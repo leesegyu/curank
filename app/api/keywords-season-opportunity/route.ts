@@ -2,14 +2,14 @@
  * 시즌 기회 키워드 추천 API
  * GET /api/keywords-season-opportunity?keyword=수박
  *
- * Historical(작년 인기) + V2(시장 데이터) 융합:
- *   1) Historical API에서 작년 인기 키워드 + DataLab 갭 데이터 획득
- *   2) V2 캐시에서 해당 키워드의 경쟁/검색량/의도 데이터 보강
- *   3) Season Opportunity Score (SOS) 5F 모델로 재채점
+ * 3개 소스 통합 후보 + 출신 가중치:
+ *   1) Historical 캐시 — 작년 인기 키워드 (가중치 +15, 검증된 과거 수요)
+ *   2) V2 캐시 — 현재 시장 데이터 (기본 점수)
+ *   3) 온톨로지 롱테일 — 형제/자식 노드 확장
+ *   → 양쪽 모두 존재하면 가중치 +20 (과거+현재 검증)
  *
- * 추가 API 호출: 0회 (Historical + V2 캐시 재사용)
- * → 이미 analyze-run에서 Historical과 V2를 병렬 호출하므로
- *   이 API는 캐시된 데이터만 읽어 SOS를 계산
+ * SOS 전용 DataLab: 정확히 1년전 ~ 1년전+2개월 말일
+ * Season Opportunity Score (SOS) 5F 모델로 채점
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -19,12 +19,11 @@ import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/ro
 import type { HistoricalKeyword } from "@/app/api/keywords-historical/route";
 import { calcSeasonOpportunityScore, type SeasonOpportunityResult } from "@/lib/season-opportunity";
 import { calcOntologyRelevance } from "@/lib/ontology-relevance";
+import { generateOntologyLongtails } from "@/lib/ontology";
 import { trackApiCall } from "@/lib/api-monitor";
 
-const CACHE_TYPE = "keywords_season_opp_3"; // v3: 자체 DataLab 조회 (1년전~+2개월)
+const CACHE_TYPE = "keywords_season_opp_4"; // v4: V2+Historical+온톨로지 통합 + 가중치
 const cache = new NodeCache({ stdTTL: 3600 });
-
-/** Historical API 캐시 키 (keywords-historical/route.ts와 동일 TTL) */
 const historicalCache = new NodeCache({ stdTTL: 3600 });
 
 const DATALAB_BASE = "https://openapi.naver.com/v1/datalab";
@@ -42,11 +41,8 @@ async function fetchSOSTrend(keywords: string[]): Promise<Map<string, { past: nu
   if (keywords.length === 0) return result;
 
   const now = new Date();
-  // SOS 과거 구간: 정확히 1년전 ~ 1년전+2개월 말일
-  // 예: 2026-04-10 → 2025-04-10 ~ 2025-06-30
   const pastStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-  const pastEnd = new Date(now.getFullYear() - 1, now.getMonth() + 3, 0); // +3개월 0일 = +2개월 말일
-  // 현재 구간: 최근 3개월
+  const pastEnd = new Date(now.getFullYear() - 1, now.getMonth() + 3, 0);
   const currentStart = new Date(now);
   currentStart.setMonth(currentStart.getMonth() - 3);
 
@@ -98,11 +94,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "keyword 파라미터 필요" }, { status: 400 });
   }
 
-  // L1 캐시 히트
   const cached = cache.get<SeasonOpportunityResult[]>(keyword);
   if (cached) return NextResponse.json({ keywords: cached, cached: true });
 
-  // L2 캐시 히트
   const l2 = await getL2Cache<SeasonOpportunityResult[]>(keyword, CACHE_TYPE);
   if (l2) {
     cache.set(keyword, l2);
@@ -110,20 +104,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // ── 1단계: Historical 데이터 획득 ────────────────────────
-    // Historical API를 내부 호출하지 않고 L2 캐시에서 읽기 (0 API 콜)
-    let historicalKeywords: HistoricalKeyword[] | null = null;
+    // ══════════════════════════════════════════════════════════
+    // 1단계: 3개 소스에서 후보 통합
+    // ══════════════════════════════════════════════════════════
 
-    // L1 캐시 시도 (같은 요청 사이클이면 히트)
-    historicalKeywords = historicalCache.get<HistoricalKeyword[]>(keyword) ?? null;
-
+    // 소스 A: Historical 캐시
+    let historicalKeywords: HistoricalKeyword[] | null =
+      historicalCache.get<HistoricalKeyword[]>(keyword) ?? null;
     if (!historicalKeywords) {
-      // L2 캐시 시도 (keywords-historical이 저장한 Supabase 캐시)
       historicalKeywords = await getL2Cache<HistoricalKeyword[]>(keyword, "keywords_historical_3");
     }
-
-    if (!historicalKeywords || historicalKeywords.length === 0) {
-      // 캐시 미스 → Historical API 직접 호출 (폴백)
+    if (!historicalKeywords) {
       try {
         const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
         const res = await fetch(
@@ -134,63 +125,99 @@ export async function GET(req: NextRequest) {
           const json = await res.json();
           historicalKeywords = json.keywords ?? [];
         }
-      } catch {
-        // 폴백도 실패 → 빈 결과
-      }
+      } catch { /* 폴백 실패 */ }
     }
 
-    if (!historicalKeywords || historicalKeywords.length === 0) {
-      cache.set(keyword, []);
-      return NextResponse.json({ keywords: [] });
-    }
-
-    // ── 2단계: V2 데이터로 경쟁/검색량 보강 ──────────────────
+    // 소스 B: V2 캐시
     let v2Keywords: KeywordV2[] | null = v2Cache.get<KeywordV2[]>(keyword) ?? null;
     if (!v2Keywords) {
       v2Keywords = await getL2Cache<KeywordV2[]>(keyword, V2_CACHE_TYPE);
     }
 
-    // V2 키워드를 맵으로 변환 (빠른 lookup)
+    // 소스 C: 온톨로지 롱테일
+    const ontologyKws = generateOntologyLongtails(keyword, "smartstore", 20);
+
+    // ══════════════════════════════════════════════════════════
+    // 2단계: 후보 통합 + 출신 태깅
+    // ══════════════════════════════════════════════════════════
+
+    const historicalSet = new Set<string>();
+    const v2Set = new Set<string>();
+    const candidateSet = new Set<string>();
+
+    // V2 맵 (경쟁/검색량 데이터)
     const v2Map = new Map<string, KeywordV2>();
     if (v2Keywords) {
       for (const k of v2Keywords) {
+        if (k.keyword === keyword) continue;
         v2Map.set(k.keyword, k);
+        v2Set.add(k.keyword);
+        candidateSet.add(k.keyword);
       }
     }
 
-    // ── 3단계: 2차 연관도 필터 (Historical 캐시가 오래된 경우 대비) ──
+    // Historical 맵 (과거 인기 데이터)
+    const historicalMap = new Map<string, HistoricalKeyword>();
+    if (historicalKeywords) {
+      for (const hk of historicalKeywords) {
+        if (hk.keyword === keyword) continue;
+        historicalMap.set(hk.keyword, hk);
+        historicalSet.add(hk.keyword);
+        candidateSet.add(hk.keyword);
+      }
+    }
+
+    // 온톨로지 롱테일
+    for (const kw of ontologyKws) {
+      if (kw !== keyword) candidateSet.add(kw);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // 3단계: 연관도 필터
+    // ══════════════════════════════════════════════════════════
+
     const seedTokens = keyword.split(/\s+/);
-    historicalKeywords = historicalKeywords.filter((hk) => {
-      const containsSeedToken = seedTokens.some((t) => hk.keyword.includes(t));
+    const filtered = [...candidateSet].filter((kw) => {
+      const containsSeedToken = seedTokens.some((t) => kw.includes(t));
       if (containsSeedToken) return true;
-      const rel = calcOntologyRelevance(keyword, hk.keyword);
+      const rel = calcOntologyRelevance(keyword, kw);
       return rel.score >= 15;
     });
 
-    // ── 4단계: SOS 전용 DataLab 조회 (1년전 ~ 1년전+2개월) ──
-    const sosKws = historicalKeywords.map((hk) => hk.keyword);
-    const sosTrendMap = await fetchSOSTrend(sosKws);
+    if (filtered.length === 0) {
+      cache.set(keyword, []);
+      return NextResponse.json({ keywords: [] });
+    }
 
-    // ── 5단계: SOS 계산 ──────────────────────────────────────
+    // ══════════════════════════════════════════════════════════
+    // 4단계: SOS DataLab 조회 (1년전 ~ +2개월)
+    // ══════════════════════════════════════════════════════════
+
+    const sosTrendMap = await fetchSOSTrend(filtered);
+
+    // ══════════════════════════════════════════════════════════
+    // 5단계: SOS 5F 채점 + 출신 가중치
+    // ══════════════════════════════════════════════════════════
+
     const results: SeasonOpportunityResult[] = [];
 
-    for (const hk of historicalKeywords) {
-      const v2Data = v2Map.get(hk.keyword);
-      const sosTrend = sosTrendMap.get(hk.keyword);
+    for (const kw of filtered) {
+      const sosTrend = sosTrendMap.get(kw);
+      const v2Data = v2Map.get(kw);
+      const hkData = historicalMap.get(kw);
 
-      // SOS 전용 DataLab 데이터로 오버라이드 (없으면 Historical 데이터 사용)
-      const pastPop = sosTrend?.past ?? hk.pastPopularity;
-      const currentPop = sosTrend?.current ?? hk.currentPopularity;
+      const pastPop = sosTrend?.past ?? hkData?.pastPopularity ?? 0;
+      const currentPop = sosTrend?.current ?? hkData?.currentPopularity ?? 0;
+
+      // DataLab에 데이터 없으면 스킵
+      if (pastPop < 3 && !v2Data) continue;
+
       const gap = Math.round((pastPop - currentPop) * 10) / 10;
-
       const competitionLevel = v2Data?.competitionLevel ?? "보통";
-      const monthlyVolume = v2Data?.monthlyVolume ?? hk.monthlyVolume;
-
-      // pastPop이 0이면 SOS 기간에 데이터 없음 → 스킵
-      if (pastPop < 3) continue;
+      const monthlyVolume = v2Data?.monthlyVolume ?? hkData?.monthlyVolume ?? 0;
 
       const sosResult = calcSeasonOpportunityScore({
-        keyword: hk.keyword,
+        keyword: kw,
         pastPopularity: pastPop,
         currentPopularity: currentPop,
         gap,
@@ -199,10 +226,20 @@ export async function GET(req: NextRequest) {
         seasonHint: gap > 15 ? "시즌 전 선점 기회" : gap > 0 ? "곧 수요 회복 예상" : "꾸준한 수요",
       });
 
-      results.push(sosResult);
+      // ── 출신 가중치 ──
+      const fromHistorical = historicalSet.has(kw);
+      const fromV2 = v2Set.has(kw);
+
+      let bonus = 0;
+      if (fromHistorical && fromV2) bonus = 20;      // 양쪽 검증
+      else if (fromHistorical)      bonus = 15;      // 과거 수요 검증
+      // V2 only, 온톨로지 only → bonus 0
+
+      const boostedScore = Math.min(100, sosResult.score + bonus);
+
+      results.push({ ...sosResult, score: boostedScore });
     }
 
-    // 점수 내림차순 정렬, 상위 40개
     const sorted = results
       .sort((a, b) => b.score - a.score)
       .slice(0, 40);

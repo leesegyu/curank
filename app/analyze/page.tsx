@@ -23,7 +23,7 @@ import BrandDistributionCard from "./BrandDistributionCard";
 import type { BrandDistributionData } from "./BrandDistributionCard";
 import ConclusionCard from "./ConclusionCard";
 import KeywordRecommendationsCreative from "./KeywordRecommendationsCreative";
-import KeywordRecommendationsHistorical from "./KeywordRecommendationsHistorical";
+// KeywordRecommendationsHistorical 삭제됨 — SOS 카드에 통합
 import KeywordRecommendationsSeasonOpportunity from "./KeywordRecommendationsSeasonOpportunity";
 import FactorCompareCard from "./FactorCompareCard";
 import BackToHomeLink from "./BackToHomeLink";
@@ -348,9 +348,6 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
               <TrendChartClient data={trend.data} weeklyData={trend.weeklyData} peak={trend.peak} current={trend.current} keyword={kw} />
             </div>
           )}
-
-          {/* 작년 이맘때 인기 키워드 — 시즌 선점 (트렌드 차트 직후 배치) */}
-          <KeywordRecommendationsHistorical keyword={kw} platform={platform} preloadedData={snapKeywordsHistorical} />
 
           {/* 검색자 인구통계 */}
           <Suspense fallback={<DemographicsSkeleton />}>
