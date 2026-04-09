@@ -5,7 +5,7 @@
  */
 import NodeCache from "node-cache";
 
-export const feedCache    = new NodeCache({ stdTTL: 1, checkperiod: 1 }); // 1초 TTL — 실질적으로 캐시 없음
+export const feedCache    = new NodeCache({ stdTTL: 300, checkperiod: 60 }); // 5분 캐시
 export const productCache = new NodeCache({ stdTTL: 86400 }); // 24h
 
 /** 특정 유저의 피드 캐시 삭제 */

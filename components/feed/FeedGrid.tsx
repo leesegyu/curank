@@ -26,7 +26,6 @@ const ROW_ICONS: Record<string, string> = {
   star:    "👑",
   bulb:    "💡",
   fire:    "📈",
-  gift:    "📢",
 };
 
 function SkeletonRow() {
@@ -139,26 +138,9 @@ export default function FeedGrid() {
         <>
           <SkeletonRow />
           <SkeletonRow />
-          <SkeletonRow />
         </>
       ) : (
         rows.map((row) => {
-          // 쿠랭크 추천: 업데이트 중
-          if (row.id === "curank_pick") {
-            return (
-              <section key={row.id} className="mb-10">
-                <div className="flex items-center gap-2.5 mb-5">
-                  <span className="text-2xl flex-shrink-0">{ROW_ICONS[row.icon] ?? "📦"}</span>
-                  <h3 className="text-lg font-black text-gray-900">{row.title}</h3>
-                </div>
-                <div className="bg-gray-50 rounded-2xl border border-gray-100 py-10 text-center">
-                  <p className="text-sm text-gray-400">업데이트 중입니다</p>
-                  <p className="text-xs text-gray-300 mt-1">곧 새로운 추천 상품이 추가될 예정이에요</p>
-                </div>
-              </section>
-            );
-          }
-
           // 최근 분석 기반 Row: 기록 없으면 안내 메시지
           if (row.id === "recent_analysis" && row.items.length === 0) {
             return (

@@ -1,13 +1,14 @@
 /**
  * 개인화 키워드 피드 API — Phase 1
  *
- * 7개 Row (내 맞춤을 2줄로 분리):
+ * 5개 Row:
  *   Row 1: 최근 분석 기반 추천 — 분석 키워드 + 체류시간 기반 유사 상품
- *   Row 2: 관심 카테고리 추천 — main_categories 계층적 추천 (L4→L3→L2→L1 폴백)
- *   Row 3: 카테고리 인기 상품 — L1 시드 키워드
- *   Row 4: 추천 키워드 — 롱테일/구매전환
- *   Row 5: 급상승 인기
- *   Row 6: 쿠랭크 추천 — 큐레이션/광고
+ *   Row 2: 이런 상품도 인기있어요 — 관심 분야 인기 상품
+ *   Row 3: 관심 카테고리 추천 — main_categories 계층적 추천 (L4→L3→L2→L1 폴백)
+ *   Row 4: 추천 키워드 — 롱테일/구매전환 (keyword_only)
+ *   Row 5: 지금 급상승 — 급상승 인기
+ *
+ * (광고 배너는 Row 2와 Row 3 사이에 프론트엔드에서 삽입)
  *
  * 피드 업데이트 시점:
  *   - 홈 방문할 때마다 (FeedGrid mount → cache bust)
@@ -24,7 +25,6 @@ import { searchNaver } from "@/lib/naver";
 import {
   classifyKeyword,
   getSimilarSeedKeywords,
-  getL1SeedKeywords,
   generateFeedKeywords,
   generateBatchLongtails,
   TRENDING_SEED_KEYWORDS,
@@ -436,57 +436,43 @@ export async function GET() {
   // Row 1: 각 카테고리 내 유사도 최상위 상품
   // Row 2: 각 카테고리 내 유사도 그 다음 (인기 상품)
   const { row1Keywords, row2Keywords } = buildProportionalRows(
-    allEvents, recentPaths, 8
+    allEvents, recentPaths, 4
   );
 
   // Row 3: 관심 카테고리 — L2 경로가 있으면 그 경로 기반 유사도, 없으면 L1 계층적
   const usedKws = new Set([...row1Keywords, ...row2Keywords]);
   const row3Keywords = userSSL2s.length > 0
-    ? getSimilarSeedKeywords(userSSL2s, "smartstore", 0.5, 12).filter((k) => !usedKws.has(k)).slice(0, 8)
+    ? getSimilarSeedKeywords(userSSL2s, "smartstore", 0.5, 12).filter((k) => !usedKws.has(k)).slice(0, 4)
     : userSSL1s.length > 0
-      ? getHierarchicalKeywords(userSSL1s, 8).filter((k) => !usedKws.has(k))
+      ? getHierarchicalKeywords(userSSL1s, 4).filter((k) => !usedKws.has(k))
       : Object.keys(categoryWeights.smartstore ?? {}).length > 0
-        ? generateFeedKeywords(categoryWeights, "smartstore", 8)
-        : getSimilarSeedKeywords([], "smartstore", 0.3, 8);
+        ? generateFeedKeywords(categoryWeights, "smartstore", 4)
+        : getSimilarSeedKeywords([], "smartstore", 0.3, 4);
 
-  // Row 4: 카테고리 인기
-  const usedKws2 = new Set([...usedKws, ...row3Keywords]);
-  const row4Keywords = userSSL1s.length > 0
-    ? userSSL1s.flatMap((id) => getL1SeedKeywords("smartstore", id, 3))
-        .filter((k) => !usedKws2.has(k)).slice(0, 8)
-    : getL1SeedKeywords("smartstore", "ss.food", 4)
-        .concat(getL1SeedKeywords("smartstore", "ss.digital", 4)).slice(0, 8);
-
-  // Row 5: 추천 키워드 (온톨로지 Facet 기반 롱테일, 텍스트 전용)
+  // Row 4: 추천 키워드 (온톨로지 Facet 기반 롱테일, 텍스트 전용)
   // 실제 분석 키워드의 온톨로지 형제/자식 노드 matchKeywords를 교차 조합
   // 예: "삼겹살" → "숙성 삼겹살", "캠핑용 삼겹살 국내산", "양념 대패 삼겹살"
-  const row5Keywords = recentKeywords.length > 0
-    ? generateBatchLongtails(recentKeywords.slice(0, 6), "smartstore", 15)
+  const row4Keywords = recentKeywords.length > 0
+    ? generateBatchLongtails(recentKeywords.slice(0, 6), "smartstore", 10)
     : [];
 
-  // Row 6: 급상승
-  const row6Keywords = shuffle(TRENDING_SEED_KEYWORDS).slice(0, 8);
+  // Row 5: 급상승
+  const row5Keywords = shuffle(TRENDING_SEED_KEYWORDS).slice(0, 4);
 
-  // Row 7: 쿠랭크 추천 (쿠팡 API 연동 전까지 비워둠)
-  const row7Keywords: string[] = [];
+  // 롱테일(Row 4)은 상품 조회 필요 없음 — 키워드만 전달
+  const row4Items: FeedItem[] = row4Keywords.map((kw) => ({ keyword: kw, category: "", product: null }));
 
-  // 롱테일(Row 5)은 상품 조회 필요 없음 — 키워드만 전달
-  const row5Items: FeedItem[] = row5Keywords.map((kw) => ({ keyword: kw, category: "", product: null }));
-
-  const [i1, i2, i3, i4, i6] = await Promise.all([
+  const [i1, i2, i3, i5] = await Promise.all([
     buildItems(row1Keywords), buildItems(row2Keywords),
-    buildItems(row3Keywords), buildItems(row4Keywords),
-    buildItems(row6Keywords),
+    buildItems(row3Keywords), buildItems(row5Keywords),
   ]);
 
   const rows: FeedRow[] = [
     { id: "recent_analysis", title: "최근 분석 기반 추천", subtitle: "내가 최근 분석한 키워드와 비슷한 상품들이에요", icon: "history", items: i1 },
     { id: "recent_popular", title: "이런 상품도 인기있어요", subtitle: "내 관심 분야에서 다른 셀러들이 많이 찾는 상품들", icon: "search", items: i2 },
     { id: "interest_category", title: "관심 카테고리 추천", subtitle: "내가 설정한 카테고리에서 지금 잘 팔리는 상품들", icon: "target", items: i3 },
-    { id: "category_top", title: "카테고리 인기 상품", subtitle: "내 관심 카테고리에서 가장 주목받는 베스트 상품", icon: "star", items: i4 },
-    { id: "longtail", title: "추천 키워드", subtitle: "검색량은 적지만 구매로 이어질 확률이 높은 키워드", icon: "bulb", items: row5Items, displayType: "keyword_only" },
-    { id: "trending", title: "지금 급상승", subtitle: "최근 검색량이 빠르게 늘고 있는 키워드", icon: "fire", items: i6 },
-    { id: "curank_pick", title: "쿠랭크 추천", subtitle: "", icon: "gift", items: [] },
+    { id: "longtail", title: "추천 키워드", subtitle: "검색량은 적지만 구매로 이어질 확률이 높은 키워드", icon: "bulb", items: row4Items, displayType: "keyword_only" },
+    { id: "trending", title: "지금 급상승", subtitle: "최근 검색량이 빠르게 늘고 있는 키워드", icon: "fire", items: i5 },
   ];
 
   return NextResponse.json({ rows, needsCategories, autoAdded });

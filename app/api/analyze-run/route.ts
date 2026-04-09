@@ -151,6 +151,24 @@ export async function GET(req: NextRequest) {
           controller.close();
           return;
         }
+        // 브랜드/상호명 분포 추출
+        const brandCount = new Map<string, number>();
+        let noBrandCount = 0;
+        for (const p of searchData.products) {
+          const b = p.brand || p.maker;
+          if (b && b.length >= 2) {
+            brandCount.set(b, (brandCount.get(b) ?? 0) + 1);
+          } else {
+            noBrandCount++;
+          }
+        }
+        const totalProducts = searchData.products.length;
+        const brandDistribution = [...brandCount.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([name, count]) => ({ name, count, ratio: Math.round(count / Math.max(totalProducts, 1) * 100) }));
+        const noBrandRatio = Math.round(noBrandCount / Math.max(totalProducts, 1) * 100);
+
         send({ step: 2, total: TOTAL, label: "상품 데이터 수집 완료", progress: 18 });
 
         // ── Step 3: 경쟁 분석 ──
@@ -262,6 +280,7 @@ export async function GET(req: NextRequest) {
             keywordsCreative: creativeData?.keywords ?? null,
             keywordsGraph: graphRaw?.keywords ?? null,
             factorScore: factorData ?? null,
+            brandDistribution: { brands: brandDistribution, noBrandRatio, totalProducts },
           }).catch(() => {});
 
           send({

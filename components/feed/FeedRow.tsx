@@ -50,7 +50,7 @@ export default function FeedRow({ title, subtitle, icon, items, displayType }: P
             </div>
           </div>
           {/* 데스크탑: 그리드 */}
-          <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {items.map((item, i) => (
               <Card key={`${item.keyword}-${i}`} item={item} />
             ))}

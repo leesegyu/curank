@@ -22,6 +22,9 @@ export interface Product {
   mallName: string;
   productImage: string;
   productUrl: string;
+  // 브랜드/제조사 (네이버 쇼핑 API 제공)
+  brand?: string;
+  maker?: string;
   // 쿠팡 파트너스 API 전용 (네이버에선 없음)
   ratingCount?: number;
   productRating?: number;
@@ -190,6 +193,8 @@ export async function unifiedSearch(
       mallName: item.mallName,
       productImage: item.image,
       productUrl: item.link,
+      brand: item.brand || undefined,
+      maker: item.maker || undefined,
     }));
 
     const result: UnifiedSearchResult = {

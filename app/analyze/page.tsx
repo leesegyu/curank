@@ -19,6 +19,8 @@ import DwellTracker from "./DwellTracker";
 import PlatformInsightCard from "./PlatformInsightCard";
 import FactorScoreCard from "./FactorScoreCard";
 import CompetitorThreatCard from "./CompetitorThreatCard";
+import BrandDistributionCard from "./BrandDistributionCard";
+import type { BrandDistributionData } from "./BrandDistributionCard";
 import ConclusionCard from "./ConclusionCard";
 import KeywordRecommendationsCreative from "./KeywordRecommendationsCreative";
 import FactorCompareCard from "./FactorCompareCard";
@@ -119,6 +121,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let snapKeywordsCreative: unknown[] | null = null;
   let snapKeywordsGraph: unknown[] | null = null;
   let snapFactorScore: unknown | null = null;
+  let snapBrandDistribution: BrandDistributionData | null = null;
 
   if (!forceRefresh && userId) {
     const snap = await getSnapshot(userId, kw, platform);
@@ -133,6 +136,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       snapKeywordsCreative = (snap.snapshot.keywordsCreative as unknown[] | undefined) ?? null;
       snapKeywordsGraph = (snap.snapshot.keywordsGraph as unknown[] | undefined) ?? null;
       snapFactorScore = snap.snapshot.factorScore ?? null;
+      snapBrandDistribution = (snap.snapshot.brandDistribution as BrandDistributionData | undefined) ?? null;
       console.log(`[snapshot] HIT: "${kw}" (${platform}) from ${snap.created_at}`, snapKeywordsV2 ? `+keywords` : `(no keywords)`);
     }
   }
@@ -356,6 +360,9 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
 
           {/* 경쟁 위협도 — 구체적으로 누가 위협적인지 */}
           <CompetitorThreatCard keyword={kw} platform={platform} />
+
+          {/* 브랜드/상호명 분포 — 시장 지배 브랜드 파악 */}
+          <BrandDistributionCard keyword={kw} platform={platform} preloadedData={snapBrandDistribution} />
 
           {/* 판매 성공 Factor — 어떤 지표에서 약한지 */}
           <FactorScoreCard keyword={kw} platform={platform} preloadedData={snapFactorScore} />
