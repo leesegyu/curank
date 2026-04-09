@@ -17,7 +17,7 @@ import { generateOntologyLongtails, classifyKeyword } from "@/lib/ontology";
 import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { getL2Cache, setL2Cache } from "@/lib/cache-db";
 
-const CACHE_TYPE = "keywords_historical_2"; // v2: 연관도 필터 + classifyKeyword 수정
+const CACHE_TYPE = "keywords_historical_3"; // v3: 날짜 범위 변경 (1년전 전달 1일 ~ 다음달 말일)
 const cache = new NodeCache({ stdTTL: 3600 });
 
 export interface HistoricalKeyword {
@@ -52,11 +52,10 @@ async function fetchPastTrend(keywords: string[]): Promise<Map<string, { past: n
   if (keywords.length === 0) return result;
 
   const now = new Date();
-  // 과거 구간: 15개월 전 ~ 9개월 전 (1년 전 ±3개월)
-  const pastStart = new Date(now);
-  pastStart.setMonth(pastStart.getMonth() - 15);
-  const pastEnd = new Date(now);
-  pastEnd.setMonth(pastEnd.getMonth() - 9);
+  // 과거 구간: 1년전 전달 1일 ~ 1년전 다음달 말일
+  // 예: 2026-04-10 → 2025-03-01 ~ 2025-05-31
+  const pastStart = new Date(now.getFullYear() - 1, now.getMonth() - 1, 1);
+  const pastEnd = new Date(now.getFullYear() - 1, now.getMonth() + 2, 0); // 다음다음달 0일 = 다음달 말일
   // 현재 구간: 최근 3개월
   const currentStart = new Date(now);
   currentStart.setMonth(currentStart.getMonth() - 3);

@@ -19,12 +19,76 @@ import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/ro
 import type { HistoricalKeyword } from "@/app/api/keywords-historical/route";
 import { calcSeasonOpportunityScore, type SeasonOpportunityResult } from "@/lib/season-opportunity";
 import { calcOntologyRelevance } from "@/lib/ontology-relevance";
+import { trackApiCall } from "@/lib/api-monitor";
 
-const CACHE_TYPE = "keywords_season_opp_2"; // v2: 2차 연관도 필터 추가
+const CACHE_TYPE = "keywords_season_opp_3"; // v3: 자체 DataLab 조회 (1년전~+2개월)
 const cache = new NodeCache({ stdTTL: 3600 });
 
 /** Historical API 캐시 키 (keywords-historical/route.ts와 동일 TTL) */
 const historicalCache = new NodeCache({ stdTTL: 3600 });
+
+const DATALAB_BASE = "https://openapi.naver.com/v1/datalab";
+function getHeaders() {
+  return {
+    "X-Naver-Client-Id": process.env.NAVER_CLIENT_ID!,
+    "X-Naver-Client-Secret": process.env.NAVER_CLIENT_SECRET!,
+    "Content-Type": "application/json",
+  };
+}
+
+/** SOS 전용 DataLab 조회: 정확히 1년전 ~ 1년전+2개월 말일 */
+async function fetchSOSTrend(keywords: string[]): Promise<Map<string, { past: number; current: number }>> {
+  const result = new Map<string, { past: number; current: number }>();
+  if (keywords.length === 0) return result;
+
+  const now = new Date();
+  // SOS 과거 구간: 정확히 1년전 ~ 1년전+2개월 말일
+  // 예: 2026-04-10 → 2025-04-10 ~ 2025-06-30
+  const pastStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  const pastEnd = new Date(now.getFullYear() - 1, now.getMonth() + 3, 0); // +3개월 0일 = +2개월 말일
+  // 현재 구간: 최근 3개월
+  const currentStart = new Date(now);
+  currentStart.setMonth(currentStart.getMonth() - 3);
+
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+  for (let i = 0; i < keywords.length; i += 5) {
+    const batch = keywords.slice(i, i + 5);
+    const keywordGroups = batch.map((kw) => ({ groupName: kw, keywords: [kw] }));
+
+    if (!trackApiCall("naver_datalab")) continue;
+
+    const [pastRes, currentRes] = await Promise.allSettled([
+      fetch(`${DATALAB_BASE}/search`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ startDate: fmt(pastStart), endDate: fmt(pastEnd), timeUnit: "month", keywordGroups }),
+        cache: "no-store",
+      }).then((r) => r.json()),
+      fetch(`${DATALAB_BASE}/search`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ startDate: fmt(currentStart), endDate: fmt(now), timeUnit: "month", keywordGroups }),
+        cache: "no-store",
+      }).then((r) => r.json()),
+    ]);
+
+    const pastResults = pastRes.status === "fulfilled" ? pastRes.value?.results ?? [] : [];
+    const currentResults = currentRes.status === "fulfilled" ? currentRes.value?.results ?? [] : [];
+
+    for (let j = 0; j < batch.length; j++) {
+      const kw = batch[j];
+      const pastPts = pastResults[j]?.data ?? [];
+      const currentPts = currentResults[j]?.data ?? [];
+      const pastAvg = pastPts.length > 0
+        ? pastPts.reduce((s: number, d: { ratio: number }) => s + d.ratio, 0) / pastPts.length : 0;
+      const currentAvg = currentPts.length > 0
+        ? currentPts.reduce((s: number, d: { ratio: number }) => s + d.ratio, 0) / currentPts.length : 0;
+      result.set(kw, { past: Math.round(pastAvg * 10) / 10, current: Math.round(currentAvg * 10) / 10 });
+    }
+  }
+  return result;
+}
 
 export type { SeasonOpportunityResult };
 
@@ -55,7 +119,7 @@ export async function GET(req: NextRequest) {
 
     if (!historicalKeywords) {
       // L2 캐시 시도 (keywords-historical이 저장한 Supabase 캐시)
-      historicalKeywords = await getL2Cache<HistoricalKeyword[]>(keyword, "keywords_historical_2");
+      historicalKeywords = await getL2Cache<HistoricalKeyword[]>(keyword, "keywords_historical_3");
     }
 
     if (!historicalKeywords || historicalKeywords.length === 0) {
@@ -103,24 +167,36 @@ export async function GET(req: NextRequest) {
       return rel.score >= 15;
     });
 
-    // ── 4단계: SOS 계산 ──────────────────────────────────────
+    // ── 4단계: SOS 전용 DataLab 조회 (1년전 ~ 1년전+2개월) ──
+    const sosKws = historicalKeywords.map((hk) => hk.keyword);
+    const sosTrendMap = await fetchSOSTrend(sosKws);
+
+    // ── 5단계: SOS 계산 ──────────────────────────────────────
     const results: SeasonOpportunityResult[] = [];
 
     for (const hk of historicalKeywords) {
       const v2Data = v2Map.get(hk.keyword);
+      const sosTrend = sosTrendMap.get(hk.keyword);
 
-      // V2가 있으면 정밀 데이터 사용, 없으면 Historical 데이터 + 기본값
+      // SOS 전용 DataLab 데이터로 오버라이드 (없으면 Historical 데이터 사용)
+      const pastPop = sosTrend?.past ?? hk.pastPopularity;
+      const currentPop = sosTrend?.current ?? hk.currentPopularity;
+      const gap = Math.round((pastPop - currentPop) * 10) / 10;
+
       const competitionLevel = v2Data?.competitionLevel ?? "보통";
       const monthlyVolume = v2Data?.monthlyVolume ?? hk.monthlyVolume;
 
+      // pastPop이 0이면 SOS 기간에 데이터 없음 → 스킵
+      if (pastPop < 3) continue;
+
       const sosResult = calcSeasonOpportunityScore({
         keyword: hk.keyword,
-        pastPopularity: hk.pastPopularity,
-        currentPopularity: hk.currentPopularity,
-        gap: hk.gap,
+        pastPopularity: pastPop,
+        currentPopularity: currentPop,
+        gap,
         monthlyVolume,
         competitionLevel,
-        seasonHint: hk.seasonHint,
+        seasonHint: gap > 15 ? "시즌 전 선점 기회" : gap > 0 ? "곧 수요 회복 예상" : "꾸준한 수요",
       });
 
       results.push(sosResult);
