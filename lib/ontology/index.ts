@@ -46,16 +46,56 @@ export function classifyKeyword(
   const platforms: Platform[] = platform ? [platform] : ["smartstore", "coupang"];
 
   // ── 1차: matchKeywords 직접 매칭 ──────────────────────────────
-  let bestMatch: { path: string; platform: Platform; level: number } | null = null;
+  // 매칭 품질 점수: (matchKeyword 길이 / 키워드 길이) × level
+  // → "게"(1자) 가 "게이밍의자"(5자)에 매칭되면 비율 0.2 → 낮은 점수
+  // → "의자"(2자) 가 "게이밍의자"(5자)에 매칭되면 비율 0.4 → 더 높은 점수
+  // → "게이밍체어"(5자)가 정확히 매칭되면 비율 1.0 → 최고 점수
+  let bestMatch: { path: string; platform: Platform; level: number; quality: number } | null = null;
+
+  // 짧은 matchKeyword의 substring 오매칭 방지:
+  // - 1글자 matchKeyword: 키워드와 완전 일치(kw === mkNorm)만 허용
+  //   예: "게"는 "게" 검색 시에만 매칭, "게이밍의자"에는 매칭 안 됨
+  // - 2글자 matchKeyword: 키워드 끝이 일치하거나 키워드와 동일할 때만
+  //   예: "의자"는 "게이밍의자"(끝 일치) OK, "의자놀이"는 OK
+  //   예: "차"는 "자동차"(끝 일치) 안 됨(1자), "녹차"(끝 일치)도 2자로 "차" 매칭 불가
+  const MIN_SUBSTR_LEN = 2; // substring 매칭 최소 길이
 
   for (const p of platforms) {
     const nodes = PLATFORM_NODES[p];
     for (const node of nodes) {
       for (const mk of node.matchKeywords) {
         const mkNorm = mk.toLowerCase().replace(/\s+/g, "");
-        if (kw.includes(mkNorm) || mkNorm.includes(kw)) {
-          if (!bestMatch || node.level > bestMatch.level) {
-            bestMatch = { path: node.id, platform: p, level: node.level };
+
+        let matched = false;
+
+        if (kw === mkNorm) {
+          // 완전 일치 — 항상 허용
+          matched = true;
+        } else if (mkNorm.length < MIN_SUBSTR_LEN) {
+          // 1글자 matchKeyword는 완전 일치만 허용 (위에서 처리됨)
+          matched = false;
+        } else if (mkNorm.length <= 2) {
+          // 2글자 matchKeyword: kw가 mkNorm으로 끝나거나 시작할 때만 (접두사/접미사)
+          // 예: "의자" → "게이밍의자"(접미사 O), "의자커버"(접두사 O)
+          // 역방향(mkNorm.includes(kw))은 kw도 2글자 이상일 때만 허용
+          // → "차"(1자)가 "차돌"(2자)에 매칭되는 오류 방지
+          if (kw.length >= MIN_SUBSTR_LEN) {
+            matched = kw.endsWith(mkNorm) || kw.startsWith(mkNorm) || mkNorm.includes(kw);
+          }
+          // kw가 1글자이면 2글자 matchKeyword와 substring 매칭 불허 (위 exact match만)
+        } else if (kw.length >= MIN_SUBSTR_LEN && (kw.includes(mkNorm) || mkNorm.includes(kw))) {
+          // 3글자 이상 matchKeyword: 기존 substring 매칭 유지
+          // 단, kw도 2글자 이상이어야 함 (1글자 kw의 false positive 방지)
+          matched = true;
+        }
+
+        if (matched) {
+          // 매칭 품질: matchKeyword 커버리지 비율 × level
+          const coverage = Math.min(mkNorm.length, kw.length) / Math.max(mkNorm.length, kw.length);
+          const quality = coverage * node.level;
+
+          if (!bestMatch || quality > bestMatch.quality) {
+            bestMatch = { path: node.id, platform: p, level: node.level, quality };
           }
         }
       }

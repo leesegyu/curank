@@ -305,7 +305,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["캠핑", "텐트", "캠핑의자"],
     seedKeywords: [] },
   { id: "cp.sports.camping.gear", name: "캠핑장비", level: 3, parent: "cp.sports.camping",
-    matchKeywords: ["텐트", "의자", "테이블", "타프"],
+    matchKeywords: ["텐트", "캠핑의자", "캠핑테이블", "타프"],
     seedKeywords: [
       "원터치 텐트 2인용 팝업", "경량 폴딩 캠핑의자",
       "접이식 알루미늄 테이블", "쿠팡 로켓배송 텐트",
@@ -1106,7 +1106,7 @@ export const COUPANG_NODES: OntologyNode[] = [
 
   // ── 홈인테리어 L3 확장 ──
   { id: "cp.home.furniture.desk", name: "책상/의자", level: 3, parent: "cp.home.furniture",
-    matchKeywords: ["책상", "컴퓨터책상", "사무용의자", "게이밍체어", "스탠딩데스크"],
+    matchKeywords: ["책상", "컴퓨터책상", "사무용의자", "게이밍체어", "게이밍의자", "스탠딩데스크"],
     seedKeywords: [
       "전동 스탠딩데스크 높이조절", "L자형 컴퓨터 책상 코너",
       "메쉬 사무용 의자 요추 받침", "게이밍 체어 리클라이닝",

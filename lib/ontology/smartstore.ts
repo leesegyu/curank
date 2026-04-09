@@ -94,7 +94,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
 
   // L3: 수산물
   { id: "ss.food.meat.seafood", name: "수산물/해산물", level: 3, parent: "ss.food.meat",
-    matchKeywords: ["생선", "해산물", "수산", "새우", "오징어", "게", "굴"],
+    matchKeywords: ["생선", "해산물", "수산", "새우", "오징어", "대게", "킹크랩", "꽃게", "굴"],
     seedKeywords: [
       "왕새우 냉동 대용량", "손질 오징어 통째로",
       "통영 굴 신선 1kg", "킹크랩 냉동 홈파티",
@@ -1598,7 +1598,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
       "게이밍 데스크 RGB 조명",
     ] },
   { id: "ss.furniture.office.chair", name: "의자", level: 3, parent: "ss.furniture.office",
-    matchKeywords: ["사무용의자", "메쉬의자", "게이밍체어", "인체공학의자", "좌식의자"],
+    matchKeywords: ["사무용의자", "메쉬의자", "게이밍체어", "게이밍의자", "인체공학의자", "좌식의자"],
     seedKeywords: [
       "메쉬 사무용 의자 허리받침", "인체공학 의자 요추 서포트",
       "게이밍 체어 발받침 리클라이닝", "좌식 등받이 의자 쿠션",
