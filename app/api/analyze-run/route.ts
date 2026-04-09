@@ -187,8 +187,10 @@ export async function GET(req: NextRequest) {
             fetch(`${BASE_URL}/api/keywords?keyword=${kw}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/keywords-creative?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
           ]);
-          const hasBlueOcean = blueOcean.status === "fulfilled" && blueOcean.value?.keywords?.length > 0;
-          const hasCreative = creative.status === "fulfilled" && creative.value?.keywords?.length > 0;
+          const blueOceanData = blueOcean.status === "fulfilled" ? blueOcean.value : null;
+          const creativeData = creative.status === "fulfilled" ? creative.value : null;
+          const hasBlueOcean = !!blueOceanData?.keywords?.length;
+          const hasCreative = !!creativeData?.keywords?.length;
           send({
             step: 6, total: TOTAL, progress: 60,
             label: hasBlueOcean && hasCreative ? "Blue Ocean + 크리에이티브 완료"
@@ -202,8 +204,10 @@ export async function GET(req: NextRequest) {
             fetch(`${BASE_URL}/api/keywords-v2?keyword=${kw}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/factor-score?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
           ]);
-          const hasKosV2 = kosV2.status === "fulfilled" && kosV2.value?.keywords?.length > 0;
-          const hasFactor = factor.status === "fulfilled" && factor.value?.factors?.length > 0;
+          const kosV2Data = kosV2.status === "fulfilled" ? kosV2.value : null;
+          const factorData = factor.status === "fulfilled" ? factor.value : null;
+          const hasKosV2 = !!kosV2Data?.keywords?.length;
+          const hasFactor = !!factorData?.factors?.length;
           send({
             step: 7, total: TOTAL, progress: 74,
             label: hasKosV2 && hasFactor ? "AI 심화 + 판매 지표 완료"
@@ -247,12 +251,17 @@ export async function GET(req: NextRequest) {
           // 부분 실패 — 핵심 데이터(추천 키워드)만 판정, factor-score는 보조 데이터
           const partial = !hasBlueOcean || !hasKosV2 || !hasGraph || !hasCreative;
 
-          // 스냅샷 저장 (결과 보기 시 즉시 로드)
+          // 스냅샷 저장 (결과 보기 시 즉시 로드 — 키워드 추천 포함)
           saveSnapshot(userId, keyword, platform, {
             result,
             trend: trendRaw,
             naverScoreData: naverScore,
             demographics: demographicsData,
+            keywordsV1: blueOceanData?.keywords ?? null,
+            keywordsV2: kosV2Data?.keywords ?? null,
+            keywordsCreative: creativeData?.keywords ?? null,
+            keywordsGraph: graphRaw?.keywords ?? null,
+            factorScore: factorData ?? null,
           }).catch(() => {});
 
           send({

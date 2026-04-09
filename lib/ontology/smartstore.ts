@@ -1188,6 +1188,42 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
       "다용도 접이식 수납박스",
     ] },
 
+  // ── 생활 L3 확장: 주방용품/음료용품 ──
+  { id: "ss.health.kitchen", name: "주방용품", level: 2, parent: "ss.health",
+    matchKeywords: ["주방용품", "텀블러", "물병", "보온병", "보온컵", "머그컵", "컵", "잔", "도시락통", "밀폐용기", "냄비", "프라이팬", "칼", "도마", "식기"],
+    seedKeywords: [] },
+  { id: "ss.health.kitchen.tumbler", name: "텀블러/보온병", level: 3, parent: "ss.health.kitchen",
+    matchKeywords: ["텀블러", "보온병", "보온컵", "아이스컵", "스테인리스컵", "트래블머그", "빨대컵", "이중진공"],
+    seedKeywords: [
+      "스테인리스 텀블러 보온 500ml", "아이스 텀블러 빨대 대용량",
+      "보온병 등산 캠핑 1L", "트래블머그 차량용 흘림방지",
+      "직장인 사무실 텀블러 선물", "미니 텀블러 휴대용 350ml",
+    ] },
+  { id: "ss.health.kitchen.bottle", name: "물병/워터보틀", level: 3, parent: "ss.health.kitchen",
+    matchKeywords: ["물병", "워터보틀", "트라이탄", "헬스물병", "등산물병"],
+    seedKeywords: [
+      "트라이탄 물병 1L BPA프리", "원터치 물병 헬스 운동",
+      "빨대 물병 대용량 2L", "어린이 물병 캐릭터 350ml",
+    ] },
+  { id: "ss.health.kitchen.lunchbox", name: "도시락/밀폐용기", level: 3, parent: "ss.health.kitchen",
+    matchKeywords: ["도시락", "도시락통", "밀폐용기", "반찬통", "유리용기", "스텐도시락"],
+    seedKeywords: [
+      "스텐 도시락통 2단 보온", "유리 밀폐용기 세트 4개",
+      "전자레인지 도시락 직장인", "반찬통 소형 냉장고용",
+    ] },
+  { id: "ss.health.kitchen.cookware", name: "냄비/프라이팬", level: 3, parent: "ss.health.kitchen",
+    matchKeywords: ["냄비", "프라이팬", "웍", "궁중팬", "주물냄비", "압력솥", "인덕션냄비"],
+    seedKeywords: [
+      "인덕션 프라이팬 28cm 코팅", "스텐 냄비 세트 3종",
+      "주물 궁중팬 대형 볶음", "1인 편수냄비 라면 16cm",
+    ] },
+  { id: "ss.health.kitchen.cutlery", name: "칼/도마/식기", level: 3, parent: "ss.health.kitchen",
+    matchKeywords: ["칼", "도마", "식기", "수저", "젓가락", "접시", "그릇", "컵세트"],
+    seedKeywords: [
+      "항균 도마 대형 논슬립", "스텐 수저 세트 4인용",
+      "캠핑 식기 세트 경량", "세라믹 그릇 세트 북유럽",
+    ] },
+
   // ── 생활 L3 확장: 수면/침구 ──
   { id: "ss.health.sleep", name: "수면/침구", level: 2, parent: "ss.health",
     matchKeywords: ["침구", "이불", "베개", "매트리스", "수면"],

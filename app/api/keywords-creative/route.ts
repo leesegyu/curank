@@ -16,7 +16,7 @@ import {
 } from "@/lib/ontology";
 import type { Platform as OntoPlatform } from "@/lib/ontology/types";
 import {
-  CREATIVE_MODIFIERS,
+  getFilteredModifiers,
   isCommonModifier,
   isCreativeModifier,
 } from "@/lib/ontology/use-case-bridges";
@@ -168,11 +168,12 @@ export async function GET(req: NextRequest) {
   }
 
   // ══════════════════════════════════════════════════════════
-  // 소스 2: 창의적 수식어 × 시드 키워드 (정적 조합)
-  // "노트북" → "직장인 노트북", "대학생 노트북", "재택근무 노트북"
+  // 소스 2: 창의적 수식어 × 시드 키워드 (카테고리 필터링)
+  // "텐트" (sports) → "캠핑 텐트", "1인가구 텐트" (O)
+  //                 → "유기농 텐트", "저칼로리 텐트" (X, food 전용)
   // ══════════════════════════════════════════════════════════
-  const allModifiers = Object.values(CREATIVE_MODIFIERS).flat();
-  for (const mod of allModifiers) {
+  const filteredModifiers = getFilteredModifiers(seedPath);
+  for (const mod of filteredModifiers) {
     addTemplateCandidate(`${mod} ${kw}`, "modifier");
     addTemplateCandidate(`${kw} ${mod}`, "modifier");
   }

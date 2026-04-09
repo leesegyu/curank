@@ -31,14 +31,20 @@ const DEFAULT_PILL = { bg: "bg-gray-50", text: "text-gray-600", display: "" };
 interface Props {
   keyword: string;
   platform: string;
+  preloadedData?: unknown[] | null;
 }
 
-export default function KeywordRecommendationsCreative({ keyword, platform }: Props) {
-  const [data, setData] = useState<CreativeKeyword[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function KeywordRecommendationsCreative({ keyword, platform, preloadedData }: Props) {
+  const [data, setData] = useState<CreativeKeyword[]>((preloadedData as CreativeKeyword[]) ?? []);
+  const [loading, setLoading] = useState(!preloadedData);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(false);
   useEffect(() => {
+    if (preloadedData?.length) {
+      setData(preloadedData as CreativeKeyword[]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetch(`/api/keywords-creative?keyword=${encodeURIComponent(keyword)}&platform=${platform}`)
@@ -48,7 +54,7 @@ export default function KeywordRecommendationsCreative({ keyword, platform }: Pr
       })
       .catch(() => setError("추천 키워드를 불러오지 못했습니다"))
       .finally(() => setLoading(false));
-  }, [keyword, platform]);
+  }, [keyword, platform, preloadedData]);
 
   const display = expanded ? data : data.slice(0, 5);
 

@@ -33,13 +33,19 @@ const COMPETITION_STYLE = {
   "매우 높음": "text-red-500",
 };
 
-export default function KeywordRecommendations({ keyword, platform = "naver" }: { keyword: string; platform?: string }) {
-  const [data, setData] = useState<KeywordOpportunity[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function KeywordRecommendations({ keyword, platform = "naver", preloadedData }: { keyword: string; platform?: string; preloadedData?: unknown[] | null }) {
+  const [data, setData] = useState<KeywordOpportunity[]>((preloadedData as KeywordOpportunity[]) ?? []);
+  const [loading, setLoading] = useState(!preloadedData);
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    if (preloadedData?.length) {
+      setData(preloadedData as KeywordOpportunity[]);
+      setLoading(false);
+      trackExpose(keyword, preloadedData as KeywordOpportunity[], "v1");
+      return;
+    }
     setLoading(true);
     setError(false);
     fetch(`/api/keywords?keyword=${encodeURIComponent(keyword)}`)
@@ -52,7 +58,7 @@ export default function KeywordRecommendations({ keyword, platform = "naver" }: 
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [keyword]);
+  }, [keyword, preloadedData]);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5">

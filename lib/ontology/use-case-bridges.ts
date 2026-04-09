@@ -52,16 +52,55 @@ export const USE_CASE_BRIDGES: Record<string, string[]> = {
   장마:       ["ss.fashion.rain", "ss.furniture.dehumid", "ss.health.mold", "ss.digital.waterproof"],
 };
 
-/** 창의적 수식어 (기존 "추천/할인/가성비"와 차별화) */
-export const CREATIVE_MODIFIERS: Record<string, string[]> = {
-  situation:    ["출근길", "퇴근길", "새벽", "심야", "비오는날", "주말", "휴일", "방학", "연휴"],
-  demographic:  ["1인가구", "직장인", "신혼부부", "시니어", "대학생", "자취생", "워킹맘", "맞벌이", "육아맘"],
-  lifestyle:    ["감성", "힐링", "미니멀", "빈티지", "레트로", "친환경", "비건", "제로웨이스트", "홈카페"],
-  occasion:     ["집들이", "생일", "어버이날", "스승의날", "크리스마스", "결혼기념일", "돌잔치", "명절", "졸업"],
-  method:       ["에어프라이어", "전자레인지", "캠핑", "차박", "글램핑", "피크닉", "홈트", "도시락"],
-  quality:      ["수제", "장인", "프리미엄", "유기농", "무첨가", "저칼로리", "글루텐프리", "소량", "맞춤"],
-  purpose:      ["선물용", "혼밥", "혼술", "간식용", "비상용", "보관용", "휴대용", "사무실용", "차량용"],
+/**
+ * 창의적 수식어 (기존 "추천/할인/가성비"와 차별화)
+ *
+ * allow: 해당 수식어를 적용할 수 있는 L1 카테고리 (온톨로지 경로 접두어)
+ *   - null이면 모든 카테고리에 적용 가능
+ *   - 배열이면 해당 L1에만 적용
+ */
+interface ModifierGroup {
+  words: string[];
+  allow: string[] | null; // null = 전체 허용, ["food","health"] = 식품/건강만
+}
+
+export const CREATIVE_MODIFIER_GROUPS: Record<string, ModifierGroup> = {
+  situation:    { words: ["출근길", "퇴근길", "새벽", "심야", "비오는날", "주말", "휴일", "방학", "연휴"], allow: null },
+  demographic:  { words: ["1인가구", "직장인", "신혼부부", "시니어", "대학생", "자취생", "워킹맘", "맞벌이", "육아맘"], allow: null },
+  lifestyle:    { words: ["감성", "힐링", "미니멀", "빈티지", "레트로"], allow: null },
+  ecoLifestyle: { words: ["친환경", "비건", "제로웨이스트"], allow: ["food", "beauty", "health", "baby"] },
+  occasion:     { words: ["집들이", "생일", "어버이날", "스승의날", "크리스마스", "결혼기념일", "돌잔치", "명절", "졸업"], allow: null },
+  methodFood:   { words: ["에어프라이어", "전자레인지", "도시락"], allow: ["food"] },
+  methodOutdoor:{ words: ["캠핑", "차박", "글램핑", "피크닉"], allow: null },
+  methodFit:    { words: ["홈트"], allow: ["sports", "health", "food"] },
+  qualityFood:  { words: ["수제", "유기농", "무첨가", "저칼로리", "글루텐프리"], allow: ["food", "health"] },
+  qualityAll:   { words: ["장인", "프리미엄", "소량", "맞춤"], allow: null },
+  purposeFood:  { words: ["혼밥", "혼술", "간식용"], allow: ["food"] },
+  purposeAll:   { words: ["선물용", "비상용", "보관용", "휴대용", "사무실용", "차량용"], allow: null },
+  homeCafe:     { words: ["홈카페"], allow: ["food", "digital", "furniture"] },
 };
+
+/** 하위 호환: 기존 CREATIVE_MODIFIERS 형태 (전체 flat) */
+export const CREATIVE_MODIFIERS: Record<string, string[]> = Object.fromEntries(
+  Object.entries(CREATIVE_MODIFIER_GROUPS).map(([k, v]) => [k, v.words])
+);
+
+/**
+ * 시드 키워드의 온톨로지 경로에서 L1 카테고리를 추출하고,
+ * 해당 카테고리에 적용 가능한 수식어만 반환
+ */
+export function getFilteredModifiers(seedPath: string | undefined): string[] {
+  // L1 추출: "ss.food.meat.chicken" → "food"
+  const l1 = seedPath ? seedPath.split(".")[1] : undefined;
+
+  const result: string[] = [];
+  for (const group of Object.values(CREATIVE_MODIFIER_GROUPS)) {
+    if (group.allow === null || (l1 && group.allow.includes(l1))) {
+      result.push(...group.words);
+    }
+  }
+  return result;
+}
 
 /** 뻔한 수식어 (기존 추천에서 많이 쓰이는 것들) */
 export const COMMON_MODIFIERS = [

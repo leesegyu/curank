@@ -395,7 +395,9 @@ export async function GET(req: NextRequest) {
     // ── 검색량 미확인 키워드: 상품 존재 여부로 판별 (L2 캐시) ──
     const unconfirmed = results.filter((r) => !r.volumeConfirmed && r.scoreSpecificity >= 40);
     if (unconfirmed.length > 0) {
-      const toCheck = unconfirmed.slice(0, 5); // 최대 5개 (API 부담 최소화)
+      // 구체성 높은 순으로 정렬 → 상위 15개 검증 (배치 3회)
+      const sorted = [...unconfirmed].sort((a, b) => b.scoreSpecificity - a.scoreSpecificity);
+      const toCheck = sorted.slice(0, 15);
       const noProductSet = new Set<string>();
 
       const checks = await Promise.all(
@@ -414,8 +416,10 @@ export async function GET(req: NextRequest) {
         })
       );
       for (const c of checks) if (!c.exists) noProductSet.add(c.keyword);
-      // 검증 안 된 나머지 미확인 키워드는 제거
-      for (const r of unconfirmed.slice(5)) noProductSet.add(r.keyword);
+      // 검증 못 한 나머지: 구체성 50+ 이면 살리고, 미만이면 제거
+      for (const r of sorted.slice(15)) {
+        if (r.scoreSpecificity < 50) noProductSet.add(r.keyword);
+      }
       for (const kw of noProductSet) {
         const idx = results.findIndex((r) => r.keyword === kw);
         if (idx >= 0) results.splice(idx, 1);

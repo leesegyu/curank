@@ -8,6 +8,13 @@ export interface AnalysisSnapshot {
   trend: unknown;
   naverScoreData: unknown;
   demographics?: unknown;
+  // 키워드 추천 데이터 (재방문 시 API 호출 0)
+  keywordsV1?: unknown;      // Blue Ocean
+  keywordsV2?: unknown;      // AI 심층 비교
+  keywordsCreative?: unknown; // 크리에이티브 발굴
+  keywordsGraph?: unknown;   // 그래프 연관
+  factorScore?: unknown;     // 판매 성공 지표
+  competitorThreat?: unknown; // 경쟁 위협도
 }
 
 export interface SnapshotRow {

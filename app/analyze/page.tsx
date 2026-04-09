@@ -113,6 +113,12 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let errorMsg: string | null = null;
   let snapshotTime: string | null = null;
   let snapshotDemographics: Awaited<ReturnType<typeof import("@/lib/datalab").getKeywordDemographics>> | null = null;
+  // 키워드 추천 스냅샷 데이터
+  let snapKeywordsV1: unknown[] | null = null;
+  let snapKeywordsV2: unknown[] | null = null;
+  let snapKeywordsCreative: unknown[] | null = null;
+  let snapKeywordsGraph: unknown[] | null = null;
+  let snapFactorScore: unknown | null = null;
 
   if (!forceRefresh && userId) {
     const snap = await getSnapshot(userId, kw, platform);
@@ -121,7 +127,13 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       trend = snap.snapshot.trend as typeof trend;
       snapshotDemographics = snap.snapshot.demographics as typeof snapshotDemographics ?? null;
       snapshotTime = snap.created_at;
-      console.log(`[snapshot] HIT: "${kw}" (${platform}) from ${snap.created_at}`);
+      // 키워드 추천 데이터 추출
+      snapKeywordsV1 = (snap.snapshot.keywordsV1 as unknown[] | undefined) ?? null;
+      snapKeywordsV2 = (snap.snapshot.keywordsV2 as unknown[] | undefined) ?? null;
+      snapKeywordsCreative = (snap.snapshot.keywordsCreative as unknown[] | undefined) ?? null;
+      snapKeywordsGraph = (snap.snapshot.keywordsGraph as unknown[] | undefined) ?? null;
+      snapFactorScore = snap.snapshot.factorScore ?? null;
+      console.log(`[snapshot] HIT: "${kw}" (${platform}) from ${snap.created_at}`, snapKeywordsV2 ? `+keywords` : `(no keywords)`);
     }
   }
 
@@ -346,7 +358,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           <CompetitorThreatCard keyword={kw} platform={platform} />
 
           {/* 판매 성공 Factor — 어떤 지표에서 약한지 */}
-          <FactorScoreCard keyword={kw} platform={platform} />
+          <FactorScoreCard keyword={kw} platform={platform} preloadedData={snapFactorScore} />
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           {/* 💡 STEP 3: 해결 방안 — 어떤 키워드로 공략할까?    */}
@@ -359,16 +371,16 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           </div>
 
           {/* Blue Ocean — 경쟁 적은 틈새 키워드 */}
-          <KeywordRecommendations keyword={kw} platform={platform} />
+          <KeywordRecommendations keyword={kw} platform={platform} preloadedData={snapKeywordsV1} />
 
           {/* 심화 키워드 추천 A/B/C */}
-          <KeywordRecommendationsV2 keyword={kw} platform={platform} />
+          <KeywordRecommendationsV2 keyword={kw} platform={platform} preloadedData={snapKeywordsV2} />
 
           {/* 그래프 기반 추천 */}
-          <KeywordRecommendationsGraph keyword={kw} platform={platform} />
+          <KeywordRecommendationsGraph keyword={kw} platform={platform} preloadedData={snapKeywordsGraph} />
 
           {/* 크리에이티브 발굴 */}
-          <KeywordRecommendationsCreative keyword={kw} platform={platform} />
+          <KeywordRecommendationsCreative keyword={kw} platform={platform} preloadedData={snapKeywordsCreative} />
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           {/* 📈 STEP 4: 결과 예측 — 이렇게 하면?             */}
@@ -381,7 +393,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           </div>
 
           {/* 판매 성공 지표 — 키워드별 6 Factor 예측 */}
-          <FactorPredictionCard keyword={kw} platform={platform} />
+          <FactorPredictionCard keyword={kw} platform={platform} preloadedData={snapKeywordsV2} />
 
           {/* 추천 키워드 효과 비교 */}
           <FactorCompareCard mainKeyword={kw} recommendations={[]} platform={platform} />

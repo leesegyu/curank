@@ -126,19 +126,24 @@ function MiniFactorCard({ factor, onClick, isOpen }: { factor: FactorResult; onC
   );
 }
 
-export default function FactorScoreCard({ keyword, platform }: Props) {
-  const [data, setData] = useState<FactorScoreSet | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function FactorScoreCard({ keyword, platform, preloadedData }: Props & { preloadedData?: unknown | null }) {
+  const [data, setData] = useState<FactorScoreSet | null>((preloadedData as FactorScoreSet) ?? null);
+  const [loading, setLoading] = useState(!preloadedData);
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   useEffect(() => {
+    if (preloadedData) {
+      setData(preloadedData as FactorScoreSet);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     fetch(`/api/factor-score?keyword=${encodeURIComponent(keyword)}&platform=${platform}`)
       .then((r) => r.json())
       .then((d) => setData(d))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [keyword, platform]);
+  }, [keyword, platform, preloadedData]);
 
   if (loading) {
     return (

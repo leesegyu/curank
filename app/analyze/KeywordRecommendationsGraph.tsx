@@ -23,20 +23,25 @@ function simLabel(sim: number): string {
   return "관련";
 }
 
-export default function KeywordRecommendationsGraph({ keyword, platform = "naver" }: { keyword: string; platform?: string }) {
-  const [data, setData]       = useState<GraphKeyword[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function KeywordRecommendationsGraph({ keyword, platform = "naver", preloadedData }: { keyword: string; platform?: string; preloadedData?: unknown[] | null }) {
+  const preFiltered = preloadedData ? (preloadedData as GraphKeyword[]).filter(k => k.type === "seed") : null;
+  const [data, setData]       = useState<GraphKeyword[]>(preFiltered ?? []);
+  const [loading, setLoading] = useState(!preFiltered);
   const [error, setError]     = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    if (preloadedData?.length) {
+      setData((preloadedData as GraphKeyword[]).filter(k => k.type === "seed"));
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(false);
     fetch(`/api/keywords-graph?keyword=${encodeURIComponent(keyword)}`)
       .then((r) => r.json())
       .then((json) => {
         if (json.keywords) {
-          // 시드 키워드만 (롱테일 제외)
           setData(json.keywords.filter((k: GraphKeyword) => k.type === "seed"));
         } else {
           setError(true);
@@ -44,7 +49,7 @@ export default function KeywordRecommendationsGraph({ keyword, platform = "naver
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [keyword]);
+  }, [keyword, preloadedData]);
 
   const display = expanded ? data.slice(0, 30) : data.slice(0, 5);
 

@@ -82,14 +82,20 @@ function ColHeader({ label, sub, align = "left", className = "" }: { label: stri
 
 // ── 메인 컴포넌트 ────────────────────────────────────────
 
-export default function KeywordRecommendationsV2({ keyword, platform = "naver" }: { keyword: string; platform?: string }) {
-  const [data, setData] = useState<KeywordV2[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function KeywordRecommendationsV2({ keyword, platform = "naver", preloadedData }: { keyword: string; platform?: string; preloadedData?: unknown[] | null }) {
+  const [data, setData] = useState<KeywordV2[]>((preloadedData as KeywordV2[]) ?? []);
+  const [loading, setLoading] = useState(!preloadedData);
   const [error, setError] = useState(false);
   const [expandedA, setExpandedA] = useState(false);
   const [expandedB, setExpandedB] = useState(false);
 
   useEffect(() => {
+    if (preloadedData?.length) {
+      setData(preloadedData as KeywordV2[]);
+      setLoading(false);
+      trackExpose(keyword, preloadedData as KeywordV2[], "v2");
+      return;
+    }
     setLoading(true);
     setError(false);
     fetch(`/api/keywords-v2?keyword=${encodeURIComponent(keyword)}`)
@@ -102,7 +108,7 @@ export default function KeywordRecommendationsV2({ keyword, platform = "naver" }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [keyword]);
+  }, [keyword, preloadedData]);
 
   if (loading) {
     return (
@@ -266,18 +272,23 @@ export default function KeywordRecommendationsV2({ keyword, platform = "naver" }
 
 // ── 판매 성공 지표 (STEP 4용 독립 컴포넌트) ──────────────────
 
-export function FactorPredictionCard({ keyword, platform = "naver" }: { keyword: string; platform?: string }) {
-  const [data, setData] = useState<KeywordV2[]>([]);
-  const [loading, setLoading] = useState(true);
+export function FactorPredictionCard({ keyword, platform = "naver", preloadedData }: { keyword: string; platform?: string; preloadedData?: unknown[] | null }) {
+  const [data, setData] = useState<KeywordV2[]>((preloadedData as KeywordV2[]) ?? []);
+  const [loading, setLoading] = useState(!preloadedData);
   const [expandedF, setExpandedF] = useState(false);
 
   useEffect(() => {
+    if (preloadedData?.length) {
+      setData(preloadedData as KeywordV2[]);
+      setLoading(false);
+      return;
+    }
     fetch(`/api/keywords-v2?keyword=${encodeURIComponent(keyword)}`)
       .then((r) => r.json())
       .then((json) => { if (json.keywords) setData(json.keywords); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [keyword]);
+  }, [keyword, preloadedData]);
 
   if (loading) {
     return (
