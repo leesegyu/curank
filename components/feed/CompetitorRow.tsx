@@ -87,7 +87,7 @@ export default function CompetitorRow() {
           .filter((r): r is PromiseFulfilledResult<(ProductCTS & { srcKeyword: string })[]> => r.status === "fulfilled")
           .flatMap((r) => r.value);
 
-        // CTS 55점 이상만, CTS 높은 순, 중복 셀러 제거, 최대 10개
+        // CTS 55점 이상만, CTS 높은 순, 중복 셀러 제거, 최대 8개
         const seen = new Set<string>();
         const unique = all
           .filter((item) => item.cts >= 55)
@@ -97,7 +97,7 @@ export default function CompetitorRow() {
             seen.add(item.product.mallName);
             return true;
           })
-          .slice(0, 10);
+          .slice(0, 8);
 
         setCompetitors(unique);
       })
@@ -114,7 +114,7 @@ export default function CompetitorRow() {
         </div>
         <div className="flex gap-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex-shrink-0 w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/3)] lg:w-[calc((100%-48px)/5)] rounded-2xl bg-gray-50 animate-pulse aspect-[3/4]" />
+            <div key={i} className="flex-shrink-0 w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/3)] lg:w-[calc((100%-36px)/4)] rounded-2xl bg-gray-50 animate-pulse aspect-[3/4]" />
           ))}
         </div>
       </section>
@@ -158,7 +158,7 @@ export default function CompetitorRow() {
             {competitors.map((item, idx) => (
               <div
                 key={`${item.product.productId}-${idx}`}
-                className="snap-start flex-shrink-0 w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/3)] lg:w-[calc((100%-48px)/5)]"
+                className="snap-start flex-shrink-0 w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/3)] lg:w-[calc((100%-36px)/4)]"
               >
                 <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md hover:border-blue-200 transition-all flex flex-col">
                   {/* 상품 이미지 */}

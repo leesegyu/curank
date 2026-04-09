@@ -126,7 +126,7 @@ export default function FeedRow({ title, subtitle, icon, items, displayType }: P
             {items.map((item, i) => (
               <div
                 key={`${item.keyword}-${i}`}
-                className="snap-start flex-shrink-0 w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/3)] lg:w-[calc((100%-48px)/5)]"
+                className="snap-start flex-shrink-0 w-[calc((100%-12px)/2)] sm:w-[calc((100%-24px)/3)] lg:w-[calc((100%-36px)/4)]"
               >
                 <KeywordProductCard item={item} />
               </div>
