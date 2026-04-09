@@ -17,7 +17,7 @@ import { generateOntologyLongtails, classifyKeyword } from "@/lib/ontology";
 import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { getL2Cache, setL2Cache } from "@/lib/cache-db";
 
-const CACHE_TYPE = "keywords_historical_1";
+const CACHE_TYPE = "keywords_historical_2"; // v2: 연관도 필터 + classifyKeyword 수정
 const cache = new NodeCache({ stdTTL: 3600 });
 
 export interface HistoricalKeyword {

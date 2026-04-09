@@ -18,8 +18,9 @@ import { getL2Cache, setL2Cache } from "@/lib/cache-db";
 import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/route";
 import type { HistoricalKeyword } from "@/app/api/keywords-historical/route";
 import { calcSeasonOpportunityScore, type SeasonOpportunityResult } from "@/lib/season-opportunity";
+import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 
-const CACHE_TYPE = "keywords_season_opp_1";
+const CACHE_TYPE = "keywords_season_opp_2"; // v2: 2차 연관도 필터 추가
 const cache = new NodeCache({ stdTTL: 3600 });
 
 /** Historical API 캐시 키 (keywords-historical/route.ts와 동일 TTL) */
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
 
     if (!historicalKeywords) {
       // L2 캐시 시도 (keywords-historical이 저장한 Supabase 캐시)
-      historicalKeywords = await getL2Cache<HistoricalKeyword[]>(keyword, "keywords_historical_1");
+      historicalKeywords = await getL2Cache<HistoricalKeyword[]>(keyword, "keywords_historical_2");
     }
 
     if (!historicalKeywords || historicalKeywords.length === 0) {
@@ -93,7 +94,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // ── 3단계: SOS 계산 ──────────────────────────────────────
+    // ── 3단계: 2차 연관도 필터 (Historical 캐시가 오래된 경우 대비) ──
+    const seedTokens = keyword.split(/\s+/);
+    historicalKeywords = historicalKeywords.filter((hk) => {
+      const containsSeedToken = seedTokens.some((t) => hk.keyword.includes(t));
+      if (containsSeedToken) return true;
+      const rel = calcOntologyRelevance(keyword, hk.keyword);
+      return rel.score >= 15;
+    });
+
+    // ── 4단계: SOS 계산 ──────────────────────────────────────
     const results: SeasonOpportunityResult[] = [];
 
     for (const hk of historicalKeywords) {

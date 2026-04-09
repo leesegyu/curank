@@ -74,7 +74,13 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <div className="mb-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-gray-700">1년전 인기 / 시즌 기회 키워드</span>
+            <span className="text-sm font-bold text-gray-700">시즌 기회 키워드</span>
+            <span
+              className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white"
+              style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}
+            >
+              1년전 인기
+            </span>
           </div>
         </div>
         <div className="space-y-2">
