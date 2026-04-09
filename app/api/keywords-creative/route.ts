@@ -14,6 +14,7 @@ import {
   classifyKeyword,
   getNodes,
 } from "@/lib/ontology";
+import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import type { Platform as OntoPlatform } from "@/lib/ontology/types";
 import {
   getFilteredModifiers,
@@ -204,6 +205,23 @@ export async function GET(req: NextRequest) {
   for (const hv of highValueMods) {
     for (const ctx of contextMods) {
       addTemplateCandidate(`${hv} ${kw} ${ctx}`, "compound");
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 연관도 필터: 시드와 완전 무관한 키워드 사전 차단
+  // 예: "게이밍 의자" → "왕새우", "오징어" 등 다른 L1 카테고리 키워드 제거
+  // ══════════════════════════════════════════════════════════
+  const seedTokensForFilter = kw.split(/\s+/);
+  for (const candidate of [...candidates]) {
+    const containsSeedToken = seedTokensForFilter.some((t) => candidate.includes(t));
+    if (!containsSeedToken) {
+      // 시드 토큰을 전혀 포함하지 않는 키워드 → 온톨로지 연관도 검사
+      const rel = calcOntologyRelevance(kw, candidate);
+      if (rel.score < 15) {
+        candidates.delete(candidate);
+        candidateSources.delete(candidate);
+      }
     }
   }
 

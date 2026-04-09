@@ -31,7 +31,7 @@ import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { searchNaver } from "@/lib/naver";
 import { calcCreativityScore, calcCreativityChanceScore } from "@/lib/creativity-score";
 
-const CACHE_TYPE = "keywords_v2_16"; // 상품존재 검증 + 카테고리별 수식어
+const CACHE_TYPE = "keywords_v2_17"; // 필터 완화: 결과 부족 방지 (v16→v17)
 const cache = new NodeCache({ stdTTL: 3600 });
 
 export interface KeywordV2 {
@@ -229,7 +229,7 @@ export async function GET(req: NextRequest) {
     // 자동완성 + 롱테일 중 Ad API 1차에서 나오지 않은 키워드 실검색량 보완
     const needLookup = [...new Set([...autoSuggestions, ...longtailCandidates, ...ontologyLongtails])]
       .filter((kw) => !adKwSet.has(kw) && kw !== keyword)
-      .slice(0, 15); // 최대 15개 (온톨로지 롱테일 포함)
+      .slice(0, 25); // 최대 25개 (온톨로지 롱테일 포함, 15→25 확대: 결과 부족 방지)
 
     if (needLookup.length > 0) {
       const batches: string[][] = [];
@@ -272,13 +272,13 @@ export async function GET(req: NextRequest) {
     let preScored: string[];
     if (adsKeywords.length > 0) {
       preScored = Array.from(candidateMap.entries())
-        .filter(([, info]) => info.volume > 200)
+        .filter(([, info]) => info.volume > 50)    // 200→50: 중소 검색량 키워드도 트렌드 분석 포함
         .sort(([, a], [, b]) => {
           const am = COMP_MULT[a.compIdx] ?? 0.5;
           const bm = COMP_MULT[b.compIdx] ?? 0.5;
           return b.volume * bm - a.volume * am;
         })
-        .slice(0, 12)
+        .slice(0, 18)                               // 12→18: 트렌드 분석 대상 확대
         .map(([kw]) => kw);
     } else {
       // Ad API 없음 → 다중어 후보 전체를 DataLab으로 조회 (최대 12개)
@@ -291,6 +291,7 @@ export async function GET(req: NextRequest) {
 
     // ─── 5단계: 전체 채점 ─────────────────────────────────────────
     const results: KeywordV2[] = [];
+    const seedTokensForFilter = keyword.split(/\s+/);
 
     for (const [kw, info] of candidateMap) {
       // 데이터 없는 후보 필터: 다중어 + 구체성 높으면 NLP 점수만으로 포함
@@ -298,7 +299,7 @@ export async function GET(req: NextRequest) {
         const tokenCount = kw.trim().split(/\s+/).length;
         if (tokenCount < 2) continue; // 단일어는 데이터 없으면 제외
         const spec = classifyKeywordIntent(kw).specificityScore;
-        if (spec < 40) continue; // 구체성 낮은 다중어도 제외
+        if (spec < 35) continue; // 구체성 낮은 다중어도 제외 (40→35: 2토큰 조합 포용)
         // 구체성 높은 롱테일 후보 → 검색량 0으로 채점 진행
       }
 
@@ -325,11 +326,24 @@ export async function GET(req: NextRequest) {
       const relevance          = calcOntologyRelevance(keyword, kw, info.graphWeight);
       const scoreRelation      = relevance.score;
 
+      // ─── 연관도 필터: 시드와 완전 무관한 키워드 차단 ────────────
+      // 시드 토큰을 하나도 포함하지 않으면서 온톨로지 연관도도 낮은 키워드 제거
+      // 예: "게이밍 의자" → "왕새우", "오징어" 등 차단
+      const containsSeedToken = seedTokensForFilter.some((t) => kw.includes(t));
+      if (!containsSeedToken && scoreRelation < 15) {
+        continue; // 시드 토큰 미포함 + 온톨로지 무관 → 완전히 다른 카테고리 키워드
+      }
+
       // ─── KOS 최종 점수 ─────────────────────────────────────────
       const compMult  = COMP_MULT[info.compIdx] ?? 0.5;
       const trendMult = Math.max(1 + trendSlope / 150, 0.5);
       const iMult     = intentMultiplier(scoreIntent);
       const sMult     = specificityMultiplier(scoreSpecificity);
+      // 연관도 배율: 0점→0.3배, 50점→1.0배, 100점→1.2배
+      // 시드 토큰 포함 키워드는 최소 0.7배 보장 (수식어 조합이므로)
+      const relMult   = containsSeedToken
+        ? Math.max(0.7, 0.3 + (scoreRelation / 100) * 0.9)
+        : 0.3 + (scoreRelation / 100) * 0.9;
 
       // volumeConfirmed: Ad API 실데이터 여부 (true = 신뢰 높음)
       const volumeConfirmed = info.inAds && info.volume > 0;
@@ -337,10 +351,10 @@ export async function GET(req: NextRequest) {
       let score: number;
       if (monthlyVolume > 0) {
         // 검색량 있음 (Ad API 실데이터 or DataLab 추정) → 전체 KOS (0~1000)
-        score = Math.round(scoreDemand * iMult * sMult * compMult * trendMult * 10);
+        score = Math.round(scoreDemand * iMult * sMult * compMult * trendMult * relMult * 10);
       } else {
         // 검색량 없음 → NLP 신호만 사용 (0~100)
-        score = Math.round((scoreIntent * 0.6 + scoreSpecificity * 0.4) * sMult * 0.7);
+        score = Math.round((scoreIntent * 0.6 + scoreSpecificity * 0.4) * sMult * relMult * 0.7);
       }
 
       const compLevel = (
@@ -393,11 +407,11 @@ export async function GET(req: NextRequest) {
     }
 
     // ── 검색량 미확인 키워드: 상품 존재 여부로 판별 (L2 캐시) ──
-    const unconfirmed = results.filter((r) => !r.volumeConfirmed && r.scoreSpecificity >= 40);
+    const unconfirmed = results.filter((r) => !r.volumeConfirmed && r.scoreSpecificity >= 35);
     if (unconfirmed.length > 0) {
-      // 구체성 높은 순으로 정렬 → 상위 15개 검증 (배치 3회)
+      // 구체성 높은 순으로 정렬 → 상위 20개 검증 (배치 4회)
       const sorted = [...unconfirmed].sort((a, b) => b.scoreSpecificity - a.scoreSpecificity);
-      const toCheck = sorted.slice(0, 15);
+      const toCheck = sorted.slice(0, 20);      // 15→20: 검증 범위 확대
       const noProductSet = new Set<string>();
 
       const checks = await Promise.all(
@@ -416,9 +430,9 @@ export async function GET(req: NextRequest) {
         })
       );
       for (const c of checks) if (!c.exists) noProductSet.add(c.keyword);
-      // 검증 못 한 나머지: 구체성 50+ 이면 살리고, 미만이면 제거
-      for (const r of sorted.slice(15)) {
-        if (r.scoreSpecificity < 50) noProductSet.add(r.keyword);
+      // 검증 못 한 나머지: 구체성 45+ 이면 살리고, 미만이면 제거
+      for (const r of sorted.slice(20)) {
+        if (r.scoreSpecificity < 45) noProductSet.add(r.keyword);  // 50→45
       }
       for (const kw of noProductSet) {
         const idx = results.findIndex((r) => r.keyword === kw);
@@ -431,10 +445,10 @@ export async function GET(req: NextRequest) {
         if (r.volumeConfirmed) {
           if (r.isLongTail || r.scoreSpecificity >= 40)
             return r.monthlyVolume >= 10 || r.scoreSpecificity >= 50;
-          return r.monthlyVolume >= 50;
+          return r.monthlyVolume >= 30;   // 50→30: "텀블러" 같은 중간 카테고리 결과 확보
         }
         // 검색량 미확인이지만 상품 존재 확인됨 (위에서 상품 없는 건 이미 제거)
-        return r.scoreSpecificity >= 40;
+        return r.scoreSpecificity >= 35;  // 40→35: 2토큰 수식어 조합 포용력 향상
       })
       .sort((a, b) => b.score - a.score)
       .slice(0, 80);

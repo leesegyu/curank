@@ -98,9 +98,12 @@ export function calcOntologyRelevance(
   const f3 = logNorm(graphWeight, 50); // weight 50 = 100점
 
   // ── F4: 학습 매핑 신뢰도 (15%) ──
-  // 실데이터(네이버 역추적) 학습 = 80점, matchKeywords 직접 = 100점, 미분류 = 0점
+  // 분류 신뢰도 × 의미적 관련성 결합:
+  //   - F1(Wu-Palmer) = 0 이면 아무리 분류가 정확해도 무관한 카테고리 → 0점
+  //   - matchKeywords 직접 매칭이 네이버 역추적보다 신뢰도 높음
   let learnedTrust = 0;
-  if (targetClass) {
+  if (targetClass && wuPalmer > 0) {
+    // 의미적으로 관련 있을 때만 분류 신뢰도 반영
     const learned = getLearned(targetKeyword);
     if (learned) {
       learnedTrust = 80; // 네이버 역추적 기반
@@ -118,6 +121,23 @@ export function calcOntologyRelevance(
   const score = clamp(
     f1 * 0.35 + f2 * 0.20 + f3 * 0.20 + f4 * 0.15 + f5 * 0.10
   );
+
+  // ── 크로스 카테고리 패널티 ──
+  // 시드와 타겟이 모두 온톨로지 분류 가능하지만 L1이 완전히 다르면
+  // (Wu-Palmer = 0) 점수를 강하게 억제 → "게이밍 의자"에 "왕새우" 방지
+  if (seedClass && targetClass && wuPalmer === 0 && overlap === 0) {
+    // 온톨로지상 완전 무관 + 토큰 겹침도 0 → 최대 5점 (사실상 차단)
+    return {
+      score: Math.min(score, 5),
+      factors: {
+        wuPalmer: f1,
+        classDepth: f2,
+        graphWeight: f3,
+        learnedTrust: f4,
+        tokenOverlap: f5,
+      },
+    };
+  }
 
   return {
     score,
