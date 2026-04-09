@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ProductCTS } from "@/lib/competitor-threat";
 
 function ArrowLeft() {
@@ -28,6 +28,7 @@ function ArrowRight() {
  */
 export default function CompetitorRow() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [competitors, setCompetitors] = useState<(ProductCTS & { srcKeyword: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -212,13 +213,13 @@ export default function CompetitorRow() {
                       >
                         상품 보기
                       </a>
-                      <Link
-                        href={`/analyze?keyword=${encodeURIComponent(item.srcKeyword)}`}
+                      <button
+                        onClick={() => router.push(`/?q=${encodeURIComponent(item.srcKeyword)}&platform=naver`)}
                         className="flex-1 text-center text-[11px] font-bold py-1.5 rounded-xl text-white transition-opacity hover:opacity-90"
                         style={{ background: "linear-gradient(135deg, #3b82f6, #6366f1)" }}
                       >
                         키워드 분석
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -162,6 +162,20 @@ export async function GET(req: NextRequest) {
             noBrandCount++;
           }
         }
+        // 긴 키워드에서 브랜드 부족 시 핵심 토큰으로 폴백 검색
+        const tokens = keyword.split(/\s+/);
+        if (brandCount.size < 3 && tokens.length >= 2) {
+          try {
+            const { searchNaver } = await import("@/lib/naver");
+            const coreToken = [...tokens].sort((a, b) => b.length - a.length)[0];
+            const fallback = await searchNaver(coreToken, 40);
+            for (const item of fallback.items) {
+              const b = item.brand || item.maker;
+              if (b && b.length >= 2) brandCount.set(b, (brandCount.get(b) ?? 0) + 1);
+            }
+          } catch { /* 폴백 실패 무시 */ }
+        }
+
         const totalProducts = searchData.products.length;
         const brandDistribution = [...brandCount.entries()]
           .sort((a, b) => b[1] - a[1])
@@ -230,6 +244,16 @@ export async function GET(req: NextRequest) {
           const historicalData = historical.status === "fulfilled" ? historical.value : null;
           const hasCreative = !!creativeData?.keywords?.length;
           const hasHistorical = !!historicalData?.keywords?.length;
+
+          // 시즌 기회(SOS) — Historical + V2 캐시 기반, 추가 API 0회
+          let seasonOppData: { keywords?: unknown[] } | null = null;
+          if (hasHistorical) {
+            try {
+              const sosRes = await fetch(`${BASE_URL}/api/keywords-season-opportunity?keyword=${kw}`, fetchOpt);
+              seasonOppData = await sosRes.json();
+            } catch { /* non-critical */ }
+          }
+
           send({
             step: 7, total: TOTAL, progress: 74,
             label: hasCreative && hasHistorical ? "크리에이티브 + 시즌 키워드 완료"
@@ -283,6 +307,7 @@ export async function GET(req: NextRequest) {
             keywordsV2: kosV2Data?.keywords ?? null,
             keywordsCreative: creativeData?.keywords ?? null,
             keywordsHistorical: historicalData?.keywords ?? null,
+            keywordsSeasonOpp: seasonOppData?.keywords ?? null,
             keywordsGraph: graphRaw?.keywords ?? null,
             factorScore: factorData ?? null,
             brandDistribution: { brands: brandDistribution, noBrandRatio, totalProducts },

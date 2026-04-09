@@ -97,6 +97,13 @@ export default function FeedGrid() {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [loadFeed]);
 
+  // 분석 완료 후 피드 갱신
+  useEffect(() => {
+    function handleFeedRefresh() { loadFeed(); }
+    window.addEventListener("feed-refresh", handleFeedRefresh);
+    return () => window.removeEventListener("feed-refresh", handleFeedRefresh);
+  }, [loadFeed]);
+
   // 카테고리 선택 완료 → 피드 새로고침
   function handleCategoryComplete() {
     setNeedsCategories(false);

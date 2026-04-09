@@ -14,6 +14,7 @@ import NodeCache from "node-cache";
 import { trackApiCall } from "@/lib/api-monitor";
 import { getNaverAdKeywords, totalMonthlyVolume } from "@/lib/naver-ad";
 import { generateOntologyLongtails, classifyKeyword } from "@/lib/ontology";
+import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { getL2Cache, setL2Cache } from "@/lib/cache-db";
 
 const CACHE_TYPE = "keywords_historical_1";
@@ -162,7 +163,16 @@ export async function GET(req: NextRequest) {
       if (lt !== keyword) candidateSet.add(lt);
     }
 
-    const candidates = [...candidateSet].slice(0, 30); // 최대 30개
+    // 연관도 필터: 시드와 무관한 키워드 차단 (V2와 동일 로직)
+    const seedTokens = keyword.split(/\s+/);
+    const filteredSet = [...candidateSet].filter((kw) => {
+      const containsSeedToken = seedTokens.some((t) => kw.includes(t));
+      if (containsSeedToken) return true;
+      const rel = calcOntologyRelevance(keyword, kw);
+      return rel.score >= 15;
+    });
+
+    const candidates = filteredSet.slice(0, 50); // 30→50: 더 많은 결과 확보
     if (candidates.length === 0) {
       cache.set(keyword, []);
       return NextResponse.json({ keywords: [] });
@@ -179,8 +189,8 @@ export async function GET(req: NextRequest) {
       if (!trend || (trend.past === 0 && trend.current === 0)) continue;
 
       const gap = trend.past - trend.current;
-      // 과거에 인기가 있었어야 의미 있음 (past >= 5)
-      if (trend.past < 5) continue;
+      // 과거에 인기가 있었어야 의미 있음 (past >= 3)
+      if (trend.past < 3) continue;
 
       const monthlyVolume = volumeMap.get(kw) ?? 0;
 
@@ -203,7 +213,7 @@ export async function GET(req: NextRequest) {
 
     const sorted = results
       .sort((a, b) => b.score - a.score)
-      .slice(0, 15);
+      .slice(0, 20);
 
     cache.set(keyword, sorted);
     setL2Cache(keyword, CACHE_TYPE, sorted);

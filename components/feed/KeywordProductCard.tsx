@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { FeedItem } from "@/app/api/feed/route";
 
 function formatPrice(price: number): string {
@@ -16,6 +16,7 @@ interface Props {
 
 export default function KeywordProductCard({ item }: Props) {
   const [imgError, setImgError] = useState(false);
+  const router = useRouter();
   const { keyword, category, product } = item;
 
   return (
@@ -73,8 +74,8 @@ export default function KeywordProductCard({ item }: Props) {
 
         {/* 키워드 뱃지 */}
         <div className="mb-2">
-          <Link
-            href={`/analyze?keyword=${encodeURIComponent(keyword)}`}
+          <button
+            onClick={() => router.push(`/?q=${encodeURIComponent(keyword)}&platform=naver`)}
             className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-100 max-w-full"
           >
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
@@ -82,7 +83,7 @@ export default function KeywordProductCard({ item }: Props) {
               <path d="M10.5 10.5L14 14" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"/>
             </svg>
             <span className="truncate">{keyword}</span>
-          </Link>
+          </button>
         </div>
 
         {/* 상품명 (클릭 → 판매 페이지) */}
@@ -123,13 +124,13 @@ export default function KeywordProductCard({ item }: Props) {
           >
             상품 보기
           </a>
-          <Link
-            href={`/analyze?keyword=${encodeURIComponent(keyword)}`}
+          <button
+            onClick={() => router.push(`/?q=${encodeURIComponent(keyword)}&platform=naver`)}
             className="flex-1 text-center text-xs font-bold py-2 rounded-xl text-white transition-opacity hover:opacity-90"
             style={{ background: "linear-gradient(135deg, #3b82f6, #6366f1)" }}
           >
             키워드 분석
-          </Link>
+          </button>
         </div>
       </div>
     </div>

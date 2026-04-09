@@ -60,6 +60,7 @@ export default function AnalysisBlocksSection() {
 
   // 외부에서 분석 시작 트리거
   const startAnalysis = useCallback((keyword: string, platform: string) => {
+    if (!window.confirm(`"${keyword}" 키워드를 분석하면 월 분석 횟수 1회가 차감됩니다.\n진행하시겠습니까?`)) return;
     const id = `${Date.now()}`;
     const block: AnalysisBlock = {
       id, keyword, platform,
@@ -102,12 +103,13 @@ export default function AnalysisBlocksSection() {
         evtSource.close();
         // 배지 갱신
         window.dispatchEvent(new Event("usage-updated"));
-        // 히스토리 갱신
+        // 히스토리 + 피드 갱신
         if (data.done) {
           fetch("/api/user/history").then(r => r.json()).then((d) => {
             const items = d?.history ?? d;
             if (Array.isArray(items)) setHistory(items);
           }).catch(() => {});
+          window.dispatchEvent(new Event("feed-refresh"));
         }
       }
     };

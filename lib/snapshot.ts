@@ -15,6 +15,7 @@ export interface AnalysisSnapshot {
   keywordsGraph?: unknown;   // 그래프 연관
   factorScore?: unknown;     // 판매 성공 지표
   keywordsHistorical?: unknown; // 1년전 인기 키워드
+  keywordsSeasonOpp?: unknown;  // 시즌 기회 (Historical + V2 융합)
   competitorThreat?: unknown; // 경쟁 위협도
   brandDistribution?: unknown; // 브랜드/상호명 분포
 }

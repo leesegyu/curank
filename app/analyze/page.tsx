@@ -24,6 +24,7 @@ import type { BrandDistributionData } from "./BrandDistributionCard";
 import ConclusionCard from "./ConclusionCard";
 import KeywordRecommendationsCreative from "./KeywordRecommendationsCreative";
 import KeywordRecommendationsHistorical from "./KeywordRecommendationsHistorical";
+import KeywordRecommendationsSeasonOpportunity from "./KeywordRecommendationsSeasonOpportunity";
 import FactorCompareCard from "./FactorCompareCard";
 import BackToHomeLink from "./BackToHomeLink";
 import ReportDownloadButton from "./ReportDownloadButton";
@@ -122,6 +123,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let snapKeywordsCreative: unknown[] | null = null;
   let snapKeywordsGraph: unknown[] | null = null;
   let snapKeywordsHistorical: unknown[] | null = null;
+  let snapKeywordsSeasonOpp: unknown[] | null = null;
   let snapFactorScore: unknown | null = null;
   let snapBrandDistribution: BrandDistributionData | null = null;
 
@@ -138,6 +140,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       snapKeywordsCreative = (snap.snapshot.keywordsCreative as unknown[] | undefined) ?? null;
       snapKeywordsGraph = (snap.snapshot.keywordsGraph as unknown[] | undefined) ?? null;
       snapKeywordsHistorical = (snap.snapshot.keywordsHistorical as unknown[] | undefined) ?? null;
+      snapKeywordsSeasonOpp = (snap.snapshot.keywordsSeasonOpp as unknown[] | undefined) ?? null;
       snapFactorScore = snap.snapshot.factorScore ?? null;
       snapBrandDistribution = (snap.snapshot.brandDistribution as BrandDistributionData | undefined) ?? null;
       console.log(`[snapshot] HIT: "${kw}" (${platform}) from ${snap.created_at}`, snapKeywordsV2 ? `+keywords` : `(no keywords)`);
@@ -382,6 +385,9 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
             <span className="text-sm font-bold text-gray-700">해결 방안</span>
             <span className="text-xs text-gray-400">경쟁을 피하고 기회를 잡을 키워드 추천</span>
           </div>
+
+          {/* 시즌 기회 키워드 — Historical + V2 융합 SOS (STEP 3 첫 번째) */}
+          <KeywordRecommendationsSeasonOpportunity keyword={kw} platform={platform} preloadedData={snapKeywordsSeasonOpp} />
 
           {/* Blue Ocean — 경쟁 적은 틈새 키워드 */}
           <KeywordRecommendations keyword={kw} platform={platform} preloadedData={snapKeywordsV1} />
