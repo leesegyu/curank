@@ -33,7 +33,7 @@ export default function UsageLimitModal() {
         </h2>
         <p className="text-sm text-gray-500 mb-6 leading-relaxed">
           매월 1일에 분석 횟수가 초기화됩니다.<br/>
-          더 많은 분석이 필요하시면 플랜 업그레이드를 고려해주세요.
+          현재 무료 플랜만 운영 중이며, 서비스 개선 후 유료 플랜을 오픈할 예정입니다.
         </p>
 
         <div className="space-y-2">
@@ -48,7 +48,7 @@ export default function UsageLimitModal() {
         </div>
 
         <p className="text-xs text-gray-300 mt-4">
-          Free: 월 30회 | Standard: 100회 | Business: 250회 | Premium: 500회 | Membership: 무제한
+          현재 무료 플랜: 월 10회 분석
         </p>
       </div>
     </div>

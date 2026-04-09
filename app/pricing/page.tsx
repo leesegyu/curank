@@ -107,7 +107,7 @@ const PLANS: Array<{
 ] as const;
 
 const FAQ = [
-  { q: "플랜은 언제든 변경할 수 있나요?", a: "네, 언제든 업그레이드 또는 다운그레이드 가능합니다. 변경 즉시 적용되며, 남은 분석 횟수는 새 플랜 기준으로 조정됩니다." },
+  { q: "유료 플랜은 언제 오픈되나요?", a: "서비스 고도화와 정확도 검증을 마친 후 오픈할 예정입니다. 셀러분들께 진짜 도움이 되는 수준이 될 때까지 무료로 제공합니다." },
   { q: "이번 달 분석 횟수를 모두 사용하면?", a: "매월 1일에 자동으로 초기화됩니다. 남은 횟수는 다음 달로 이월되지 않습니다." },
   { q: "같은 키워드를 다시 분석하면 횟수가 차감되나요?", a: "같은 달에 이미 분석한 키워드는 횟수 차감 없이 재조회됩니다." },
   { q: "PDF 보고서에는 어떤 내용이 포함되나요?", a: "경쟁 분석, 트렌드, 인구통계, 추천 키워드, 결론까지 전체 분석 결과가 쿠랭크 디자인으로 정리됩니다." },
@@ -133,9 +133,20 @@ export default async function PricingPage() {
       <h1 className="text-3xl font-black text-center text-gray-900 mb-2">
         셀러에게 딱 맞는 요금제
       </h1>
-      <p className="text-center text-gray-500 text-sm mb-10">
+      <p className="text-center text-gray-500 text-sm mb-6">
         무료로 시작하고, 필요할 때 업그레이드하세요
       </p>
+
+      {/* 유료 플랜 준비 중 안내 */}
+      <div className="max-w-2xl mx-auto mb-10 bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4 text-center">
+        <p className="text-sm font-bold text-blue-800 mb-1">
+          현재 무료 플랜만 운영 중입니다
+        </p>
+        <p className="text-xs text-blue-600 leading-relaxed">
+          더 정확하고 유용한 분석을 드리기 위해 서비스를 개선하고 있습니다.<br/>
+          충분한 검증과 고도화를 마친 후 유료 플랜을 오픈할 예정이니 조금만 기다려주세요.
+        </p>
+      </div>
 
       {/* 플랜 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-16">
@@ -186,10 +197,14 @@ export default async function PricingPage() {
                 <div className="py-2.5 rounded-xl text-center text-sm font-bold text-blue-600 bg-blue-50 border border-blue-200">
                   사용 중
                 </div>
+              ) : plan.id === "free" ? (
+                <Link href="/signup" className="block py-2.5 rounded-xl text-center text-sm font-bold text-white transition-opacity hover:opacity-90" style={{ background: "#6b7280" }}>
+                  무료 시작
+                </Link>
               ) : (
-                <button className="py-2.5 rounded-xl text-center text-sm font-bold text-white transition-opacity hover:opacity-90" style={{ background: plan.id === "free" ? "#6b7280" : "linear-gradient(135deg, #3b82f6, #6366f1)" }}>
-                  {plan.id === "free" ? "무료 시작" : "업그레이드"}
-                </button>
+                <div className="py-2.5 rounded-xl text-center text-sm font-bold text-gray-400 bg-gray-100 border border-gray-200 cursor-not-allowed">
+                  준비 중
+                </div>
               )}
             </div>
           );

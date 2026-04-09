@@ -18,8 +18,7 @@ export default function ReportDownloadButton({ keyword, platform }: { keyword: s
       const data = await res.json();
 
       if (data.upgrade) {
-        alert("PDF 다운로드는 Standard 이상 플랜에서 가능합니다.");
-        router.push("/pricing");
+        alert("PDF 다운로드는 유료 플랜 오픈 후 이용 가능합니다. 서비스 개선 중이니 조금만 기다려주세요!");
         return;
       }
       if (data.error) { alert(data.error); return; }
