@@ -199,38 +199,37 @@ export async function GET(req: NextRequest) {
         const kw = encodeURIComponent(keyword);
 
         try {
-          // ── Step 6: Blue Ocean + 크리에이티브 (병렬) ──
-          send({ step: 6, total: TOTAL, label: "Blue Ocean + 크리에이티브 키워드 탐색 중...", progress: 52 });
-          const [blueOcean, creative] = await Promise.allSettled([
-            fetch(`${BASE_URL}/api/keywords?keyword=${kw}`, fetchOpt).then(r => r.json()),
-            fetch(`${BASE_URL}/api/keywords-creative?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
-          ]);
-          const blueOceanData = blueOcean.status === "fulfilled" ? blueOcean.value : null;
-          const creativeData = creative.status === "fulfilled" ? creative.value : null;
-          const hasBlueOcean = !!blueOceanData?.keywords?.length;
-          const hasCreative = !!creativeData?.keywords?.length;
-          send({
-            step: 6, total: TOTAL, progress: 60,
-            label: hasBlueOcean && hasCreative ? "Blue Ocean + 크리에이티브 완료"
-              : hasBlueOcean || hasCreative ? "키워드 추천 완료 (일부 누락)"
-              : "키워드 추천 (실패)",
-          });
-
-          // ── Step 7: AI 심화 + 판매 성공 지표 (병렬) ──
-          send({ step: 7, total: TOTAL, label: "AI 심화 분석 + 판매 성공 지표 분석 중...", progress: 64 });
-          const [kosV2, factor] = await Promise.allSettled([
+          // ── Step 6: AI 심화(v2) + Blue Ocean + 판매 지표 (병렬) ──
+          // v2를 먼저 실행 → 캐시 생성 → Step 7에서 creative가 캐시 재사용
+          send({ step: 6, total: TOTAL, label: "AI 심화 + Blue Ocean + 판매 지표 분석 중...", progress: 52 });
+          const [kosV2, blueOcean, factor] = await Promise.allSettled([
             fetch(`${BASE_URL}/api/keywords-v2?keyword=${kw}`, fetchOpt).then(r => r.json()),
+            fetch(`${BASE_URL}/api/keywords?keyword=${kw}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/factor-score?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
           ]);
           const kosV2Data = kosV2.status === "fulfilled" ? kosV2.value : null;
+          const blueOceanData = blueOcean.status === "fulfilled" ? blueOcean.value : null;
           const factorData = factor.status === "fulfilled" ? factor.value : null;
           const hasKosV2 = !!kosV2Data?.keywords?.length;
+          const hasBlueOcean = !!blueOceanData?.keywords?.length;
           const hasFactor = !!factorData?.factors?.length;
           send({
+            step: 6, total: TOTAL, progress: 64,
+            label: hasKosV2 && hasBlueOcean && hasFactor ? "AI 심화 + Blue Ocean + 판매 지표 완료"
+              : (hasKosV2 || hasBlueOcean || hasFactor) ? "분석 완료 (일부 누락)"
+              : "AI 분석 (실패)",
+          });
+
+          // ── Step 7: 크리에이티브 (v2 캐시 활용 → API 호출 최소화) ──
+          send({ step: 7, total: TOTAL, label: "크리에이티브 키워드 탐색 중...", progress: 68 });
+          const creative = await Promise.allSettled([
+            fetch(`${BASE_URL}/api/keywords-creative?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
+          ]);
+          const creativeData = creative[0].status === "fulfilled" ? creative[0].value : null;
+          const hasCreative = !!creativeData?.keywords?.length;
+          send({
             step: 7, total: TOTAL, progress: 74,
-            label: hasKosV2 && hasFactor ? "AI 심화 + 판매 지표 완료"
-              : hasKosV2 || hasFactor ? "분석 완료 (일부 누락)"
-              : "AI 심화 분석 (실패)",
+            label: hasCreative ? "크리에이티브 키워드 완료" : "크리에이티브 (실패)",
           });
 
           // ── Step 8: 그래프 추천 ──

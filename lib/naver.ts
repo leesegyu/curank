@@ -27,12 +27,38 @@ function stripHtml(str: string): string {
   return str.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 }
 
+import NodeCache from "node-cache";
 import { trackApiCall } from "./api-monitor";
+
+// L1 인메모리 캐시 (1시간) — 동일 키워드 중복 호출 방지
+const shopCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
 
 export async function searchNaver(
   keyword: string,
   display = 20
 ): Promise<NaverShopResponse> {
+  // L1 캐시: keyword+display 조합으로 캐싱
+  // display가 더 큰 기존 캐시가 있으면 재사용 (슬라이스)
+  const cacheKey = `shop:${keyword}:${display}`;
+  const cached = shopCache.get<NaverShopResponse>(cacheKey);
+  if (cached) return cached;
+
+  // 더 큰 display로 캐시된 결과가 있으면 슬라이스해서 재사용
+  for (const d of [100, 80, 60, 40, 20, 10, 1]) {
+    if (d > display) {
+      const larger = shopCache.get<NaverShopResponse>(`shop:${keyword}:${d}`);
+      if (larger) {
+        const sliced: NaverShopResponse = {
+          ...larger,
+          display,
+          items: larger.items.slice(0, display),
+        };
+        shopCache.set(cacheKey, sliced);
+        return sliced;
+      }
+    }
+  }
+
   const clientId = process.env.NAVER_CLIENT_ID;
   const clientSecret = process.env.NAVER_CLIENT_SECRET;
 
@@ -67,5 +93,6 @@ export async function searchNaver(
     title: stripHtml(item.title),
   }));
 
+  shopCache.set(cacheKey, data);
   return data;
 }

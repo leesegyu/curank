@@ -31,8 +31,11 @@ import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { searchNaver } from "@/lib/naver";
 import { calcCreativityScore, calcCreativityChanceScore } from "@/lib/creativity-score";
 
-const CACHE_TYPE = "keywords_v2_17"; // 필터 완화: 결과 부족 방지 (v16→v17)
-const cache = new NodeCache({ stdTTL: 3600 });
+export const V2_CACHE_TYPE = "keywords_v2_17"; // 필터 완화: 결과 부족 방지 (v16→v17)
+const CACHE_TYPE = V2_CACHE_TYPE; // 기존 코드 호환용 alias
+/** L1 인메모리 캐시 — keywords-creative에서도 읽기 전용으로 참조 */
+export const v2Cache = new NodeCache({ stdTTL: 3600 });
+const cache = v2Cache; // 기존 코드 호환용 alias
 
 export interface KeywordV2 {
   keyword: string;

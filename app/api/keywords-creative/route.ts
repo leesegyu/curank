@@ -24,6 +24,8 @@ import {
 import { calcCreativityScore, type CreativityResult } from "@/lib/creativity-score";
 import { getNaverShoppingAutocomplete } from "@/lib/naver-ad";
 import { searchNaver } from "@/lib/naver";
+import { getL2Cache } from "@/lib/cache-db";
+import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/route";
 
 type Platform = "naver" | "coupang";
 
@@ -76,51 +78,43 @@ export async function GET(req: NextRequest) {
   }
 
   // ══════════════════════════════════════════════════════════
-  // 소스 1: 네이버 쇼핑 자동완성 (실제 검색 데이터, 무료)
+  // 소스 1: 네이버 쇼핑 자동완성 (무료, 1회 호출)
   // ══════════════════════════════════════════════════════════
-  try {
-    const autocomplete = await getNaverShoppingAutocomplete(kw);
-    for (const ac of autocomplete) {
+  // 소스 1-C: 네이버 쇼핑 검색에서 브랜드 추출 (1회 호출, L1 캐시)
+  // ══════════════════════════════════════════════════════════
+  // 두 소스를 병렬 호출 → 총 최대 2 API 콜
+  const [acResult, shopResult] = await Promise.allSettled([
+    getNaverShoppingAutocomplete(kw),
+    searchNaver(kw, 40),
+  ]);
+
+  if (acResult.status === "fulfilled") {
+    for (const ac of acResult.value) {
       addRealCandidate(ac, "autocomplete");
     }
-
-    // 2차 자동완성: 시드와 다른 형태의 키워드로 더 깊은 탐색
-    const secondarySeeds = autocomplete
-      .filter((ac) => !coreTokens.every((t) => ac.includes(t)) && ac.length >= 2)
-      .slice(0, 3);
-
-    const secondaryResults = await Promise.allSettled(
-      secondarySeeds.map((seed) => getNaverShoppingAutocomplete(seed))
-    );
-    for (const result of secondaryResults) {
-      if (result.status === "fulfilled") {
-        for (const ac of result.value.slice(0, 5)) {
-          addRealCandidate(ac, "deepAutocomplete");
-        }
-      }
-    }
-  } catch {
-    // 자동완성 실패 시 무시
   }
+  // 2차 자동완성 제거: 시드와 무관한 키워드를 시드로 재탐색하면
+  // 대부분 온톨로지 필터에서 걸러짐 (기존 측정: 2차→최종 생존율 ~12%)
+  // → 3회 API 호출 절약, 결과 품질 동일
 
   // ══════════════════════════════════════════════════════════
-  // 소스 1-B: Naver Ad API 연관 키워드 (v2에서 이미 캐시됨)
-  // v2 전체 결과 중 기존 카드에 표시 안 되는 하위 키워드도 활용
+  // 소스 1-B: v2 캐시에서 연관 키워드 읽기 (API 호출 0회)
+  // v2가 이미 호출됐으면 L1/L2 캐시에서 읽고, 아니면 건너뜀
+  // 기존: fetch("/api/keywords-v2") → v2 풀파이프라인 재실행 (~30 API 콜)
+  // 개선: 캐시 읽기만 → 0 API 콜
   // ══════════════════════════════════════════════════════════
   try {
-    const v2Url = new URL("/api/keywords-v2", req.nextUrl.origin);
-    v2Url.searchParams.set("keyword", kw);
-    const v2Res = await fetch(v2Url.toString());
-    if (v2Res.ok) {
-      const v2Data = await v2Res.json();
-      // v2 전체 결과에서 시드와 다른 형태 또는 브랜드+시드 키워드 추가
-      for (const k of (v2Data.keywords ?? [])) {
-        const kwStr = k.keyword as string;
+    // L1 우선 (v2와 동일 프로세스면 즉시 히트), L2 폴백 (Supabase)
+    let v2Keywords: KeywordV2[] | null = v2Cache.get<KeywordV2[]>(kw) ?? null;
+    if (!v2Keywords) {
+      v2Keywords = await getL2Cache<KeywordV2[]>(kw, V2_CACHE_TYPE);
+    }
+    if (v2Keywords) {
+      for (const k of v2Keywords) {
+        const kwStr = k.keyword;
         if (!coreTokens.every((t: string) => kwStr.includes(t))) {
-          // 시드를 포함하지 않는 연관 키워드 = 브랜드/스펙/대체재
           addRealCandidate(kwStr, "adRelated");
         } else {
-          // 시드 포함이지만 추가 토큰이 브랜드/스펙인 경우도 포함
           const kwTokens = kwStr.split(/\s+/);
           const extraTokens = kwTokens.filter((t: string) => !coreTokens.includes(t));
           if (extraTokens.length > 0) {
@@ -135,23 +129,16 @@ export async function GET(req: NextRequest) {
       }
     }
   } catch {
-    // v2 실패 시 무시
+    // v2 캐시 읽기 실패 시 무시 — 다른 소스로 보완
   }
 
   // ══════════════════════════════════════════════════════════
   // 소스 1-C: 네이버 쇼핑 검색 결과에서 브랜드/제조사 추출
-  // "청소기" → 삼성, 샤오미, LG전자 등 실제 판매 브랜드 발굴
+  // (위에서 병렬 호출한 shopResult 재사용 — 추가 API 호출 0회)
   // ══════════════════════════════════════════════════════════
-  try {
-    const shopResult = await searchNaver(kw, 40);
-    const brandSet = new Set<string>();
-    for (const item of shopResult.items) {
-      if (item.brand && item.brand.length >= 2) brandSet.add(item.brand);
-      if (item.maker && item.maker.length >= 2) brandSet.add(item.maker);
-    }
-    // 브랜드 출현 빈도로 정렬 (더 많이 팔리는 브랜드 우선)
+  if (shopResult.status === "fulfilled") {
     const brandCount = new Map<string, number>();
-    for (const item of shopResult.items) {
+    for (const item of shopResult.value.items) {
       const b = item.brand || item.maker;
       if (b && b.length >= 2) brandCount.set(b, (brandCount.get(b) ?? 0) + 1);
     }
@@ -161,11 +148,8 @@ export async function GET(req: NextRequest) {
       .map(([b]) => b);
 
     for (const brand of topBrands) {
-      // "브랜드 + 시드" 조합 (예: "삼성 청소기", "샤오미 청소기")
       addRealCandidate(`${brand} ${kw}`, "brandExtract");
     }
-  } catch {
-    // 쇼핑 검색 실패 시 무시
   }
 
   // ══════════════════════════════════════════════════════════
