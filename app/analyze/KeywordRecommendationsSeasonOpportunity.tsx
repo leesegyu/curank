@@ -74,13 +74,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <div className="mb-4">
           <div className="flex items-center gap-2">
-            <span
-              className="text-xs font-bold text-white px-2.5 py-0.5 rounded-full"
-              style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}
-            >
-              Season
-            </span>
-            <span className="text-sm font-bold text-gray-700">시즌 기회 키워드</span>
+            <span className="text-sm font-bold text-gray-700">1년전 인기 / 시즌 기회 키워드</span>
           </div>
         </div>
         <div className="space-y-2">
@@ -107,16 +101,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
       {/* 헤더 */}
       <div className="mb-4">
         <div className="flex items-center gap-2">
-          <span
-            className="text-xs font-bold text-white px-2.5 py-0.5 rounded-full"
-            style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}
-          >
-            Season
-          </span>
-          <span className="text-sm font-bold text-gray-700">시즌 기회 키워드</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-bold text-orange-700 bg-orange-50 border border-orange-200">
-            Historical + AI 융합
-          </span>
+          <span className="text-sm font-bold text-gray-700">1년전 인기 / 시즌 기회 키워드</span>
         </div>
         <p className="text-[11px] text-gray-400 mt-1">
           작년에 검증된 수요 + 현재 진입 가능성을 동시에 평가한 키워드예요. 시즌이 오기 전에 미리 상품을 준비하세요

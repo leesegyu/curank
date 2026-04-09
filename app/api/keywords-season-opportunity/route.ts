@@ -116,10 +116,10 @@ export async function GET(req: NextRequest) {
       results.push(sosResult);
     }
 
-    // 점수 내림차순 정렬, 상위 15개
+    // 점수 내림차순 정렬, 상위 40개
     const sorted = results
       .sort((a, b) => b.score - a.score)
-      .slice(0, 15);
+      .slice(0, 40);
 
     cache.set(keyword, sorted);
     setL2Cache(keyword, CACHE_TYPE, sorted);

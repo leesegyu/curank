@@ -213,7 +213,7 @@ export async function GET(req: NextRequest) {
 
     const sorted = results
       .sort((a, b) => b.score - a.score)
-      .slice(0, 20);
+      .slice(0, 40);
 
     cache.set(keyword, sorted);
     setL2Cache(keyword, CACHE_TYPE, sorted);
