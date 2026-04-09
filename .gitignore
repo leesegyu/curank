@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# project docs (not for repo)
+*.pdf
+/pricing-designs
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

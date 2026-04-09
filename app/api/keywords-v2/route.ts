@@ -1,0 +1,448 @@
+/**
+ * 키워드 기회 분석 API (v2 — 통합 KOS)
+ * GET /api/keywords-v2?keyword=에어팟
+ *
+ * Keyword Opportunity Score (KOS) 구성 요소:
+ *   scoreDemand      — 실검색량 (Naver Ad API)
+ *   scoreIntent      — 구매 의도율 (클릭/검색, Li et al. 2019 검증: 3.7× CVR)
+ *   scoreSpecificity — 키워드 구체성 / 롱테일 (Brynjolfsson 2011: 전환율 2.5×)
+ *   scoreGrowth      — 검색량 성장률 (Choi & Varian 2012: 미래 매출 예측 r=0.73)
+ *   scorePenetrability — 진입 용이성 (Jungle Scout: top-3 리뷰 중앙값 역수)
+ *   scoreRelation    — 연관도 (D 그래프 BFS)
+ *
+ * 롱테일 전략:
+ *   Ad API 후보 + 롱테일 템플릿 확장 → 구체성 높은 저경쟁 키워드 발굴
+ */
+
+import { NextRequest, NextResponse }    from "next/server";
+import NodeCache                         from "node-cache";
+import {
+  getNaverAdKeywords,
+  getNaverAdKeywordsForHints,
+  getNaverShoppingAutocomplete,
+  totalMonthlyVolume,
+} from "@/lib/naver-ad";
+import { calcMomentumScores }            from "@/lib/trend-momentum";
+import { bfsKeywords, upsertAutocompleteEdges } from "@/lib/keyword-graph";
+import { getL2Cache, setL2Cache }        from "@/lib/cache-db";
+import { classifyKeywordIntent, intentMultiplier, specificityMultiplier } from "@/lib/intent-classifier";
+import { generateOntologyLongtails } from "@/lib/ontology";
+import { calcOntologyRelevance } from "@/lib/ontology-relevance";
+import { searchNaver } from "@/lib/naver";
+import { calcCreativityScore, calcCreativityChanceScore } from "@/lib/creativity-score";
+
+const CACHE_TYPE = "keywords_v2_16"; // 상품존재 검증 + 카테고리별 수식어
+const cache = new NodeCache({ stdTTL: 3600 });
+
+export interface KeywordV2 {
+  keyword: string;
+  // ─── 종합 점수 ────────────────────────────────────────────────────
+  // volumeConfirmed=true:  0~1000 (전체 KOS 공식)
+  // volumeConfirmed=false: 0~100  (NLP 신호만)
+  score: number;
+  // ─── 서브 점수 (각 0~100) ────────────────────────────────────────
+  scoreDemand:        number;
+  scoreIntent:        number;
+  scoreSpecificity:   number;
+  scoreGrowth:        number;
+  scorePenetrability: number;
+  scoreRelation:      number;
+  scoreCreativity:    number;  // 수요선점 (Creativity Score)
+  scoreChance:        number;  // 기회 발굴 (Creativity Chance Score)
+  // ─── 메타 ─────────────────────────────────────────────────────────
+  competitionLevel:  "낮음" | "보통" | "높음" | "매우 높음";
+  monthlyVolume:     number;
+  trendDirection:    "상승" | "하락" | "안정";
+  trendSlope:        number;
+  intentType:        "transactional" | "informational" | "neutral";
+  isLongTail:        boolean;
+  /** false = Ad API 검색량 미확인, NLP 점수만 사용 */
+  volumeConfirmed:   boolean;
+}
+
+// ─── 롱테일 후보 생성 ─────────────────────────────────────────────
+
+/** 시드 키워드 기반 롱테일 수식어 템플릿 */
+// 모든 카테고리에 적용 가능한 범용 수식어
+const UNIVERSAL_TEMPLATES = [
+  "{kw} 가성비", "{kw} 최저가", "{kw} 저렴한", "{kw} 할인",
+  "{kw} 추천", "{kw} 세트", "{kw} 대용량", "{kw} 1인용",
+  "{kw} 선물", "{kw} 인기",
+];
+// 제품(비식품)에만 적용하는 수식어
+const PRODUCT_TEMPLATES = [
+  "{kw} 경량", "{kw} 접이식", "{kw} 무선", "{kw} 휴대용",
+  "{kw} 캠핑용", "{kw} 가정용", "{kw} 사무용",
+  "{kw} 남성용", "{kw} 여성용", "{kw} 아동용",
+];
+// 식품에만 적용하는 수식어
+const FOOD_TEMPLATES = [
+  "{kw} 국내산", "{kw} 유기농", "{kw} 소포장",
+  "{kw} 선물세트", "{kw} 가정용",
+];
+// 식품 키워드 판별 (온톨로지 L1 기반)
+const FOOD_KEYWORDS = ["식품", "과일", "채소", "수산", "축산", "건강식품", "음료", "간식", "반찬", "김치", "쌀", "견과", "참외", "수박", "사과", "배", "포도", "딸기", "감", "귤", "망고", "바나나", "멜론", "복숭아", "자두", "체리", "블루베리", "토마토", "고구마", "감자", "양파", "마늘"];
+
+function isLikelyFood(seed: string): boolean {
+  return FOOD_KEYWORDS.some((f) => seed.includes(f));
+}
+
+function generateLongtailCandidates(seed: string): string[] {
+  const templates = [
+    ...UNIVERSAL_TEMPLATES,
+    ...(isLikelyFood(seed) ? FOOD_TEMPLATES : PRODUCT_TEMPLATES),
+  ];
+  return templates
+    .map((t) => t.replace("{kw}", seed))
+    .filter((kw) => kw.trim().split(/\s+/).length >= 2);
+}
+
+// ─── 서브스코어 계산 ──────────────────────────────────────────────
+
+/** 검색 수요: log 스케일 0-100 */
+function calcDemandScore(volume: number): number {
+  if (volume <= 0) return 0;
+  return Math.min(Math.round((Math.log10(volume + 1) / 6) * 100), 100);
+}
+
+/** 구매 의도: 클릭/검색 비율 (0-100). 30% = 100점 */
+function calcIntentScore(clicks: number, volume: number): number {
+  if (volume <= 0) return 0;
+  return Math.min(Math.round((clicks / volume) * 333), 100);
+}
+
+/** 성장률: trendSlope -100~+100 → 0~100점 */
+function calcGrowthScore(trendSlope: number): number {
+  return Math.max(0, Math.min(100, Math.round(50 + trendSlope)));
+}
+
+/** 진입 용이성: compIdx → 0-100 */
+const PENETRABILITY: Record<string, number> = {
+  "낮음":    90,
+  "보통":    55,
+  "높음":    18,
+  "매우 높음": 5,
+};
+
+/** 연관도: 그래프 weight log 스케일 */
+function calcRelationScore(graphWeight: number): number {
+  if (graphWeight <= 0) return 0;
+  return Math.min(Math.round(Math.log(graphWeight + 1) * 30), 100);
+}
+
+/** 광고 경쟁지수 → KOS 배율 */
+const COMP_MULT: Record<string, number> = {
+  "낮음":    1.00,
+  "보통":    0.50,
+  "높음":    0.18,
+  "매우 높음": 0.08,
+};
+
+export async function GET(req: NextRequest) {
+  const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
+  if (!keyword) {
+    return NextResponse.json({ error: "keyword 파라미터 필요" }, { status: 400 });
+  }
+
+  const cached = cache.get<KeywordV2[]>(keyword);
+  if (cached) return NextResponse.json({ keywords: cached, cached: true });
+
+  const l2 = await getL2Cache<KeywordV2[]>(keyword, CACHE_TYPE);
+  if (l2) {
+    cache.set(keyword, l2);
+    return NextResponse.json({ keywords: l2, cached: true });
+  }
+
+  try {
+    // ─── 1단계: Ad API + BFS 그래프 + 쇼핑 자동완성 병렬 호출 ──────
+    const longtailCandidates = generateLongtailCandidates(keyword);
+
+    const [adsResult, graphResult, autoResult] = await Promise.allSettled([
+      getNaverAdKeywords(keyword),
+      bfsKeywords(keyword, 2, 15),
+      getNaverShoppingAutocomplete(keyword),
+    ]);
+
+    const adsKeywords     = adsResult.status   === "fulfilled" ? adsResult.value   : [];
+    const graphKeywords   = graphResult.status  === "fulfilled" ? graphResult.value  : [];
+    const autoSuggestions = autoResult.status   === "fulfilled" ? autoResult.value   : [];
+
+    // ─── 2단계: 후보 통합 ──────────────────────────────────────────
+    type CandidateInfo = {
+      volume: number;
+      clicks: number;
+      compIdx: string;
+      graphWeight: number;
+      inAds: boolean;
+    };
+    const candidateMap = new Map<string, CandidateInfo>();
+
+    const addOrMerge = (
+      kw: string,
+      info: Partial<CandidateInfo>
+    ) => {
+      if (kw === keyword || kw.length < 2) return;
+      if (!candidateMap.has(kw)) {
+        candidateMap.set(kw, {
+          volume: 0, clicks: 0, compIdx: "보통", graphWeight: 0, inAds: false,
+          ...info,
+        });
+      } else {
+        const c = candidateMap.get(kw)!;
+        if (info.volume)      c.volume      = Math.max(c.volume, info.volume);
+        if (info.clicks)      c.clicks      = Math.max(c.clicks, info.clicks);
+        if (info.compIdx)     c.compIdx     = info.compIdx;
+        if (info.graphWeight) c.graphWeight = Math.max(c.graphWeight, info.graphWeight);
+        if (info.inAds)       c.inAds       = true;
+      }
+    };
+
+    // Ad API 결과 (가장 신뢰도 높은 소스)
+    const adKwSet = new Set<string>();
+    for (const ad of adsKeywords) {
+      adKwSet.add(ad.relKeyword);
+      addOrMerge(ad.relKeyword, {
+        volume:      totalMonthlyVolume(ad),
+        clicks:      (ad.monthlyAvgPcClkCnt ?? 0) + (ad.monthlyAvgMobileClkCnt ?? 0),
+        compIdx:     ad.compIdx ?? "보통",
+        graphWeight: 0,
+        inAds:       true,
+      });
+    }
+
+    // D 그래프 결과 (발굴 가산점)
+    for (const g of graphKeywords) {
+      addOrMerge(g.keyword, { graphWeight: g.graphWeight });
+    }
+
+    // 온톨로지 Facet 기반 롱테일 (형제/자식 노드 속성 교차 조합)
+    const ontologyLongtails = generateOntologyLongtails(keyword, "smartstore", 15);
+
+    // 자동완성 + 템플릿 롱테일 + 온톨로지 롱테일 — 후보로 등록
+    for (const lt of [...autoSuggestions, ...longtailCandidates, ...ontologyLongtails]) {
+      if (!candidateMap.has(lt)) {
+        addOrMerge(lt, { inAds: false, compIdx: "보통" });
+      }
+    }
+
+    // ─── 3단계: 미조회 후보 검색량 일괄 조회 (Ad API 2차 호출) ────
+    // 자동완성 + 롱테일 중 Ad API 1차에서 나오지 않은 키워드 실검색량 보완
+    const needLookup = [...new Set([...autoSuggestions, ...longtailCandidates, ...ontologyLongtails])]
+      .filter((kw) => !adKwSet.has(kw) && kw !== keyword)
+      .slice(0, 15); // 최대 15개 (온톨로지 롱테일 포함)
+
+    if (needLookup.length > 0) {
+      const batches: string[][] = [];
+      for (let i = 0; i < needLookup.length; i += 5) {
+        batches.push(needLookup.slice(i, i + 5));
+      }
+      const batchResults = await Promise.allSettled(
+        batches.map((b) => getNaverAdKeywordsForHints(b))
+      );
+      for (const r of batchResults) {
+        if (r.status !== "fulfilled") continue;
+        for (const ad of r.value) {
+          addOrMerge(ad.relKeyword, {
+            volume:  totalMonthlyVolume(ad),
+            clicks:  (ad.monthlyAvgPcClkCnt ?? 0) + (ad.monthlyAvgMobileClkCnt ?? 0),
+            compIdx: ad.compIdx ?? "보통",
+            inAds:   true,
+          });
+        }
+      }
+    }
+
+    // ─── 4단계: 자동완성 엣지 → D 그래프 ─────────────────────────
+    const autoKeywords = [
+      ...adsKeywords.slice(0, 8).map((a) => a.relKeyword),
+      ...autoSuggestions.slice(0, 5),
+    ];
+    if (autoKeywords.length > 0) {
+      upsertAutocompleteEdges(keyword, autoKeywords).catch(() => {});
+    }
+
+    // ─── 5단계: 검색량 맵 + 트렌드 (DataLab 무료 대안 포함) ──────
+    const volumeMap = new Map<string, number>();
+    for (const [kw, info] of candidateMap) {
+      if (info.volume > 0) volumeMap.set(kw, info.volume);
+    }
+
+    // Ad API 결과 있으면: 상위 12개 선별해서 DataLab 트렌드 보강
+    // Ad API 결과 없으면: 모든 NLP 후보를 DataLab으로 조회 (무료 검색량 추정)
+    let preScored: string[];
+    if (adsKeywords.length > 0) {
+      preScored = Array.from(candidateMap.entries())
+        .filter(([, info]) => info.volume > 200)
+        .sort(([, a], [, b]) => {
+          const am = COMP_MULT[a.compIdx] ?? 0.5;
+          const bm = COMP_MULT[b.compIdx] ?? 0.5;
+          return b.volume * bm - a.volume * am;
+        })
+        .slice(0, 12)
+        .map(([kw]) => kw);
+    } else {
+      // Ad API 없음 → 다중어 후보 전체를 DataLab으로 조회 (최대 12개)
+      preScored = Array.from(candidateMap.keys())
+        .filter((kw) => kw.trim().split(/\s+/).length >= 2)
+        .slice(0, 12);
+    }
+
+    const momentumMap = await calcMomentumScores(preScored, volumeMap);
+
+    // ─── 5단계: 전체 채점 ─────────────────────────────────────────
+    const results: KeywordV2[] = [];
+
+    for (const [kw, info] of candidateMap) {
+      // 데이터 없는 후보 필터: 다중어 + 구체성 높으면 NLP 점수만으로 포함
+      if (!info.inAds && info.graphWeight < 1 && info.volume === 0) {
+        const tokenCount = kw.trim().split(/\s+/).length;
+        if (tokenCount < 2) continue; // 단일어는 데이터 없으면 제외
+        const spec = classifyKeywordIntent(kw).specificityScore;
+        if (spec < 40) continue; // 구체성 낮은 다중어도 제외
+        // 구체성 높은 롱테일 후보 → 검색량 0으로 채점 진행
+      }
+
+      const momentum       = momentumMap.get(kw);
+      const monthlyVolume  = Math.round(info.volume > 0 ? info.volume : (momentum?.monthlyVolume ?? 0));
+      const trendSlope     = momentum?.recentSlope ?? 0;
+      const trendDirection: KeywordV2["trendDirection"] = momentum?.direction ?? "안정";
+
+      // 구매 의도 + 구체성 (키워드 자체 분석 — API 독립)
+      const intent = classifyKeywordIntent(kw);
+
+      // 서브 점수
+      const scoreDemand        = calcDemandScore(monthlyVolume);
+      const scoreIntentApi     = calcIntentScore(info.clicks, info.volume); // Ad API 클릭율
+      const scoreIntentNlp     = intent.intentScore;                        // NLP 분류
+      // 두 신호 블렌딩: API 클릭율 60% + NLP 분류 40%
+      const scoreIntent        = info.inAds && info.volume > 0
+        ? Math.round(scoreIntentApi * 0.6 + scoreIntentNlp * 0.4)
+        : scoreIntentNlp;
+      const scoreSpecificity   = intent.specificityScore;
+      const scoreGrowth        = calcGrowthScore(trendSlope);
+      const scorePenetrability = PENETRABILITY[info.compIdx] ?? 55;
+      // 온톨로지 기반 연관도 (Wu-Palmer + 분류깊이 + 그래프 + 학습매핑 + 토큰겹침)
+      const relevance          = calcOntologyRelevance(keyword, kw, info.graphWeight);
+      const scoreRelation      = relevance.score;
+
+      // ─── KOS 최종 점수 ─────────────────────────────────────────
+      const compMult  = COMP_MULT[info.compIdx] ?? 0.5;
+      const trendMult = Math.max(1 + trendSlope / 150, 0.5);
+      const iMult     = intentMultiplier(scoreIntent);
+      const sMult     = specificityMultiplier(scoreSpecificity);
+
+      // volumeConfirmed: Ad API 실데이터 여부 (true = 신뢰 높음)
+      const volumeConfirmed = info.inAds && info.volume > 0;
+
+      let score: number;
+      if (monthlyVolume > 0) {
+        // 검색량 있음 (Ad API 실데이터 or DataLab 추정) → 전체 KOS (0~1000)
+        score = Math.round(scoreDemand * iMult * sMult * compMult * trendMult * 10);
+      } else {
+        // 검색량 없음 → NLP 신호만 사용 (0~100)
+        score = Math.round((scoreIntent * 0.6 + scoreSpecificity * 0.4) * sMult * 0.7);
+      }
+
+      const compLevel = (
+        info.compIdx === "매우 높음" ? "매우 높음"
+        : info.compIdx === "높음"   ? "높음"
+        : info.compIdx === "보통"   ? "보통"
+        : "낮음"
+      ) as KeywordV2["competitionLevel"];
+
+      // 수요선점 (Creativity Score)
+      const csResult = calcCreativityScore({
+        seedKeyword: keyword,
+        candidateKeyword: kw,
+        platform: "smartstore",
+        monthlyVolume,
+        competitionLevel: compLevel,
+        trendSlope,
+        source: "v2",
+      });
+      const scoreCreativity = csResult.score;
+      const scoreChance = calcCreativityChanceScore({
+        seedKeyword: keyword,
+        candidateKeyword: kw,
+        platform: "smartstore",
+        monthlyVolume,
+        competitionLevel: compLevel,
+        trendSlope,
+        source: "v2",
+      });
+
+      results.push({
+        keyword:           kw,
+        score,
+        scoreDemand,
+        scoreIntent,
+        scoreSpecificity,
+        scoreGrowth,
+        scorePenetrability,
+        scoreRelation,
+        scoreCreativity,
+        scoreChance,
+        competitionLevel:  compLevel,
+        monthlyVolume,
+        trendDirection,
+        trendSlope,
+        intentType:        intent.type,
+        isLongTail:        intent.isLongTail,
+        volumeConfirmed,
+      });
+    }
+
+    // ── 검색량 미확인 키워드: 상품 존재 여부로 판별 (L2 캐시) ──
+    const unconfirmed = results.filter((r) => !r.volumeConfirmed && r.scoreSpecificity >= 40);
+    if (unconfirmed.length > 0) {
+      const toCheck = unconfirmed.slice(0, 5); // 최대 5개 (API 부담 최소화)
+      const noProductSet = new Set<string>();
+
+      const checks = await Promise.all(
+        toCheck.map(async (r) => {
+          // L2 캐시 확인
+          const cached = await getL2Cache<boolean>(r.keyword, "product_exists");
+          if (cached !== null) return { keyword: r.keyword, exists: cached };
+          try {
+            const res = await searchNaver(r.keyword, 1);
+            const exists = res.total > 0;
+            setL2Cache(r.keyword, "product_exists", exists); // 24h 캐시
+            return { keyword: r.keyword, exists };
+          } catch {
+            return { keyword: r.keyword, exists: true }; // 에러 시 살려둠
+          }
+        })
+      );
+      for (const c of checks) if (!c.exists) noProductSet.add(c.keyword);
+      // 검증 안 된 나머지 미확인 키워드는 제거
+      for (const r of unconfirmed.slice(5)) noProductSet.add(r.keyword);
+      for (const kw of noProductSet) {
+        const idx = results.findIndex((r) => r.keyword === kw);
+        if (idx >= 0) results.splice(idx, 1);
+      }
+    }
+
+    const top = results
+      .filter((r) => {
+        if (r.volumeConfirmed) {
+          if (r.isLongTail || r.scoreSpecificity >= 40)
+            return r.monthlyVolume >= 10 || r.scoreSpecificity >= 50;
+          return r.monthlyVolume >= 50;
+        }
+        // 검색량 미확인이지만 상품 존재 확인됨 (위에서 상품 없는 건 이미 제거)
+        return r.scoreSpecificity >= 40;
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 80);
+
+    cache.set(keyword, top);
+    setL2Cache(keyword, CACHE_TYPE, top);
+    return NextResponse.json({ keywords: top });
+
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "추천 실패" },
+      { status: 500 }
+    );
+  }
+}

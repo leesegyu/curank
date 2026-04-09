@@ -1,0 +1,50 @@
+{
+  "텀블러": {
+    "path": "ss.health",
+    "platform": "smartstore",
+    "source": "naver_shopping",
+    "learnedAt": "2026-04-05T15:12:07.665Z"
+  },
+  "면도기": {
+    "path": "ss.digital",
+    "platform": "smartstore",
+    "source": "naver_shopping",
+    "learnedAt": "2026-04-06T01:47:22.782Z"
+  },
+  "면도기 할인": {
+    "path": "ss.digital",
+    "platform": "smartstore",
+    "source": "naver_shopping",
+    "learnedAt": "2026-04-06T02:09:57.512Z"
+  },
+  "타이어": {
+    "path": "ss.health.car",
+    "platform": "smartstore",
+    "source": "naver_shopping",
+    "learnedAt": "2026-04-06T08:44:16.242Z"
+  },
+  "kg kg": {
+    "path": "ss.food.fruit.apple",
+    "platform": "smartstore",
+    "source": "naver_shopping",
+    "learnedAt": "2026-04-07T00:29:05.802Z"
+  },
+  "스킨로션": {
+    "path": "ss.beauty.skincare",
+    "platform": "smartstore",
+    "source": "naver_shopping",
+    "learnedAt": "2026-04-07T07:10:01.345Z"
+  },
+  "오겹살": {
+    "path": "ss.food.meat.pork",
+    "platform": "smartstore",
+    "source": "naver_shopping",
+    "learnedAt": "2026-04-07T08:14:48.363Z"
+  },
+  "오토바이 헬멧": {
+    "path": "ss.sports",
+    "platform": "smartstore",
+    "source": "naver_shopping",
+    "learnedAt": "2026-04-07T09:18:41.949Z"
+  }
+}
