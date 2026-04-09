@@ -149,10 +149,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
         if (!valid) return null;
 
-        // 1단계: 이메일 미인증 시 로그인 차단
-        if (!user.email_verified) {
-          throw new Error("EMAIL_NOT_VERIFIED");
-        }
+        // 이메일 인증 임시 비활성화 — 커스텀 도메인 확보 후 재활성화 예정
+        // if (!user.email_verified) {
+        //   throw new Error("EMAIL_NOT_VERIFIED");
+        // }
 
         return {
           id:    user.id,

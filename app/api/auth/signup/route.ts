@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     main_categories:    Array.isArray(mainCategories) ? mainCategories : [],
     main_platform:      mainPlatform || null,
     platform_categories: platformCategories ?? { smartstore: [], coupang: [] },
-    email_verified:      false,
+    email_verified:      true,  // 임시: 이메일 인증 비활성화 — 커스텀 도메인 확보 후 false로 복원
     email_verify_token:  token,
     email_verify_expires: expires,
   });
