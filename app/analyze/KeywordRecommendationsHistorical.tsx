@@ -123,7 +123,7 @@ export default function KeywordRecommendationsHistorical({ keyword, platform, pr
         })}
       </div>
 
-      {data.length > 5 && (
+      {data.length > 3 && (
         <div className="mt-3 flex items-center justify-between px-1">
           <p className="text-xs text-gray-400">
             <span className="font-bold text-amber-600">작년 인기</span> = 1년 전 검색량이 높았던 키워드
