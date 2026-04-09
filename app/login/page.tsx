@@ -96,7 +96,8 @@ function LoginForm() {
               </svg>
               Google로 로그인
             </button>
-            <button
+            {/* 카카오 로그인 — 비활성화 (필요 시 주석 해제) */}
+            {/* <button
               type="button"
               onClick={() => signIn("kakao", { callbackUrl })}
               className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border text-sm font-medium text-gray-800 hover:opacity-90 transition-opacity"
@@ -106,7 +107,7 @@ function LoginForm() {
                 <path d="M9 1.5C4.86 1.5 1.5 4.136 1.5 7.4c0 2.1 1.392 3.938 3.488 4.983l-.888 3.314c-.078.292.263.524.512.347L8.82 13.56c.058.004.117.006.18.006 4.14 0 7.5-2.636 7.5-5.9S13.14 1.5 9 1.5Z" fill="#3C1E1E"/>
               </svg>
               카카오로 로그인
-            </button>
+            </button> */}
           </div>
 
           <div className="flex items-center gap-3 mb-5">
