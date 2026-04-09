@@ -35,8 +35,8 @@ function SkeletonRow() {
         <div className="w-6 h-6 bg-gray-100 rounded-full" />
         <div className="h-5 w-40 bg-gray-100 rounded" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="aspect-square bg-gray-100" />
             <div className="p-3 space-y-2">

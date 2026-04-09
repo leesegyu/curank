@@ -436,18 +436,18 @@ export async function GET() {
   // Row 1: 각 카테고리 내 유사도 최상위 상품
   // Row 2: 각 카테고리 내 유사도 그 다음 (인기 상품)
   const { row1Keywords, row2Keywords } = buildProportionalRows(
-    allEvents, recentPaths, 4
+    allEvents, recentPaths, 10
   );
 
   // Row 3: 관심 카테고리 — L2 경로가 있으면 그 경로 기반 유사도, 없으면 L1 계층적
   const usedKws = new Set([...row1Keywords, ...row2Keywords]);
   const row3Keywords = userSSL2s.length > 0
-    ? getSimilarSeedKeywords(userSSL2s, "smartstore", 0.5, 12).filter((k) => !usedKws.has(k)).slice(0, 4)
+    ? getSimilarSeedKeywords(userSSL2s, "smartstore", 0.5, 20).filter((k) => !usedKws.has(k)).slice(0, 10)
     : userSSL1s.length > 0
-      ? getHierarchicalKeywords(userSSL1s, 4).filter((k) => !usedKws.has(k))
+      ? getHierarchicalKeywords(userSSL1s, 10).filter((k) => !usedKws.has(k))
       : Object.keys(categoryWeights.smartstore ?? {}).length > 0
-        ? generateFeedKeywords(categoryWeights, "smartstore", 4)
-        : getSimilarSeedKeywords([], "smartstore", 0.3, 4);
+        ? generateFeedKeywords(categoryWeights, "smartstore", 10)
+        : getSimilarSeedKeywords([], "smartstore", 0.3, 10);
 
   // Row 4: 추천 키워드 (온톨로지 Facet 기반 롱테일, 텍스트 전용)
   // 실제 분석 키워드의 온톨로지 형제/자식 노드 matchKeywords를 교차 조합
@@ -457,7 +457,7 @@ export async function GET() {
     : [];
 
   // Row 5: 급상승
-  const row5Keywords = shuffle(TRENDING_SEED_KEYWORDS).slice(0, 4);
+  const row5Keywords = shuffle(TRENDING_SEED_KEYWORDS).slice(0, 10);
 
   // 롱테일(Row 4)은 상품 조회 필요 없음 — 키워드만 전달
   const row4Items: FeedItem[] = row4Keywords.map((kw) => ({ keyword: kw, category: "", product: null }));
