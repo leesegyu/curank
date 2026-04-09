@@ -6,6 +6,7 @@ import { getKeywordTrend } from "@/lib/datalab";
 import { classifyKeywordIntent } from "@/lib/intent-classifier";
 import { calcFactorScores, type FactorInput, type Platform } from "@/lib/factor-model";
 import { generateConclusion } from "@/lib/conclusion-generator";
+import { getUsage, getPlanLimits, isAdmin } from "@/lib/usage";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,17 +29,36 @@ export async function GET(req: NextRequest) {
   const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
   const platform = (req.nextUrl.searchParams.get("platform") ?? "naver") as Platform;
   const shouldGenerate = req.nextUrl.searchParams.get("generate") === "true";
+  const shouldRegenerate = req.nextUrl.searchParams.get("regenerate") === "true";
 
   if (!keyword) {
     return NextResponse.json({ error: "keyword required" }, { status: 400 });
   }
 
+  const userId = session.user.id as string;
+
+  // ── 재생성 한도 정보 헬퍼 ──
+  async function getRegenInfo() {
+    const usage = await getUsage(userId);
+    const limits = isAdmin(userId)
+      ? { regeneration: Infinity }
+      : getPlanLimits(usage?.plan ?? "free");
+    const { data: row } = await supabaseAdmin
+      .from("analysis_conclusions")
+      .select("regeneration_count")
+      .eq("user_id", userId)
+      .eq("keyword", keyword)
+      .eq("platform", platform)
+      .single();
+    const used = row?.regeneration_count ?? 0;
+    return { limit: limits.regeneration, used, plan: usage?.plan ?? "free" };
+  }
+
   // ── 조회 모드: 저장된 결론 반환 ──
-  if (!shouldGenerate) {
-    const userId = session.user.id as string;
+  if (!shouldGenerate && !shouldRegenerate) {
     const { data, error: selectError } = await supabaseAdmin
       .from("analysis_conclusions")
-      .select("result, generated_at")
+      .select("result, generated_at, regeneration_count")
       .eq("user_id", userId)
       .eq("keyword", keyword)
       .eq("platform", platform)
@@ -49,31 +69,55 @@ export async function GET(req: NextRequest) {
     }
 
     if (data) {
+      const regen = await getRegenInfo();
       return NextResponse.json({
         ...data.result,
         generatedAt: data.generated_at,
         cached: true,
+        regeneration: { used: regen.used, limit: regen.limit, plan: regen.plan },
       });
     }
 
     return NextResponse.json({ cached: false, combinations: null });
   }
 
-  // ── 생성 모드: 이미 있으면 기존 결과 반환 (1회만 생성) ──
-  const { data: existing } = await supabaseAdmin
-    .from("analysis_conclusions")
-    .select("result, generated_at")
-    .eq("user_id", session.user.id)
-    .eq("keyword", keyword)
-    .eq("platform", platform)
-    .single();
+  // ── 재생성 모드: plan 한도 검사 ──
+  if (shouldRegenerate) {
+    const regen = await getRegenInfo();
+    if (regen.limit <= 0) {
+      return NextResponse.json({
+        error: "무료 플랜은 결론 재생성을 지원하지 않습니다. 업그레이드해주세요.",
+        regeneration: { used: regen.used, limit: regen.limit, plan: regen.plan },
+      }, { status: 403 });
+    }
+    if (regen.used >= regen.limit) {
+      return NextResponse.json({
+        error: `재생성 한도 초과 (${regen.used}/${regen.limit}회)`,
+        regeneration: { used: regen.used, limit: regen.limit, plan: regen.plan },
+      }, { status: 403 });
+    }
+    // 한도 OK → 아래 생성 로직으로 진행
+  }
 
-  if (existing) {
-    return NextResponse.json({
-      ...existing.result,
-      generatedAt: existing.generated_at,
-      cached: true,
-    });
+  // ── 생성 모드: 이미 있으면 기존 결과 반환 (재생성이 아닌 경우) ──
+  if (!shouldRegenerate) {
+    const { data: existing } = await supabaseAdmin
+      .from("analysis_conclusions")
+      .select("result, generated_at")
+      .eq("user_id", userId)
+      .eq("keyword", keyword)
+      .eq("platform", platform)
+      .single();
+
+    if (existing) {
+      const regen = await getRegenInfo();
+      return NextResponse.json({
+        ...existing.result,
+        generatedAt: existing.generated_at,
+        cached: true,
+        regeneration: { used: regen.used, limit: regen.limit, plan: regen.plan },
+      });
+    }
   }
 
   try {
@@ -188,28 +232,37 @@ export async function GET(req: NextRequest) {
       creativeKeyword,
     });
 
-    // 4. DB에 저장 (upsert)
-    const userId = session.user.id as string;
-    const { error: upsertError } = await supabaseAdmin
-      .from("analysis_conclusions")
-      .upsert(
-        {
-          user_id: userId,
-          keyword,
-          platform,
-          result,
-          generated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,keyword,platform" }
-      );
-    if (upsertError) {
-      console.error("[conclusion] upsert failed:", upsertError.message, upsertError.details);
+    // 4. DB에 저장 (upsert) + 재생성 카운트 증가
+    const now = new Date().toISOString();
+    if (shouldRegenerate) {
+      // 재생성: 기존 카운트 읽고 +1 업데이트
+      const { data: cur } = await supabaseAdmin
+        .from("analysis_conclusions")
+        .select("regeneration_count")
+        .eq("user_id", userId).eq("keyword", keyword).eq("platform", platform)
+        .single();
+      const newCount = (cur?.regeneration_count ?? 0) + 1;
+      const { error: updateErr } = await supabaseAdmin
+        .from("analysis_conclusions")
+        .update({ result, generated_at: now, regeneration_count: newCount, last_regenerated_at: now })
+        .eq("user_id", userId).eq("keyword", keyword).eq("platform", platform);
+      if (updateErr) console.error("[conclusion] regenerate update failed:", updateErr.message);
+    } else {
+      const { error: upsertError } = await supabaseAdmin
+        .from("analysis_conclusions")
+        .upsert(
+          { user_id: userId, keyword, platform, result, generated_at: now },
+          { onConflict: "user_id,keyword,platform" }
+        );
+      if (upsertError) console.error("[conclusion] upsert failed:", upsertError.message);
     }
 
+    const regen = await getRegenInfo();
     return NextResponse.json({
       ...result,
-      generatedAt: new Date().toISOString(),
+      generatedAt: now,
       cached: false,
+      regeneration: { used: regen.used, limit: regen.limit, plan: regen.plan },
     });
   } catch (err) {
     console.error("[conclusion]", err);

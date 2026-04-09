@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   description:
     "쿠팡 셀러를 위한 무료 키워드 분석 & 추천 도구. 경쟁 강도, 검색 트렌드, 성별/연령 분포, Blue Ocean 키워드 추천까지 한번에.",
   keywords: "쿠팡 키워드 분석, 쿠팡 키워드 추천, 쿠팡 셀러 도구, 쿠팡 경쟁 분석, 쿠랭크",
+  icons: {
+    icon: "/icon-512.png",
+    apple: "/icon-512.png",
+  },
 };
 
 export default function RootLayout({

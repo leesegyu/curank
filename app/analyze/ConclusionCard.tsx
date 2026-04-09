@@ -54,12 +54,20 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
+interface RegenInfo {
+  used: number;
+  limit: number;
+  plan: string;
+}
+
 export default function ConclusionCard({ keyword, platform }: Props) {
   const [combinations, setCombinations] = useState<TitleTagCombo[] | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
+  const [regen, setRegen] = useState<RegenInfo | null>(null);
 
   // 마운트 시 저장된 결론 조회
   useEffect(() => {
@@ -74,6 +82,7 @@ export default function ConclusionCard({ keyword, platform }: Props) {
             setCombinations(data.combinations);
             setGeneratedAt(data.generatedAt);
           }
+          if (data.regeneration) setRegen(data.regeneration);
         }
       } catch {
         // 조회 실패는 무시 — 생성 버튼 표시
@@ -98,12 +107,39 @@ export default function ConclusionCard({ keyword, platform }: Props) {
       const data = await res.json();
       setCombinations(data.combinations);
       setGeneratedAt(data.generatedAt);
+      if (data.regeneration) setRegen(data.regeneration);
     } catch (err) {
       setError(err instanceof Error ? err.message : "결론 생성 실패");
     } finally {
       setLoading(false);
     }
   }
+
+  async function regenerate() {
+    setRegenerating(true);
+    setError("");
+    try {
+      const res = await fetch(
+        `/api/conclusion?keyword=${encodeURIComponent(keyword)}&platform=${platform}&regenerate=true`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.regeneration) setRegen(data.regeneration);
+        throw new Error(data.error || "재생성 실패");
+      }
+      setCombinations(data.combinations);
+      setGeneratedAt(data.generatedAt);
+      if (data.regeneration) setRegen(data.regeneration);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "재생성 실패");
+    } finally {
+      setRegenerating(false);
+    }
+  }
+
+  const regenRemaining = regen ? regen.limit - regen.used : null;
+  const canRegenerate = regen ? regen.limit > 0 && regen.used < regen.limit : false;
+  const isFree = regen?.plan === "free";
 
   // 초기 로딩 (저장된 결론 확인 중)
   if (initialLoading) {
@@ -171,14 +207,43 @@ export default function ConclusionCard({ keyword, platform }: Props) {
   // 결과 표시
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-400 text-center">
-        {platform === "naver" ? "스마트스토어" : "쿠팡"} 규격에 맞춰 생성된 조합입니다. 복사하여 바로 사용하세요.
-        {generatedAt && (
-          <span className="ml-1">
-            ({new Date(generatedAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} 생성)
-          </span>
-        )}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-gray-400">
+          {platform === "naver" ? "스마트스토어" : "쿠팡"} 규격에 맞춰 생성된 조합입니다. 복사하여 바로 사용하세요.
+          {generatedAt && (
+            <span className="ml-1">
+              ({new Date(generatedAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })} 생성)
+            </span>
+          )}
+        </p>
+        <div className="flex items-center gap-2 shrink-0">
+          {regen && (
+            <span className="text-[11px] text-gray-400">
+              {isFree ? "" : regen.limit === Infinity ? "무제한" : `${regenRemaining}/${regen.limit}회 남음`}
+            </span>
+          )}
+          {isFree ? (
+            <span className="text-[11px] text-gray-400 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50">
+              재생성은 유료 플랜부터
+            </span>
+          ) : (
+            <button
+              onClick={regenerate}
+              disabled={regenerating || !canRegenerate}
+              className="text-xs px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              {regenerating ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                  재생성 중...
+                </>
+              ) : (
+                "재생성"
+              )}
+            </button>
+          )}
+        </div>
+      </div>
 
       {combinations!.map((combo, idx) => {
         const factorStyle = FACTOR_STYLE[combo.highlightFactor] ?? FACTOR_STYLE.ranking;

@@ -220,16 +220,21 @@ export async function GET(req: NextRequest) {
               : "AI 분석 (실패)",
           });
 
-          // ── Step 7: 크리에이티브 (v2 캐시 활용 → API 호출 최소화) ──
-          send({ step: 7, total: TOTAL, label: "크리에이티브 키워드 탐색 중...", progress: 68 });
-          const creative = await Promise.allSettled([
+          // ── Step 7: 크리에이티브 + 작년 인기 키워드 (병렬, v2 캐시 활용) ──
+          send({ step: 7, total: TOTAL, label: "크리에이티브 + 시즌 키워드 탐색 중...", progress: 68 });
+          const [creative, historical] = await Promise.allSettled([
             fetch(`${BASE_URL}/api/keywords-creative?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
+            fetch(`${BASE_URL}/api/keywords-historical?keyword=${kw}`, fetchOpt).then(r => r.json()),
           ]);
-          const creativeData = creative[0].status === "fulfilled" ? creative[0].value : null;
+          const creativeData = creative.status === "fulfilled" ? creative.value : null;
+          const historicalData = historical.status === "fulfilled" ? historical.value : null;
           const hasCreative = !!creativeData?.keywords?.length;
+          const hasHistorical = !!historicalData?.keywords?.length;
           send({
             step: 7, total: TOTAL, progress: 74,
-            label: hasCreative ? "크리에이티브 키워드 완료" : "크리에이티브 (실패)",
+            label: hasCreative && hasHistorical ? "크리에이티브 + 시즌 키워드 완료"
+              : hasCreative || hasHistorical ? "키워드 탐색 완료 (일부 누락)"
+              : "키워드 탐색 (실패)",
           });
 
           // ── Step 8: 그래프 추천 ──
@@ -277,6 +282,7 @@ export async function GET(req: NextRequest) {
             keywordsV1: blueOceanData?.keywords ?? null,
             keywordsV2: kosV2Data?.keywords ?? null,
             keywordsCreative: creativeData?.keywords ?? null,
+            keywordsHistorical: historicalData?.keywords ?? null,
             keywordsGraph: graphRaw?.keywords ?? null,
             factorScore: factorData ?? null,
             brandDistribution: { brands: brandDistribution, noBrandRatio, totalProducts },

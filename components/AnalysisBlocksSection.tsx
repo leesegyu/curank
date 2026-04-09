@@ -247,12 +247,12 @@ export default function AnalysisBlocksSection() {
               <div className="flex items-center gap-2 flex-shrink-0">
                 {block.score !== undefined && block.level && (
                   <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${LEVEL_COLORS[block.level] || "text-gray-600 bg-gray-50 border-gray-200"}`}>
-                    {block.score}점
+                    경쟁강도 {block.score}점
                   </span>
                 )}
                 {block.trendDirection && (
                   <span className={`text-xs font-bold ${TREND_COLOR[block.trendDirection] || "text-gray-400"}`}>
-                    {TREND_ICON[block.trendDirection] || "→"} {block.trendDirection}
+                    검색트렌드 {TREND_ICON[block.trendDirection] || "→"} {block.trendDirection}
                   </span>
                 )}
                 {(block.status === "done" || block.status === "partial") && (

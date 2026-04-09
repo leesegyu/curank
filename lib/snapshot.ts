@@ -14,6 +14,7 @@ export interface AnalysisSnapshot {
   keywordsCreative?: unknown; // 크리에이티브 발굴
   keywordsGraph?: unknown;   // 그래프 연관
   factorScore?: unknown;     // 판매 성공 지표
+  keywordsHistorical?: unknown; // 1년전 인기 키워드
   competitorThreat?: unknown; // 경쟁 위협도
   brandDistribution?: unknown; // 브랜드/상호명 분포
 }

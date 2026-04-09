@@ -64,10 +64,7 @@ export default function KeywordRecommendations({ keyword, platform = "naver", pr
     <div className="bg-white rounded-2xl border border-gray-100 p-5">
       <div className="mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-gray-700">추천 키워드</span>
-          <span className="text-xs px-2 py-0.5 rounded-full font-bold text-amber-700 bg-amber-50 border border-amber-200">
-            Blue Ocean
-          </span>
+          <span className="text-sm font-bold text-gray-700">기본 키워드 추천</span>
           <span className="text-xs px-2 py-0.5 rounded-lg bg-green-50 text-green-600 border border-green-100 font-medium">
             {platform === "naver" ? "스마트스토어" : "쿠팡"} 기준
           </span>
@@ -149,7 +146,7 @@ export default function KeywordRecommendations({ keyword, platform = "naver", pr
                 className="font-bold px-1.5 py-0.5 rounded-full text-xs mr-1 text-white"
                 style={{ background: "linear-gradient(135deg, #f59e0b, #f97316)" }}
               >최고</span>
-              Blue Ocean 기회 ·
+              추천 키워드 ·
               <span className="text-blue-600 font-bold ml-1">경쟁 낮음</span> = 상품 1,000개 미만
             </p>
             <div className="flex items-center gap-2">

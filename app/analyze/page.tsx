@@ -23,6 +23,7 @@ import BrandDistributionCard from "./BrandDistributionCard";
 import type { BrandDistributionData } from "./BrandDistributionCard";
 import ConclusionCard from "./ConclusionCard";
 import KeywordRecommendationsCreative from "./KeywordRecommendationsCreative";
+import KeywordRecommendationsHistorical from "./KeywordRecommendationsHistorical";
 import FactorCompareCard from "./FactorCompareCard";
 import BackToHomeLink from "./BackToHomeLink";
 import ReportDownloadButton from "./ReportDownloadButton";
@@ -120,6 +121,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let snapKeywordsV2: unknown[] | null = null;
   let snapKeywordsCreative: unknown[] | null = null;
   let snapKeywordsGraph: unknown[] | null = null;
+  let snapKeywordsHistorical: unknown[] | null = null;
   let snapFactorScore: unknown | null = null;
   let snapBrandDistribution: BrandDistributionData | null = null;
 
@@ -135,6 +137,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       snapKeywordsV2 = (snap.snapshot.keywordsV2 as unknown[] | undefined) ?? null;
       snapKeywordsCreative = (snap.snapshot.keywordsCreative as unknown[] | undefined) ?? null;
       snapKeywordsGraph = (snap.snapshot.keywordsGraph as unknown[] | undefined) ?? null;
+      snapKeywordsHistorical = (snap.snapshot.keywordsHistorical as unknown[] | undefined) ?? null;
       snapFactorScore = snap.snapshot.factorScore ?? null;
       snapBrandDistribution = (snap.snapshot.brandDistribution as BrandDistributionData | undefined) ?? null;
       console.log(`[snapshot] HIT: "${kw}" (${platform}) from ${snap.created_at}`, snapKeywordsV2 ? `+keywords` : `(no keywords)`);
@@ -342,6 +345,9 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
               <TrendChartClient data={trend.data} weeklyData={trend.weeklyData} peak={trend.peak} current={trend.current} keyword={kw} />
             </div>
           )}
+
+          {/* 작년 이맘때 인기 키워드 — 시즌 선점 (트렌드 차트 직후 배치) */}
+          <KeywordRecommendationsHistorical keyword={kw} platform={platform} preloadedData={snapKeywordsHistorical} />
 
           {/* 검색자 인구통계 */}
           <Suspense fallback={<DemographicsSkeleton />}>

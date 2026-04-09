@@ -26,12 +26,12 @@ import { calcMomentumScores }            from "@/lib/trend-momentum";
 import { bfsKeywords, upsertAutocompleteEdges } from "@/lib/keyword-graph";
 import { getL2Cache, setL2Cache }        from "@/lib/cache-db";
 import { classifyKeywordIntent, intentMultiplier, specificityMultiplier } from "@/lib/intent-classifier";
-import { generateOntologyLongtails } from "@/lib/ontology";
+import { generateOntologyLongtails, classifyKeyword } from "@/lib/ontology";
 import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { searchNaver } from "@/lib/naver";
 import { calcCreativityScore, calcCreativityChanceScore } from "@/lib/creativity-score";
 
-export const V2_CACHE_TYPE = "keywords_v2_17"; // 필터 완화: 결과 부족 방지 (v16→v17)
+export const V2_CACHE_TYPE = "keywords_v2_18"; // 카테고리 기반 수식어 필터링 (v17→v18)
 const CACHE_TYPE = V2_CACHE_TYPE; // 기존 코드 호환용 alias
 /** L1 인메모리 캐시 — keywords-creative에서도 읽기 전용으로 참조 */
 export const v2Cache = new NodeCache({ stdTTL: 3600 });
@@ -72,16 +72,30 @@ const UNIVERSAL_TEMPLATES = [
   "{kw} 추천", "{kw} 세트", "{kw} 대용량", "{kw} 1인용",
   "{kw} 선물", "{kw} 인기",
 ];
-// 제품(비식품)에만 적용하는 수식어
-const PRODUCT_TEMPLATES = [
-  "{kw} 경량", "{kw} 접이식", "{kw} 무선", "{kw} 휴대용",
-  "{kw} 캠핑용", "{kw} 가정용", "{kw} 사무용",
-  "{kw} 남성용", "{kw} 여성용", "{kw} 아동용",
-];
-// 식품에만 적용하는 수식어
-const FOOD_TEMPLATES = [
-  "{kw} 국내산", "{kw} 유기농", "{kw} 소포장",
-  "{kw} 선물세트", "{kw} 가정용",
+// 카테고리 태깅된 수식어 그룹 — L1 카테고리 기반 필터링
+interface TemplateGroup {
+  templates: string[];
+  allow: string[] | null; // null = 전체 카테고리, 배열 = 해당 L1만
+}
+const TEMPLATE_GROUPS: TemplateGroup[] = [
+  // 전자기기 수식어
+  { templates: ["{kw} 무선", "{kw} 블루투스", "{kw} 충전식"], allow: ["digital", "sports", "leisure"] },
+  // 구조/경량 수식어
+  { templates: ["{kw} 접이식", "{kw} 경량", "{kw} 휴대용"], allow: ["digital", "sports", "furniture", "baby", "leisure"] },
+  // 캠핑용
+  { templates: ["{kw} 캠핑용"], allow: ["sports", "food", "furniture", "digital", "health"] },
+  // 실내 용도 — 범용
+  { templates: ["{kw} 가정용", "{kw} 사무용"], allow: null },
+  // 인구통계 — 범용
+  { templates: ["{kw} 남성용", "{kw} 여성용", "{kw} 아동용"], allow: null },
+  // 침구/패브릭 사이즈
+  { templates: ["{kw} 퀸사이즈", "{kw} 싱글", "{kw} 킹사이즈"], allow: ["health", "furniture"] },
+  // 소재/촉감
+  { templates: ["{kw} 순면", "{kw} 극세사", "{kw} 냉감"], allow: ["health", "fashion", "furniture", "baby"] },
+  // 계절
+  { templates: ["{kw} 여름용", "{kw} 겨울용", "{kw} 사계절"], allow: ["health", "fashion", "furniture", "sports", "baby", "accessory"] },
+  // 식품 전용
+  { templates: ["{kw} 국내산", "{kw} 유기농", "{kw} 소포장", "{kw} 선물세트"], allow: ["food"] },
 ];
 // 식품 키워드 판별 (온톨로지 L1 기반)
 const FOOD_KEYWORDS = ["식품", "과일", "채소", "수산", "축산", "건강식품", "음료", "간식", "반찬", "김치", "쌀", "견과", "참외", "수박", "사과", "배", "포도", "딸기", "감", "귤", "망고", "바나나", "멜론", "복숭아", "자두", "체리", "블루베리", "토마토", "고구마", "감자", "양파", "마늘"];
@@ -90,11 +104,32 @@ function isLikelyFood(seed: string): boolean {
   return FOOD_KEYWORDS.some((f) => seed.includes(f));
 }
 
+function getSeedL1Category(seed: string): string | null {
+  const classified = classifyKeyword(seed, "smartstore");
+  if (!classified) return null;
+  const parts = classified.path.split(".");
+  return parts.length >= 2 ? parts[1] : null;
+}
+
 function generateLongtailCandidates(seed: string): string[] {
-  const templates = [
-    ...UNIVERSAL_TEMPLATES,
-    ...(isLikelyFood(seed) ? FOOD_TEMPLATES : PRODUCT_TEMPLATES),
-  ];
+  const l1 = getSeedL1Category(seed);
+  const templates = [...UNIVERSAL_TEMPLATES];
+
+  if (l1) {
+    for (const group of TEMPLATE_GROUPS) {
+      if (group.allow === null || group.allow.includes(l1)) {
+        templates.push(...group.templates);
+      }
+    }
+  } else {
+    // 미분류 폴백: 안전한 범용 수식어만
+    if (isLikelyFood(seed)) {
+      templates.push("{kw} 국내산", "{kw} 유기농", "{kw} 소포장", "{kw} 선물세트");
+    } else {
+      templates.push("{kw} 가정용", "{kw} 사무용", "{kw} 남성용", "{kw} 여성용", "{kw} 아동용");
+    }
+  }
+
   return templates
     .map((t) => t.replace("{kw}", seed))
     .filter((kw) => kw.trim().split(/\s+/).length >= 2);
