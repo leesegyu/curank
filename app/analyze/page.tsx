@@ -28,6 +28,7 @@ import KeywordRecommendationsCreative from "./KeywordRecommendationsCreative";
 import KeywordRecommendationsSeasonOpportunity from "./KeywordRecommendationsSeasonOpportunity";
 import FactorCompareCard from "./FactorCompareCard";
 import BackToHomeLink from "./BackToHomeLink";
+import PreventSwipeBack from "./PreventSwipeBack";
 import ReportDownloadButton from "./ReportDownloadButton";
 import type { SearchPlatform } from "@/components/PlatformSelector";
 import { getSnapshot, saveSnapshot } from "@/lib/snapshot";
@@ -179,6 +180,9 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
     <main className="min-h-screen px-4 sm:px-8 py-10 max-w-5xl mx-auto">
       {/* 체류시간 트래킹 (렌더 없음) */}
       <DwellTracker keyword={kw} />
+
+      {/* 뒤로가기/스와이프 제스처 차단 (렌더 없음) */}
+      <PreventSwipeBack />
 
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-8">
