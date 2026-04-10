@@ -72,7 +72,7 @@ export default function OpportunitySummary({ result, trend, platform = "naver" }
   const avgPrice = result.priceStats.avg;
 
   // 리뷰 수 기반 판매량 추정
-  const topProduct = result.products.find((p) => (p.ratingCount ?? 0) > 0) ?? null;
+  const topProduct = (result.products ?? []).find((p) => (p.ratingCount ?? 0) > 0) ?? null;
   const topReviews = topProduct?.ratingCount ?? 0;
   const hasReviewData = topReviews > 0;
   const estimatedSales = hasReviewData ? topReviews * 50 : null;
