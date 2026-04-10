@@ -39,18 +39,32 @@ interface ConclusionInput {
   topVariantKeyword?: string;
 }
 
+/**
+ * 플랫폼 규칙 — OpenAI 프롬프트 캐싱을 위해 system 메시지로 분리
+ * (고정된 내용 → 캐시 히트율 극대화)
+ */
 const PLATFORM_RULES: Record<string, string> = {
-  naver: `[스마트스토어 규칙]
+  naver: `당신은 스마트스토어 상품 등록 전문가입니다.
+[스마트스토어 규칙]
 - 상품 제목: 50자 이내 (공백 포함)
 - 앞 25자 안에 핵심 키워드를 반드시 배치 (검색 가중치 높음)
 - 태그: 10개 (각 태그는 검색 키워드 역할)
-- 제목에 특수문자 남용 금지, 자연스러운 상품명`,
+- 제목에 특수문자 남용 금지, 자연스러운 상품명
+[출력 규약]
+- 반드시 JSON만 출력 (다른 텍스트 금지)
+- highlightFactor는 반드시 다음 중 하나: ranking, conversion, growth, profitability, entryBarrier, crossPlatform
+- 제목/태그에 쓰는 모든 키워드는 시드 키워드와 의미적으로 자연스럽게 어울려야 함 (어색한 수식어 조합 금지)`,
 
-  coupang: `[쿠팡 규칙]
+  coupang: `당신은 쿠팡 상품 등록 전문가입니다.
+[쿠팡 규칙]
 - 상품 제목: 100자 이내 (공백 포함)
 - 핵심 키워드를 앞부분에 배치
 - 태그: 10개 (검색어 태그)
-- 로켓배송/로켓그로스 상품은 제목에 용량/수량 명시 권장`,
+- 로켓배송/로켓그로스 상품은 제목에 용량/수량 명시 권장
+[출력 규약]
+- 반드시 JSON만 출력 (다른 텍스트 금지)
+- highlightFactor는 반드시 다음 중 하나: ranking, conversion, growth, profitability, entryBarrier, crossPlatform
+- 제목/태그에 쓰는 모든 키워드는 시드 키워드와 의미적으로 자연스럽게 어울려야 함 (어색한 수식어 조합 금지)`,
 };
 
 const FACTOR_LABELS: Record<string, { name: string; highDesc: string; lowDesc: string }> = {
@@ -62,7 +76,7 @@ const FACTOR_LABELS: Record<string, { name: string; highDesc: string; lowDesc: s
   crossPlatform: { name: "크로스 플랫폼", highDesc: "이 플랫폼에서 특히 강세인 키워드입니다",          lowDesc: "상대 플랫폼이 더 강세입니다" },
 };
 
-function buildPrompt(input: ConclusionInput): string {
+function buildUserPrompt(input: ConclusionInput): string {
   const { keyword, platform, factorScores, recommendedKeywords, topAggregatedKeyword, topVariantKeyword } = input;
   const platformName = platform === "naver" ? "스마트스토어" : "쿠팡";
 
@@ -70,7 +84,6 @@ function buildPrompt(input: ConclusionInput): string {
   const seedTopFactor = [...factorScores.factors].sort((a, b) => b.score - a.score)[0];
   const seedTopFactorName = FACTOR_LABELS[seedTopFactor?.key]?.name ?? seedTopFactor?.label ?? "";
 
-  // 신규 제안 입력 한 줄 요약
   const aggLine = topAggregatedKeyword
     ? `[최종 후보 Top] "${topAggregatedKeyword.keyword}" (종합 ${topAggregatedKeyword.overallScore}점, 강점 ${FACTOR_LABELS[topAggregatedKeyword.topFactorKey]?.name ?? topAggregatedKeyword.topFactorKey} ${topAggregatedKeyword.topFactorScore})`
     : "";
@@ -86,55 +99,45 @@ function buildPrompt(input: ConclusionInput): string {
     return `- ${label?.name ?? f.label}: ${f.score}점/100 (${level})`;
   }).join("\n");
 
-  const kwList = recommendedKeywords.slice(0, 15).map(
-    (k) => `  "${k.keyword}" (점수: ${k.score})`
+  // 프롬프트 길이 축소: 추천 15→8, 기회 10→5
+  const kwList = recommendedKeywords.slice(0, 8).map(
+    (k) => `  "${k.keyword}" (${k.score})`
   ).join("\n");
 
-  const oppList = (input.opportunityKeywords ?? []).slice(0, 10).map(
-    (k) => `  "${k.keyword}" (기회발굴 점수: ${k.scoreChance})`
+  const oppList = (input.opportunityKeywords ?? []).slice(0, 5).map(
+    (k) => `  "${k.keyword}" (${k.scoreChance})`
   ).join("\n");
 
   const extraCount = (topAggregatedKeyword ? 1 : 0) + (topVariantKeyword ? 1 : 0);
   const totalMin = 3 + extraCount;
   const totalMax = 4 + extraCount;
 
-  return `당신은 ${platformName} 상품 등록 전문가입니다.
+  return `셀러가 "${keyword}" 관련 상품을 ${platformName}에 등록하려 합니다.
+아래 데이터를 바탕으로 전략이 서로 다른 상품 제목+태그 조합을 ${totalMin}~${totalMax}개 만들어주세요.
 
-셀러가 "${keyword}" 관련 상품을 ${platformName}에 등록하려 합니다.
-아래 분석 데이터를 바탕으로, 전략이 서로 다른 상품 제목+태그 조합을 ${totalMin}~${totalMax}개 만들어주세요.
-
-[6 Factor 분석 결과]
+[6 Factor 분석]
 ${factorSummary}
 
-[AI 심층 비교 추천 키워드 (종합점수순)]
+[추천 키워드 종합점수순]
 ${kwList}
 ${oppList ? `
-[기회 분석 추천 키워드 (기회발굴 점수순)]
+[기회 분석 키워드 — 경쟁이 적은 틈새]
 ${oppList}
-— 기회 분석은 셀러가 진입할 수 있는 틈새 키워드를 찾는 것입니다. 경쟁이 적으면서 구매 의도가 높은 키워드입니다.
-` : ""}${aggLine ? `${aggLine}\n` : ""}${varLine ? `${varLine}\n` : ""}
-${PLATFORM_RULES[platform]}
+` : ""}${aggLine ? `${aggLine}\n` : ""}${varLine ? `${varLine}\n` : ""}${input.creativeKeyword ? `
+[크리에이티브 키워드] "${input.creativeKeyword}" — 남들이 아직 안 쓰는 차별화 키워드
+` : ""}
+[요청]
+1. 각 조합은 서로 다른 전략 (예: "상위 노출 집중", "구매전환 극대화", "기회 분석 기반 진입")
+2. 반드시 하나는 "기회 분석 기반 진입" 전략 — 위 기회 분석 키워드 중 점수 높은 것 활용
+3. 제목에는 추천 키워드 중 적합한 것을 자연스럽게 조합
+4. 태그 10개는 제목에 없는 보조 키워드도 활용
+5. reasoning은 6 Factor 강점 기반 한줄 설명${input.creativeKeyword ? `
+6. 반드시 하나는 "크리에이티브 전략"이라는 이름으로, "${input.creativeKeyword}"를 제목/태그에 포함` : ""}${topAggregatedKeyword ? `
+7. 반드시 하나는 "최종 후보 Top 전략" — "${topAggregatedKeyword.keyword}"를 제목 앞부분에, highlightFactor="${topAggregatedKeyword.topFactorKey}"` : ""}${topVariantKeyword ? `
+8. 반드시 하나는 "세부 유형 특화" — "${topVariantKeyword}"를 제목 맨 앞 주어로, highlightFactor="${seedTopFactor?.key ?? "ranking"}"` : ""}
 
-${input.creativeKeyword ? `[크리에이티브 키워드]
-"${input.creativeKeyword}" — 다른 셀러들이 아직 사용하지 않는 창의적 키워드입니다.
-` : ""}[요청]
-1. 각 조합은 서로 다른 전략을 가져야 합니다 (예: "상위 노출 집중", "구매전환 극대화", "기회 분석 기반 진입" 등)
-2. 반드시 하나의 조합은 "기회 분석 기반 진입" 전략으로, 위 기회 분석 추천 키워드 중 기회발굴 점수가 높은 키워드를 활용하여 경쟁이 적은 틈새 시장에 진입하는 전략을 만드세요
-3. 제목에는 위 추천 키워드 중 적합한 것들을 자연스럽게 조합하세요
-4. 태그 10개는 제목에 포함되지 않은 보조 키워드도 활용하세요
-5. 각 조합에 대해 6 Factor 중 어떤 강점 때문에 이 전략을 추천하는지 한줄로 설명하세요
-6. highlightFactor는 6개 중 가장 핵심인 factor의 key값입니다: ranking, conversion, growth, profitability, entryBarrier, crossPlatform${input.creativeKeyword ? `
-7. 반드시 하나의 조합은 "크리에이티브 전략"이라는 이름으로, 위 크리에이티브 키워드 "${input.creativeKeyword}"를 제목과 태그에 자연스럽게 포함시키세요. 이 조합은 남들과 차별화된 틈새 시장 공략 전략입니다.` : ""}${topAggregatedKeyword ? `
-8. 반드시 하나의 조합은 "최종 후보 Top 전략"이라는 이름으로, [최종 후보 Top] 키워드 "${topAggregatedKeyword.keyword}"를 제목 앞부분에 배치하세요. highlightFactor는 "${topAggregatedKeyword.topFactorKey}"로 설정하고, reasoning에 6 Factor 종합점수가 가장 높다는 점과 강점 Factor를 반영하세요.` : ""}${topVariantKeyword ? `
-9. 반드시 하나의 조합은 "세부 유형 특화" 전략이라는 이름으로, [세부 유형 Top] 키워드 "${topVariantKeyword}"를 제목 맨 앞에 주어로 배치하세요. highlightFactor는 시드 키워드의 가장 높은 점수 factor인 "${seedTopFactor?.key ?? "ranking"}"를 사용하고, 나머지 제목/태그는 이 강점에 맞춰 구성하세요.` : ""}
-
-[중요] 제목과 태그에 사용하는 키워드 조합이 의미적으로 자연스러운지 반드시 검증하세요.
-- "${keyword}"와 어울리지 않는 수식어 조합은 절대 사용하지 마세요 (예: 식품에 "접이식", "무선", "충전식" 등 물리적 속성 수식어)
-- 실제로 소비자가 검색할 법한 자연스러운 키워드 조합만 사용하세요
-- 어색하거나 엉뚱한 조합이 포함되면 해당 키워드를 제외하고 더 적합한 키워드로 대체하세요
-
-반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
-{"combinations":[{"strategy":"전략명","title":"상품 제목","tags":["태그1","태그2",...],"reasoning":"한줄 해석","highlightFactor":"factor_key"}]}`;
+반드시 아래 JSON 형식으로만 응답:
+{"combinations":[{"strategy":"전략명","title":"상품 제목","tags":["태그1",...],"reasoning":"한줄 해석","highlightFactor":"factor_key"}]}`;
 }
 
 export async function generateConclusion(input: ConclusionInput): Promise<ConclusionResult> {
@@ -143,13 +146,17 @@ export async function generateConclusion(input: ConclusionInput): Promise<Conclu
     throw new Error("OpenAI 일일 한도 초과");
   }
 
-  const prompt = buildPrompt(input);
+  const userPrompt = buildUserPrompt(input);
+  const systemPrompt = PLATFORM_RULES[input.platform] ?? PLATFORM_RULES.naver;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.7,
-    max_tokens: 2800,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0,
+    max_tokens: 1500,
     response_format: { type: "json_object" },
   });
 

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import NodeCache from "node-cache";
 import { fetchNaverScoreData } from "@/lib/search";
 import { getKeywordTrend } from "@/lib/datalab";
 import { classifyKeywordIntent } from "@/lib/intent-classifier";
 import { calcFactorScores, type FactorInput, type Platform, type FactorScoreSet } from "@/lib/factor-model";
+import { factorCache } from "@/lib/factor-cache";
+import { validateKeyword } from "@/lib/keyword-validator";
 
 /**
  * 배치 factor score 계산
@@ -14,7 +15,6 @@ import { calcFactorScores, type FactorInput, type Platform, type FactorScoreSet 
  * 사용 시나리오: STEP 3 추천 카드들의 top 키워드를 한번에 채점하여 종합 비교
  */
 
-const factorCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
 const MAX_KEYWORDS = 100; // CSV 최대치
 const CONCURRENCY = 10; // 동시 호출 제한 (네이버 rate limit 보호)
 
@@ -102,7 +102,8 @@ export async function GET(req: NextRequest) {
   const rawKeywords = keywordsParam
     .split(",")
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((k) => validateKeyword(k).ok); // 스팸/노이즈 키워드 제외
 
   // 중복 제거 + 최대 개수 제한
   const keywords = Array.from(new Set(rawKeywords)).slice(0, MAX_KEYWORDS);

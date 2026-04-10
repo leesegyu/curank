@@ -21,6 +21,7 @@ import { calcSeasonOpportunityScore, type SeasonOpportunityResult } from "@/lib/
 import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { generateOntologyLongtails } from "@/lib/ontology";
 import { trackApiCall } from "@/lib/api-monitor";
+import { validateKeyword } from "@/lib/keyword-validator";
 
 const CACHE_TYPE = "keywords_season_opp_4"; // v4: V2+Historical+온톨로지 통합 + 가중치
 const cache = new NodeCache({ stdTTL: 3600 });
@@ -89,10 +90,12 @@ async function fetchSOSTrend(keywords: string[]): Promise<Map<string, { past: nu
 export type { SeasonOpportunityResult };
 
 export async function GET(req: NextRequest) {
-  const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
-  if (!keyword) {
-    return NextResponse.json({ error: "keyword 파라미터 필요" }, { status: 400 });
+  const rawKeyword = req.nextUrl.searchParams.get("keyword")?.trim();
+  const validation = validateKeyword(rawKeyword);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const keyword = rawKeyword as string;
 
   const cached = cache.get<SeasonOpportunityResult[]>(keyword);
   if (cached) return NextResponse.json({ keywords: cached, cached: true });

@@ -26,6 +26,7 @@ import { getNaverShoppingAutocomplete } from "@/lib/naver-ad";
 import { searchNaver } from "@/lib/naver";
 import { getL2Cache } from "@/lib/cache-db";
 import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/route";
+import { validateKeyword } from "@/lib/keyword-validator";
 
 type Platform = "naver" | "coupang";
 
@@ -42,12 +43,14 @@ export interface CreativeKeyword {
 }
 
 export async function GET(req: NextRequest) {
-  const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
+  const rawKeyword = req.nextUrl.searchParams.get("keyword")?.trim();
   const platform = (req.nextUrl.searchParams.get("platform") ?? "naver") as Platform;
 
-  if (!keyword) {
-    return NextResponse.json({ error: "keyword required" }, { status: 400 });
+  const validation = validateKeyword(rawKeyword);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const keyword = rawKeyword as string;
 
   const kw = keyword;
   const op = ontoPlatform(platform);

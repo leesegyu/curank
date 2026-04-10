@@ -7,6 +7,9 @@ import { classifyKeywordIntent } from "@/lib/intent-classifier";
 import { calcFactorScores, type FactorInput, type Platform } from "@/lib/factor-model";
 import { generateConclusion } from "@/lib/conclusion-generator";
 import { getUsage, getPlanLimits, isAdmin } from "@/lib/usage";
+import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/route";
+import { getL2Cache } from "@/lib/cache-db";
+import { validateKeyword } from "@/lib/keyword-validator";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,14 +29,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "로그인 필요" }, { status: 401 });
   }
 
-  const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
+  const rawKeyword = req.nextUrl.searchParams.get("keyword")?.trim();
   const platform = (req.nextUrl.searchParams.get("platform") ?? "naver") as Platform;
   const shouldGenerate = req.nextUrl.searchParams.get("generate") === "true";
   const shouldRegenerate = req.nextUrl.searchParams.get("regenerate") === "true";
 
-  if (!keyword) {
-    return NextResponse.json({ error: "keyword required" }, { status: 400 });
+  const validation = validateKeyword(rawKeyword);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const keyword = rawKeyword as string;
 
   const userId = session.user.id as string;
 
@@ -180,14 +185,27 @@ export async function GET(req: NextRequest) {
 
     const factorScores = calcFactorScores(factorInput, platform);
 
-    // 2. 추천 키워드 수집
-    const kwUrl = new URL("/api/keywords-v2", req.nextUrl.origin);
-    kwUrl.searchParams.set("keyword", keyword);
-    const kwRes = await fetch(kwUrl.toString(), {
-      headers: { cookie: req.headers.get("cookie") ?? "" },
-    });
-    const kwData = kwRes.ok ? await kwRes.json() : { keywords: [] };
-    const v2Keywords = kwData.keywords ?? [];
+    // 2. 추천 키워드 수집 — 캐시 우선 (L1 → L2 → 최후 fetch)
+    let v2Keywords: KeywordV2[] = [];
+    const l1 = v2Cache.get<KeywordV2[]>(keyword);
+    if (l1) {
+      v2Keywords = l1;
+    } else {
+      const l2 = await getL2Cache<KeywordV2[]>(keyword, V2_CACHE_TYPE);
+      if (l2) {
+        v2Cache.set(keyword, l2);
+        v2Keywords = l2;
+      } else {
+        // 최후 수단: 내부 fetch (analyze-run SSE 이후엔 거의 발생 안 함)
+        const kwUrl = new URL("/api/keywords-v2", req.nextUrl.origin);
+        kwUrl.searchParams.set("keyword", keyword);
+        const kwRes = await fetch(kwUrl.toString(), {
+          headers: { cookie: req.headers.get("cookie") ?? "" },
+        });
+        const kwData = kwRes.ok ? await kwRes.json() : { keywords: [] };
+        v2Keywords = (kwData.keywords ?? []) as KeywordV2[];
+      }
+    }
     const recommendedKeywords = v2Keywords
       .slice(0, 15)
       .map((k: { keyword: string; score: number }) => ({

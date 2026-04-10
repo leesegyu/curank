@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
 
       try {
         // ── Step 1: 사용량 확인 ──
-        send({ step: 1, total: TOTAL, label: "사용량 확인 중...", progress: 3 });
+        send({ step: 1, total: TOTAL, label: "⚙️ 사용량 확인 중...", progress: 3 });
 
         const now = new Date();
         const monthStart = `${now.toISOString().slice(0, 7)}-01T00:00:00`;
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
         let usage: { used: number; limit: number; remaining: number; plan: string } | null = null;
         if (existingEvent) {
           usage = await getUsage(userId);
-          send({ step: 1, total: TOTAL, label: "기존 분석 재조회 (횟수 차감 없음)", progress: 5, usage, reuse: true });
+          send({ step: 1, total: TOTAL, label: "⚙️ 기존 분석 재조회 (횟수 차감 없음)", progress: 5, usage, reuse: true });
         } else {
           const result = await consumeUsage(userId);
           if (!result.ok) {
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
             return;
           }
           usage = result.usage;
-          send({ step: 1, total: TOTAL, label: "사용량 확인 완료", progress: 5, usage });
+          send({ step: 1, total: TOTAL, label: "⚙️ 사용량 확인 완료", progress: 5, usage });
         }
 
         trackEvent(userId, "analyze", keyword, { source: "home" });
@@ -129,8 +129,8 @@ export async function GET(req: NextRequest) {
             }
           });
 
-        // ── Step 2: 상품 데이터 수집 ──
-        send({ step: 2, total: TOTAL, label: "상품 데이터 수집 중...", progress: 10 });
+        // ── Step 2: 상품 데이터 수집 (STEP 1 현재 상황) ──
+        send({ step: 2, total: TOTAL, label: "📊 STEP 1 · 상품 데이터 수집 중...", progress: 10 });
         const [searchRaw, naverScoreRaw] = await Promise.allSettled([
           unifiedSearch(keyword, platform),
           fetchNaverScoreData(keyword),
@@ -192,22 +192,22 @@ export async function GET(req: NextRequest) {
           .map(([name, count]) => ({ name, count, ratio: Math.round(count / Math.max(totalProducts, 1) * 100) }));
         const noBrandRatio = Math.round(noBrandCount / Math.max(totalProducts, 1) * 100);
 
-        send({ step: 2, total: TOTAL, label: "상품 데이터 수집 완료", progress: 18 });
+        send({ step: 2, total: TOTAL, label: "📊 STEP 1 · 상품 데이터 완료", progress: 18 });
 
-        // ── Step 3: 경쟁 분석 ──
-        send({ step: 3, total: TOTAL, label: "경쟁 강도 분석 중...", progress: 22 });
+        // ── Step 3: 경쟁 분석 (STEP 1 현재 상황) ──
+        send({ step: 3, total: TOTAL, label: "📊 STEP 1 · 경쟁 강도 분석 중...", progress: 22 });
         const result = analyze(searchData, naverScore);
-        send({ step: 3, total: TOTAL, label: "경쟁 분석 완료", progress: 28, score: result.competitionScore, level: result.competitionLevel });
+        send({ step: 3, total: TOTAL, label: "📊 STEP 1 · 경쟁 분석 완료", progress: 28, score: result.competitionScore, level: result.competitionLevel });
 
-        // ── Step 4: 트렌드 분석 ──
-        send({ step: 4, total: TOTAL, label: "트렌드 분석 중...", progress: 32 });
+        // ── Step 4: 트렌드 분석 (STEP 1 현재 상황) ──
+        send({ step: 4, total: TOTAL, label: "📊 STEP 1 · 트렌드 분석 중...", progress: 32 });
         const trendRaw = await getKeywordTrend(keyword).catch(() => null);
         const trendDirection = trendRaw?.direction ?? "안정";
-        send({ step: 4, total: TOTAL, label: "트렌드 분석 완료", progress: 38, trendDirection });
+        send({ step: 4, total: TOTAL, label: "📊 STEP 1 · 트렌드 분석 완료", progress: 38, trendDirection });
 
-        // ── Step 5: 인구통계 삭제됨 — API 비용 절감 ──
+        // ── Step 5: STEP 2 문제 진단 준비 ──
         const demographicsData = null;
-        send({ step: 5, total: TOTAL, label: "다음 단계 진행 중...", progress: 48 });
+        send({ step: 5, total: TOTAL, label: "🔍 STEP 2 · 문제 진단 시작...", progress: 48 });
 
         // ── Step 6~9: 키워드 추천 + 결론 (타임아웃 적용) ──
         const abortCtrl = new AbortController();
@@ -216,9 +216,9 @@ export async function GET(req: NextRequest) {
         const kw = encodeURIComponent(keyword);
 
         try {
-          // ── Step 6: AI 심화(v2) + 세부 유형 + 판매 지표 (병렬) ──
+          // ── Step 6: STEP 2 판매 지표 + STEP 3 기회 분석 + 세부 유형 (병렬) ──
           // v2를 먼저 실행 → 캐시 생성 → Step 7에서 creative가 캐시 재사용
-          send({ step: 6, total: TOTAL, label: "AI 심화 + 세부 유형 + 판매 지표 분석 중...", progress: 52 });
+          send({ step: 6, total: TOTAL, label: "🔍 STEP 2 · 💡 STEP 3 · 판매 지표 + 기회 분석 중...", progress: 52 });
           const [kosV2, variant, factor] = await Promise.allSettled([
             fetch(`${BASE_URL}/api/keywords-v2?keyword=${kw}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/keywords-variant?keyword=${kw}`, fetchOpt).then(r => r.json()),
@@ -232,13 +232,13 @@ export async function GET(req: NextRequest) {
           const hasFactor = !!factorData?.factors?.length;
           send({
             step: 6, total: TOTAL, progress: 64,
-            label: hasKosV2 && hasVariant && hasFactor ? "AI 심화 + 세부 유형 + 판매 지표 완료"
-              : (hasKosV2 || hasVariant || hasFactor) ? "분석 완료 (일부 누락)"
-              : "AI 분석 (실패)",
+            label: hasKosV2 && hasVariant && hasFactor ? "🔍 STEP 2 · 💡 STEP 3 · 완료"
+              : (hasKosV2 || hasVariant || hasFactor) ? "🔍 STEP 2 · 💡 STEP 3 · 일부 완료"
+              : "AI 분석 실패",
           });
 
-          // ── Step 7: 크리에이티브 + 작년 인기 키워드 (병렬, v2 캐시 활용) ──
-          send({ step: 7, total: TOTAL, label: "크리에이티브 + 시즌 키워드 탐색 중...", progress: 68 });
+          // ── Step 7: STEP 3 크리에이티브 + 시즌 기회 (병렬, v2 캐시 활용) ──
+          send({ step: 7, total: TOTAL, label: "💡 STEP 3 · 크리에이티브 + 시즌 기회 탐색 중...", progress: 68 });
           const [creative, historical] = await Promise.allSettled([
             fetch(`${BASE_URL}/api/keywords-creative?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/keywords-historical?keyword=${kw}`, fetchOpt).then(r => r.json()),
@@ -259,27 +259,27 @@ export async function GET(req: NextRequest) {
 
           send({
             step: 7, total: TOTAL, progress: 74,
-            label: hasCreative && hasHistorical ? "크리에이티브 + 시즌 키워드 완료"
-              : hasCreative || hasHistorical ? "키워드 탐색 완료 (일부 누락)"
-              : "키워드 탐색 (실패)",
+            label: hasCreative && hasHistorical ? "💡 STEP 3 · 크리에이티브 + 시즌 완료"
+              : hasCreative || hasHistorical ? "💡 STEP 3 · 일부 완료"
+              : "💡 STEP 3 · 탐색 실패",
           });
 
-          // ── Step 8: 그래프 추천 ──
-          send({ step: 8, total: TOTAL, label: "연관 키워드 그래프 분석 중...", progress: 78 });
+          // ── Step 8: STEP 3 연관 키워드 그래프 ──
+          send({ step: 8, total: TOTAL, label: "💡 STEP 3 · 연관 키워드 그래프 분석 중...", progress: 78 });
           const graphRaw = await fetch(`${BASE_URL}/api/keywords-graph?keyword=${kw}`, fetchOpt).then(r => r.json()).catch(() => null);
           const hasGraph = graphRaw?.keywords?.length > 0;
           send({
             step: 8, total: TOTAL, progress: 84,
-            label: hasGraph ? "그래프 추천 완료" : "그래프 추천 (일부 실패)",
+            label: hasGraph ? "💡 STEP 3 · 그래프 완료" : "💡 STEP 3 · 그래프 실패",
           });
 
-          // ── Step 9: 결론 생성 ──
-          send({ step: 9, total: TOTAL, label: "결론 생성 중...", progress: 88 });
+          // ── Step 9: STEP 4 최종 후보 + STEP 6 결론 생성 ──
+          send({ step: 9, total: TOTAL, label: "🏆 STEP 4 · 🎯 STEP 6 · 최종 후보 비교 + 결론 생성 중...", progress: 88 });
           const conclusionRaw = await fetch(`${BASE_URL}/api/conclusion?keyword=${kw}&platform=${platform}&generate=true`, fetchOpt).then(r => r.json()).catch(() => null);
           const hasConclusion = !!conclusionRaw?.conclusion;
           send({
             step: 9, total: TOTAL, progress: 94,
-            label: hasConclusion ? "결론 생성 완료" : "결론 생성 (건너뜀)",
+            label: hasConclusion ? "🎯 STEP 6 · 결론 생성 완료" : "🎯 STEP 6 · 결론 건너뜀",
           });
 
           // ── Step 10: 최종 검증 ──
@@ -320,7 +320,7 @@ export async function GET(req: NextRequest) {
           send({
             step: 10,
             total: TOTAL,
-            label: partial ? "분석 완료 (일부 데이터 누락)" : "모든 분석 완료!",
+            label: partial ? "✨ 분석 완료 (일부 데이터 누락)" : "✨ 모든 분석 완료!",
             progress: 100,
             done: true,
             partial,

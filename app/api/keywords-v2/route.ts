@@ -30,6 +30,7 @@ import { generateOntologyLongtails, classifyKeyword } from "@/lib/ontology";
 import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { searchNaver } from "@/lib/naver";
 import { calcCreativityScore, calcCreativityChanceScore } from "@/lib/creativity-score";
+import { validateKeyword } from "@/lib/keyword-validator";
 
 export const V2_CACHE_TYPE = "keywords_v2_18"; // 카테고리 기반 수식어 필터링 (v17→v18)
 const CACHE_TYPE = V2_CACHE_TYPE; // 기존 코드 호환용 alias
@@ -177,10 +178,12 @@ const COMP_MULT: Record<string, number> = {
 };
 
 export async function GET(req: NextRequest) {
-  const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
-  if (!keyword) {
-    return NextResponse.json({ error: "keyword 파라미터 필요" }, { status: 400 });
+  const rawKeyword = req.nextUrl.searchParams.get("keyword")?.trim();
+  const validation = validateKeyword(rawKeyword);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const keyword = rawKeyword as string;
 
   const cached = cache.get<KeywordV2[]>(keyword);
   if (cached) return NextResponse.json({ keywords: cached, cached: true });
@@ -452,11 +455,25 @@ export async function GET(req: NextRequest) {
       const toCheck = sorted.slice(0, 20);      // 15→20: 검증 범위 확대
       const noProductSet = new Set<string>();
 
-      const checks = await Promise.all(
-        toCheck.map(async (r) => {
-          // L2 캐시 확인
-          const cached = await getL2Cache<boolean>(r.keyword, "product_exists");
-          if (cached !== null) return { keyword: r.keyword, exists: cached };
+      // L2 캐시 일괄 병렬 조회 (과거: 순차 → 현재: Promise.all)
+      const l2Results = await Promise.all(
+        toCheck.map((r) => getL2Cache<boolean>(r.keyword, "product_exists"))
+      );
+
+      const cacheHits: Array<{ keyword: string; exists: boolean }> = [];
+      const cacheMisses: typeof toCheck = [];
+      for (let i = 0; i < toCheck.length; i++) {
+        const l2 = l2Results[i];
+        if (l2 !== null) {
+          cacheHits.push({ keyword: toCheck[i].keyword, exists: l2 });
+        } else {
+          cacheMisses.push(toCheck[i]);
+        }
+      }
+
+      // 캐시 미스만 실제 네이버 API 호출
+      const missResults = await Promise.all(
+        cacheMisses.map(async (r) => {
           try {
             const res = await searchNaver(r.keyword, 1);
             const exists = res.total > 0;
@@ -467,6 +484,8 @@ export async function GET(req: NextRequest) {
           }
         })
       );
+
+      const checks = [...cacheHits, ...missResults];
       for (const c of checks) if (!c.exists) noProductSet.add(c.keyword);
       // 검증 못 한 나머지: 구체성 45+ 이면 살리고, 미만이면 제거
       for (const r of sorted.slice(20)) {

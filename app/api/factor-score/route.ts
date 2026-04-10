@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import NodeCache from "node-cache";
 import { fetchNaverScoreData } from "@/lib/search";
 import { getKeywordTrend } from "@/lib/datalab";
 import { classifyKeywordIntent } from "@/lib/intent-classifier";
 import { calcFactorScores, type FactorInput, type Platform } from "@/lib/factor-model";
-
-const factorCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
+import { factorCache } from "@/lib/factor-cache";
+import { validateKeyword } from "@/lib/keyword-validator";
 
 export async function GET(req: NextRequest) {
-  const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
+  const rawKeyword = req.nextUrl.searchParams.get("keyword")?.trim();
   const platform = (req.nextUrl.searchParams.get("platform") ?? "naver") as Platform;
 
-  if (!keyword) {
-    return NextResponse.json({ error: "keyword required" }, { status: 400 });
+  const validation = validateKeyword(rawKeyword);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
+  const keyword = rawKeyword as string;
 
   // L1 캐시 히트
   const cacheKey = `factor:${keyword}:${platform}`;

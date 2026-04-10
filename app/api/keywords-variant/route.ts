@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import NodeCache from "node-cache";
 import { classifyKeywordV2, getNodesV2 } from "@/lib/ontology/index";
+import { validateKeyword } from "@/lib/keyword-validator";
 
 const cache = new NodeCache({ stdTTL: 3600 });
 
 export async function GET(req: NextRequest) {
-  const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
-  if (!keyword) return NextResponse.json({ error: "keyword 파라미터 필요" }, { status: 400 });
+  const rawKeyword = req.nextUrl.searchParams.get("keyword")?.trim();
+  const validation = validateKeyword(rawKeyword);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+  const keyword = rawKeyword as string;
 
   const cacheKey = `var:${keyword}`;
   const l1 = cache.get<{ keywords: { keyword: string }[]; category: string | null }>(cacheKey);
