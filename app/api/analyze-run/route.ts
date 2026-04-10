@@ -297,8 +297,9 @@ export async function GET(req: NextRequest) {
             return;
           }
 
-          // 부분 실패 — 핵심 데이터(추천 키워드)만 판정, factor-score는 보조 데이터
-          const partial = !hasVariant || !hasKosV2 || !hasGraph || !hasCreative;
+          // 부분 실패 — 핵심 데이터(추천 키워드)만 판정
+          // variant는 보조 데이터 (variantKeywords 미정의 카테고리에서 빈 결과 정상)
+          const partial = !hasKosV2 || !hasGraph || !hasCreative;
 
           // 스냅샷 저장 (결과 보기 시 즉시 로드 — 키워드 추천 포함)
           saveSnapshot(userId, keyword, platform, {
