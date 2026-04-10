@@ -8,9 +8,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { supabase } from "@/lib/db";
 
+/**
+ * 10% 샘플링 — DB 쓰기량 90% 절감
+ * 요청의 ~10%만 실제 저장하되, 클릭(reward) 이벤트는 별도 경로에서 항상 저장
+ */
+const SAMPLE_RATE = 0.1;
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id || !supabase) return NextResponse.json({ ok: true });
+
+  // 10% 확률로만 저장 — 통계적으로 충분하고 DB 비용 대폭 절감
+  if (Math.random() >= SAMPLE_RATE) return NextResponse.json({ ok: true });
 
   try {
     const { queryKeyword, candidates, modelVersion } = await req.json();

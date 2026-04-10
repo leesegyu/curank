@@ -118,13 +118,14 @@ export async function GET(req: NextRequest) {
               const overflow = rows.slice(planLimits.historyMax);
               const deleteIds = overflow.map((r) => r.id);
               await supabaseAdmin.from("analysis_history").delete().in("id", deleteIds);
-              // 연동 삭제: 삭제된 이력의 snapshot/conclusion도 함께 정리
-              for (const r of overflow) {
+              // 연동 삭제(cascade): 삭제된 이력의 snapshot/conclusion도 함께 정리
+              const cascadeOps = overflow.flatMap((r) => [
                 supabaseAdmin.from("analysis_snapshots").delete()
-                  .eq("user_id", userId).eq("keyword", r.keyword).eq("platform", r.platform).then(() => {});
+                  .eq("user_id", userId).eq("keyword", r.keyword).eq("platform", r.platform),
                 supabaseAdmin.from("analysis_conclusions").delete()
-                  .eq("user_id", userId).eq("keyword", r.keyword).eq("platform", r.platform).then(() => {});
-              }
+                  .eq("user_id", userId).eq("keyword", r.keyword).eq("platform", r.platform),
+              ]);
+              Promise.all(cascadeOps).catch(() => {});
             }
           });
 

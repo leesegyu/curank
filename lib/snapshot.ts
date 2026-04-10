@@ -1,12 +1,13 @@
 /**
  * 분석 결과 스냅샷 — 과거 분석 재방문 시 API 재호출 없이 즉시 로드
+ * ★ 슬림 정책: raw data(products 배열, naverScoreData) 제거, 요약만 저장
  */
 import { supabase } from "./db";
 
 export interface AnalysisSnapshot {
   result: unknown;
   trend: unknown;
-  naverScoreData: unknown;
+  naverScoreData?: unknown;   // ← 더 이상 저장하지 않음 (하위 호환용 optional)
   demographics?: unknown;
   // 키워드 추천 데이터 (재방문 시 API 호출 0)
   keywordsV1?: unknown;      // Blue Ocean
@@ -18,6 +19,29 @@ export interface AnalysisSnapshot {
   keywordsSeasonOpp?: unknown;  // 시즌 기회 (Historical + V2 융합)
   competitorThreat?: unknown; // 경쟁 위협도
   brandDistribution?: unknown; // 브랜드/상호명 분포
+}
+
+/**
+ * 스냅샷 저장 전 raw data 제거 — DB 용량 대폭 절감
+ * - result.products (상품 목록 전체) 제거
+ * - result.relatedKeywords 제거
+ * - naverScoreData 제거
+ */
+function slimSnapshot(snapshot: AnalysisSnapshot): AnalysisSnapshot {
+  const slim = { ...snapshot };
+
+  // naverScoreData 는 analyze() 입력값이지 출력이 아님 → 저장 불필요
+  delete slim.naverScoreData;
+
+  // result 에서 대용량 배열 제거
+  if (slim.result && typeof slim.result === "object") {
+    const r = { ...(slim.result as Record<string, unknown>) };
+    delete r.products;
+    delete r.relatedKeywords;
+    slim.result = r;
+  }
+
+  return slim;
 }
 
 export interface SnapshotRow {
@@ -44,7 +68,7 @@ export async function getSnapshot(
   return data as SnapshotRow;
 }
 
-/** 스냅샷 저장 (upsert) */
+/** 스냅샷 저장 (upsert) — 자동 슬림화 적용 */
 export async function saveSnapshot(
   userId: string,
   keyword: string,
@@ -59,7 +83,7 @@ export async function saveSnapshot(
         user_id: userId,
         keyword,
         platform,
-        snapshot,
+        snapshot: slimSnapshot(snapshot),
         created_at: new Date().toISOString(),
       },
       { onConflict: "user_id,keyword,platform" }
