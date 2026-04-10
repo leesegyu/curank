@@ -1,134 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import NodeCache from "node-cache";
+import { searchNaver } from "@/lib/naver";
 import { getL2Cache, setL2Cache } from "@/lib/cache-db";
 
+/**
+ * "이 키워드 쿠팡 TOP 5 상품" API
+ *
+ * 전략:
+ * 1. 네이버 쇼핑 API로 상위 상품 정보 수집 (이미지/가격/리뷰 등)
+ *    - 쿠팡 직접 스크래핑은 Cloudflare/Vercel IP 차단으로 실패
+ *    - 네이버 쇼핑은 안정적이고 이미 인프라가 있음
+ * 2. 각 상품에 대응하는 "쿠팡 검색" URL 생성 (lptag 포함)
+ *    - 상품명으로 쿠팡 검색 → 유사 상품 노출 → 파트너스 수수료
+ * 3. 경쟁 분석용 정보 제공 (이미지/가격대/브랜드 파악)
+ */
+
 const CACHE_TYPE = "coupang_products";
-const cache = new NodeCache({ stdTTL: 3600 }); // L1: 1시간
+const cache = new NodeCache({ stdTTL: 3600 });
 
-const PARTNERS_ID = process.env.COUPANG_PARTNERS_ID || process.env.NEXT_PUBLIC_COUPANG_PARTNERS_ID || "";
+const PARTNERS_ID =
+  process.env.COUPANG_PARTNERS_ID ||
+  process.env.NEXT_PUBLIC_COUPANG_PARTNERS_ID ||
+  "";
 
-interface CoupangProduct {
+interface TopProduct {
   title: string;
   imageUrl: string;
   price: number;
-  originalPrice?: number;
-  discount?: number;
-  rating: number;
-  reviewCount: number;
-  productUrl: string;
-  rocketDelivery: boolean;
+  mallName: string;
+  brand: string;
+  category: string;
+  /** 해당 상품명으로 쿠팡 검색하는 URL (파트너스 추적 포함) */
+  coupangSearchUrl: string;
+  /** 원본(네이버) 상품 URL */
+  sourceUrl: string;
 }
 
-interface CoupangProductsResponse {
+interface Response {
   keyword: string;
-  products: CoupangProduct[];
-  fallback: boolean;
-  searchUrl: string;
+  products: TopProduct[];
+  /** 키워드 자체의 쿠팡 검색 URL (전체 보기 버튼용) */
+  coupangKeywordUrl: string;
 }
 
-/**
- * 쿠팡 검색 페이지 스크래핑 — 상위 상품 5개 추출
- * Cloudflare 탐지 우회를 위해 최신 브라우저 헤더 사용
- */
-async function scrapeCoupangSearch(keyword: string): Promise<CoupangProduct[]> {
-  const searchUrl = `https://www.coupang.com/np/search?component=&q=${encodeURIComponent(keyword)}&channel=user`;
+function buildCoupangSearchUrl(query: string): string {
+  const base = `https://www.coupang.com/np/search?q=${encodeURIComponent(query)}`;
+  return PARTNERS_ID ? `${base}&lptag=${PARTNERS_ID}` : base;
+}
 
-  const res = await fetch(searchUrl, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-      "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
-      "Accept-Encoding": "gzip, deflate, br",
-      Referer: "https://www.coupang.com/",
-      "Cache-Control": "no-cache",
-      Pragma: "no-cache",
-      "Upgrade-Insecure-Requests": "1",
-    },
-    cache: "no-store",
-    signal: AbortSignal.timeout(8000),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Coupang HTTP ${res.status}`);
-  }
-
-  const html = await res.text();
-  const products: CoupangProduct[] = [];
-
-  // 쿠팡 검색 결과 상품 블록 파싱
-  // <li class="search-product ... " data-product-id="123"> ... </li>
-  const itemRegex =
-    /<li[^>]*class="[^"]*search-product[^"]*"[^>]*data-product-id="(\d+)"[\s\S]*?<\/li>/g;
-
-  const matches = Array.from(html.matchAll(itemRegex)).slice(0, 15);
-
-  for (const m of matches) {
-    const block = m[0];
-    const productId = m[1];
-
-    // 상품명
-    const titleMatch = block.match(/class="name"[^>]*>([^<]+)</);
-    if (!titleMatch) continue;
-    const title = titleMatch[1].trim();
-
-    // 가격
-    const priceMatch = block.match(/class="price-value"[^>]*>([\d,]+)/);
-    if (!priceMatch) continue;
-    const price = parseInt(priceMatch[1].replace(/,/g, ""), 10);
-    if (isNaN(price) || price === 0) continue;
-
-    // 원가 (할인 있을 때)
-    const originalMatch = block.match(/class="base-price"[^>]*>([\d,]+)/);
-    const originalPrice = originalMatch
-      ? parseInt(originalMatch[1].replace(/,/g, ""), 10)
-      : undefined;
-
-    // 할인율
-    const discountMatch = block.match(/class="discount-percentage"[^>]*>(\d+)/);
-    const discount = discountMatch ? parseInt(discountMatch[1], 10) : undefined;
-
-    // 이미지 URL
-    const imgMatch = block.match(/class="search-product-wrap-img"[^>]*src="([^"]+)"/)
-      || block.match(/<img[^>]*src="(\/\/[^"]+)"/);
-    let imageUrl = imgMatch ? imgMatch[1] : "";
-    if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
-
-    // 별점
-    const ratingMatch = block.match(/class="star"[^>]*rating="([\d.]+)"/)
-      || block.match(/class="rating"[^>]*>([\d.]+)/);
-    const rating = ratingMatch ? parseFloat(ratingMatch[1]) : 0;
-
-    // 리뷰 수
-    const reviewMatch = block.match(/class="rating-total-count"[^>]*>\(([\d,]+)\)/);
-    const reviewCount = reviewMatch
-      ? parseInt(reviewMatch[1].replace(/,/g, ""), 10)
-      : 0;
-
-    // 로켓배송 여부
-    const rocketDelivery = /rocket|로켓/i.test(block);
-
-    // 상품 URL (파트너스 추적 포함)
-    const baseUrl = `https://www.coupang.com/vp/products/${productId}`;
-    const productUrl = PARTNERS_ID ? `${baseUrl}?lptag=${PARTNERS_ID}` : baseUrl;
-
-    products.push({
-      title,
-      imageUrl,
-      price,
-      originalPrice: originalPrice !== price ? originalPrice : undefined,
-      discount,
-      rating,
-      reviewCount,
-      productUrl,
-      rocketDelivery,
-    });
-
-    if (products.length >= 5) break;
-  }
-
-  return products;
+/** 상품명에서 브랜드/수식어 제거하여 검색 품질 향상 (옵션) */
+function cleanForSearch(title: string): string {
+  // 특수문자/괄호 제거, 30자 이내로 제한
+  return title
+    .replace(/[\[\](){}<>]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 40);
 }
 
 export async function GET(req: NextRequest) {
@@ -136,30 +63,58 @@ export async function GET(req: NextRequest) {
   if (!keyword)
     return NextResponse.json({ error: "keyword 파라미터 필요" }, { status: 400 });
 
-  // 쿠팡 검색 URL (파트너스 추적 포함) — fallback 용도
-  const baseSearchUrl = `https://www.coupang.com/np/search?q=${encodeURIComponent(keyword)}`;
-  const searchUrl = PARTNERS_ID
-    ? `${baseSearchUrl}&lptag=${PARTNERS_ID}`
-    : baseSearchUrl;
+  const coupangKeywordUrl = buildCoupangSearchUrl(keyword);
 
   // L1 캐시
-  const l1 = cache.get<CoupangProductsResponse>(keyword);
+  const l1 = cache.get<Response>(keyword);
   if (l1) return NextResponse.json(l1);
 
-  // L2 캐시 (Supabase, 24시간)
-  const l2 = await getL2Cache<CoupangProductsResponse>(keyword, CACHE_TYPE);
+  // L2 캐시 (24시간)
+  const l2 = await getL2Cache<Response>(keyword, CACHE_TYPE);
   if (l2) {
     cache.set(keyword, l2);
     return NextResponse.json(l2);
   }
 
   try {
-    const products = await scrapeCoupangSearch(keyword);
-    const response: CoupangProductsResponse = {
+    const shopResult = await searchNaver(keyword, 10); // 상위 10개 가져와서 필터 후 5개 선별
+
+    // 이미지와 가격이 있는 상품만 필터, 같은 브랜드 중복 제거
+    const seen = new Set<string>();
+    const products: TopProduct[] = [];
+
+    for (const item of shopResult.items) {
+      if (products.length >= 5) break;
+      if (!item.image || !item.lprice) continue;
+
+      const price = parseInt(item.lprice, 10);
+      if (isNaN(price) || price <= 0) continue;
+
+      // 같은 몰 중복 방지 (다양성 확보)
+      const dedupeKey = item.mallName || item.brand || item.title.slice(0, 10);
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+
+      const searchQuery = cleanForSearch(item.title);
+
+      products.push({
+        title: item.title,
+        imageUrl: item.image,
+        price,
+        mallName: item.mallName || "",
+        brand: item.brand || "",
+        category: [item.category1, item.category2, item.category3]
+          .filter(Boolean)
+          .join(" > "),
+        coupangSearchUrl: buildCoupangSearchUrl(searchQuery),
+        sourceUrl: item.link,
+      });
+    }
+
+    const response: Response = {
       keyword,
       products,
-      fallback: products.length === 0,
-      searchUrl,
+      coupangKeywordUrl,
     };
 
     cache.set(keyword, response);
@@ -167,14 +122,14 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(response);
   } catch (err) {
-    console.warn("[coupang-products] 스크래핑 실패:", err instanceof Error ? err.message : err);
-    // 스크래핑 실패 → fallback 응답 (검색 링크만)
-    const response: CoupangProductsResponse = {
+    console.warn(
+      "[coupang-products] 네이버 쇼핑 조회 실패:",
+      err instanceof Error ? err.message : err,
+    );
+    return NextResponse.json({
       keyword,
       products: [],
-      fallback: true,
-      searchUrl,
-    };
-    return NextResponse.json(response);
+      coupangKeywordUrl,
+    });
   }
 }
