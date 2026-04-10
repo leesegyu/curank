@@ -328,7 +328,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["캠핑", "텐트", "캠핑의자"],
     seedKeywords: [] },
   { id: "cp.sports.camping.gear", name: "캠핑장비", level: 3, parent: "cp.sports.camping",
-    matchKeywords: ["텐트", "캠핑의자", "캠핑테이블", "타프", "원터치텐트", "돔텐트", "차박텐트", "백패킹텐트"],
+    matchKeywords: ["텐트", "캠핑의자", "캠핑테이블", "타프", "원터치텐트", "돔텐트", "차박텐트", "백패킹텐트", "캠핑텐트"],
     seedKeywords: [
       "원터치 텐트 2인용 팝업", "경량 폴딩 캠핑의자",
       "접이식 알루미늄 테이블", "쿠팡 로켓배송 텐트",
@@ -346,7 +346,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["강아지", "개", "반려견"],
     seedKeywords: [] },
   { id: "cp.pet.dog.food", name: "강아지 사료/간식", level: 3, parent: "cp.pet.dog",
-    matchKeywords: ["사료", "강아지사료", "개간식", "애견", "건사료", "습식사료"],
+    matchKeywords: ["사료", "강아지사료", "개간식", "애견", "건사료", "습식사료", "간식", "츄르"],
     seedKeywords: [
       "강아지 사료 소형견 6kg", "강아지 간식 덴탈껌",
       "소프트 사료 노견용", "연어 그레인프리 사료",
@@ -382,7 +382,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["기저귀", "물티슈", "팬티기저귀"],
     seedKeywords: [] },
   { id: "cp.baby.diaper.item", name: "기저귀", level: 3, parent: "cp.baby.diaper",
-    matchKeywords: ["기저귀", "팬티기저귀", "밤기저귀", "밴드형기저귀", "신생아기저귀"],
+    matchKeywords: ["기저귀", "팬티기저귀", "밤기저귀", "밴드형기저귀", "신생아기저귀", "물티슈"],
     seedKeywords: [
       "로켓배송 기저귀 밴드형 대형", "팬티기저귀 대용량 박스",
       "밤기저귀 오버나이트 특대", "유기농 기저귀 신생아",
@@ -393,7 +393,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["수유", "젖병", "이유식"],
     seedKeywords: [] },
   { id: "cp.baby.feeding.bottle", name: "젖병/컵", level: 3, parent: "cp.baby.feeding",
-    matchKeywords: ["젖병", "빨대컵", "이유식용기", "PPSU젖병", "아기식판"],
+    matchKeywords: ["젖병", "빨대컵", "이유식용기", "PPSU젖병", "아기식판", "물병"],
     seedKeywords: [
       "PPSU 젖병 260ml 세트", "누수방지 빨대컵 아기",
       "실리콘 이유식 용기 세트", "아기 식판 흡착형",
@@ -411,7 +411,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["청소", "세탁", "세제", "물걸레"],
     seedKeywords: [] },
   { id: "cp.living.cleaning.item", name: "청소용품", level: 3, parent: "cp.living.cleaning",
-    matchKeywords: ["물걸레", "청소포", "세제", "섬유유연제", "곰팡이제거제", "유리세정제"],
+    matchKeywords: ["물걸레", "청소포", "세제", "섬유유연제", "곰팡이제거제", "유리세정제", "세탁세제", "주방세제"],
     seedKeywords: [
       "물걸레 청소기 패드 40매", "세탁세제 캡슐 대용량",
       "섬유유연제 고농축 3L", "화장실 곰팡이 제거제",
@@ -597,7 +597,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["욕실", "칫솔", "치약", "비누", "샤워"],
     seedKeywords: [] },
   { id: "cp.living.bath.toothcare", name: "구강관리", level: 3, parent: "cp.living.bath",
-    matchKeywords: ["칫솔", "치약", "전동칫솔", "치실", "가글", "구강청결제", "구강세정기"],
+    matchKeywords: ["칫솔", "치약", "전동칫솔", "치실", "가글", "구강청결제", "구강세정기", "음파칫솔", "미백치약", "잇몸치약"],
     seedKeywords: [
       "전동칫솔 음파진동 2분타이머", "미백 치약 불소 3개세트",
       "치실 워터플로서 구강세정기", "가글 구강청결제 1L 대용량",
@@ -605,7 +605,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["전동칫솔", "미백치약", "구강세정기", "구강청결제", "칫솔살균기", "치간칫솔"] },
   { id: "cp.living.bath.towel", name: "수건/목욕용품", level: 3, parent: "cp.living.bath",
-    matchKeywords: ["수건", "목욕수건", "타월", "때밀이", "등밀이", "헤어타월"],
+    matchKeywords: ["수건", "목욕수건", "타월", "때밀이", "등밀이", "헤어타월", "세면타월"],
     seedKeywords: [
       "호텔식 목욕수건 140x70 5장", "극세사 헤어타월 빠른건조",
       "때밀이 이태리타올 100장", "등밀이 타올 손잡이 롱",
@@ -621,7 +621,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["규조토발매트", "미끄럼방지매트", "방수샤워커튼", "메모리폼발매트", "욕실거름망"] },
   { id: "cp.living.bath.soap", name: "비누/바디워시", level: 3, parent: "cp.living.bath",
-    matchKeywords: ["비누", "바디워시", "핸드워시", "손세정제", "천연비누", "자동디스펜서"],
+    matchKeywords: ["비누", "바디워시", "핸드워시", "손세정제", "천연비누", "자동디스펜서", "세정제"],
     seedKeywords: [
       "대용량 바디워시 1000ml 보습", "핸드워시 자동디스펜서 세트",
       "천연 수제비누 선물세트", "아이 순한 바디워시 저자극",
@@ -889,7 +889,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["TV", "텔레비전", "모니터", "빔프로젝터"],
     seedKeywords: [] },
   { id: "cp.digital.tv.television", name: "TV", level: 3, parent: "cp.digital.tv",
-    matchKeywords: ["TV", "스마트TV", "OLED", "QLED", "4K", "대형TV", "안드로이드TV"],
+    matchKeywords: ["TV", "스마트TV", "OLED", "QLED", "4K", "대형TV", "안드로이드TV", "텔레비전"],
     seedKeywords: [
       "55인치 4K 스마트TV UHD", "75인치 대형TV 거실용",
       "OLED TV 65인치 프리미엄", "가성비 43인치 FHD TV",
@@ -926,7 +926,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["양문형냉장고", "미니냉장고", "4도어냉장고", "김치냉장고", "원룸냉장고", "비스포크냉장고"] },
   { id: "cp.digital.major.washer", name: "세탁기/건조기", level: 3, parent: "cp.digital.major",
-    matchKeywords: ["세탁기", "건조기", "드럼세탁기", "통돌이", "일체형", "미니세탁기"],
+    matchKeywords: ["세탁기", "건조기", "드럼세탁기", "통돌이", "일체형", "미니세탁기", "세탁건조기"],
     seedKeywords: [
       "드럼세탁기 12kg 에너지1등급", "통돌이 세탁기 10kg 가성비",
       "의류건조기 히트펌프 9kg", "미니 세탁기 아기옷 3kg",
@@ -934,7 +934,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["드럼세탁기", "통돌이세탁기", "히트펌프건조기", "미니세탁기", "올인원세탁건조기"] },
   { id: "cp.digital.major.ac", name: "에어컨/선풍기", level: 3, parent: "cp.digital.major",
-    matchKeywords: ["에어컨", "선풍기", "서큘레이터", "냉풍기", "제습기", "이동식에어컨"],
+    matchKeywords: ["에어컨", "선풍기", "서큘레이터", "냉풍기", "제습기", "이동식에어컨", "냉방기", "에어서큘레이터"],
     seedKeywords: [
       "벽걸이 에어컨 7평 인버터", "이동식 에어컨 원룸 공사불필요",
       "타워형 선풍기 DC모터 저소음", "서큘레이터 3D회전 강력",
@@ -1158,7 +1158,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["손상모헤어팩", "아르간헤어오일", "단백질트리트먼트", "열보호에센스", "헤어슬리핑팩"] },
   { id: "cp.beauty.hair.styling", name: "스타일링/기기", level: 3, parent: "cp.beauty.hair",
-    matchKeywords: ["왁스", "고데기", "헤어드라이기", "스프레이", "젤", "컬링아이론"],
+    matchKeywords: ["왁스", "고데기", "헤어드라이기", "스프레이", "젤", "컬링아이론", "헤어아이론", "매직기"],
     seedKeywords: [
       "매트 왁스 남성 내추럴 홀드", "미니 고데기 여행용 휴대",
       "음이온 헤어드라이기 대풍량", "볼륨 스프레이 뿌리 셋팅",
@@ -1169,7 +1169,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["바디워시", "바디로션", "핸드크림", "바디스크럽"],
     seedKeywords: [] },
   { id: "cp.beauty.body.wash", name: "바디워시/비누", level: 3, parent: "cp.beauty.body",
-    matchKeywords: ["바디워시", "비누", "샤워젤", "천연비누", "클렌징바", "약산성바디워시"],
+    matchKeywords: ["바디워시", "비누", "샤워젤", "천연비누", "클렌징바", "약산성바디워시", "핸드워시", "세정제"],
     seedKeywords: [
       "보습 바디워시 대용량 1L", "약산성 민감성 바디클렌저",
       "천연 수제비누 선물세트 6개", "향기좋은 샤워젤 프리미엄",
@@ -1188,7 +1188,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["향수", "디퓨저", "캔들", "방향제"],
     seedKeywords: [] },
   { id: "cp.beauty.perfume.fragrance", name: "향수", level: 3, parent: "cp.beauty.perfume",
-    matchKeywords: ["향수", "오드퍼퓸", "니치향수", "데일리향수", "미니향수", "남성향수"],
+    matchKeywords: ["향수", "오드퍼퓸", "니치향수", "데일리향수", "미니향수", "남성향수", "퍼퓸", "바디미스트"],
     seedKeywords: [
       "여성 데일리 향수 플로럴 50ml", "남성 우디 향수 시트러스",
       "미니 향수 세트 선물용 5ml", "니치 향수 유니섹스 50ml",
@@ -1217,7 +1217,7 @@ export const COUPANG_NODES: OntologyNode[] = [
 
   // ── 홈인테리어 L3 확장 ──
   { id: "cp.home.furniture.desk", name: "책상/의자", level: 3, parent: "cp.home.furniture",
-    matchKeywords: ["책상", "컴퓨터책상", "사무용의자", "게이밍체어", "게이밍의자", "스탠딩데스크", "학생의자", "접이식의자"],
+    matchKeywords: ["책상", "컴퓨터책상", "사무용의자", "게이밍체어", "게이밍의자", "스탠딩데스크", "학생의자", "접이식의자", "데스크"],
     seedKeywords: [
       "전동 스탠딩데스크 높이조절", "L자형 컴퓨터 책상 코너",
       "메쉬 사무용 의자 요추 받침", "게이밍 체어 리클라이닝",
@@ -1241,7 +1241,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["저상침대", "수납침대", "접이식침대", "이층침대", "원목침대", "호텔침대", "싱글침대"] },
   { id: "cp.home.bedding.blanket", name: "이불/침구커버", level: 3, parent: "cp.home.bedding",
-    matchKeywords: ["이불", "이불커버", "차렵이불", "여름이불", "구스다운이불", "시어서커이불"],
+    matchKeywords: ["이불", "이불커버", "차렵이불", "여름이불", "구스다운이불", "시어서커이불", "극세사이불"],
     seedKeywords: [
       "여름 시어서커 이불 퀸", "극세사 겨울이불 따뜻한",
       "차렵이불 4계절 면 더블", "구스다운 이불 프리미엄",
@@ -1432,7 +1432,7 @@ export const COUPANG_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["대형곰인형", "애착인형", "공룡피규어", "캐릭터인형", "봉제인형", "실바니안"] },
   { id: "cp.baby.toy.outdoor", name: "실외놀이/킥보드", level: 3, parent: "cp.baby.toy",
-    matchKeywords: ["킥보드", "세발자전거", "미끄럼틀", "모래놀이", "물놀이", "LED킥보드"],
+    matchKeywords: ["킥보드", "세발자전거", "미끄럼틀", "모래놀이", "물놀이", "LED킥보드", "전동킥보드"],
     seedKeywords: [
       "접이식 킥보드 어린이 LED바퀴", "세발자전거 푸쉬바 12개월",
       "실내 미끄럼틀 그네세트", "모래놀이 양동이 세트",

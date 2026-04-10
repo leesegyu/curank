@@ -279,7 +279,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["신발", "운동화", "구두", "샌들", "슬리퍼"],
     seedKeywords: [] },
   { id: "ss.accessory.shoes.sneakers", name: "스니커즈/운동화", level: 3, parent: "ss.accessory.shoes",
-    matchKeywords: ["운동화", "스니커즈", "캔버스화", "슬립온", "러닝화", "워킹화", "트레일러닝화"],
+    matchKeywords: ["운동화", "스니커즈", "캔버스화", "슬립온", "러닝화", "워킹화", "트레일러닝화", "런닝화"],
     seedKeywords: [
       "쿠셔닝 남성 러닝화", "올화이트 캔버스 스니커즈",
       "슬립온 편한 신발", "여성 웨지 스니커즈",
@@ -354,7 +354,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["이어폰", "헤드폰", "스피커", "음향"],
     seedKeywords: [] },
   { id: "ss.digital.audio.earphone", name: "이어폰/헤드폰", level: 3, parent: "ss.digital.audio",
-    matchKeywords: ["이어폰", "헤드폰", "헤드셋", "에어팟", "무선이어폰", "TWS", "노이즈캔슬링", "골전도", "커널형", "스포츠이어폰"],
+    matchKeywords: ["이어폰", "헤드폰", "헤드셋", "에어팟", "무선이어폰", "TWS", "노이즈캔슬링", "골전도", "커널형", "스포츠이어폰", "이어버드"],
     seedKeywords: [
       "노이즈캔슬링 무선 이어폰", "유선 고음질 이어폰",
       "오픈형 무선 이어폰", "게이밍 헤드셋 7.1",
@@ -415,7 +415,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["리클라이너소파", "패브릭소파", "가죽소파", "1인소파", "코너소파", "좌식소파", "접이식소파"] },
   { id: "ss.furniture.living.storage", name: "수납/선반", level: 3, parent: "ss.furniture.living",
-    matchKeywords: ["선반", "수납", "책장", "서랍장", "행거", "수납박스"],
+    matchKeywords: ["선반", "수납", "책장", "서랍장", "행거", "수납박스", "정리함"],
     seedKeywords: [
       "벽걸이 원목 선반 3단", "이동식 바퀴 수납장",
       "패브릭 접이식 수납함", "아크릴 투명 서랍장",
@@ -462,7 +462,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["캠핑", "아웃도어", "텐트", "캠핑장비"],
     seedKeywords: [] },
   { id: "ss.sports.camping.gear", name: "캠핑장비", level: 3, parent: "ss.sports.camping",
-    matchKeywords: ["텐트", "캠핑의자", "캠핑테이블", "타프", "원터치텐트", "돔텐트", "차박텐트", "백패킹텐트"],
+    matchKeywords: ["텐트", "캠핑의자", "캠핑테이블", "타프", "원터치텐트", "돔텐트", "차박텐트", "백패킹텐트", "캠핑텐트"],
     seedKeywords: [
       "경량 폴딩 캠핑의자 1인", "원터치 팝업텐트 2인용",
       "알루미늄 접이식 테이블", "차박 에어매트 SUV",
@@ -845,7 +845,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["남성사각팬티", "여성면팬티", "드로즈", "냉감팬티", "레이스팬티", "기능성팬티"] },
   { id: "ss.fashion.underwear.socks", name: "양말", level: 3, parent: "ss.fashion.underwear",
-    matchKeywords: ["양말", "발목양말", "덧신", "스타킹", "압박스타킹", "등산양말", "면양말"],
+    matchKeywords: ["양말", "발목양말", "덧신", "스타킹", "압박스타킹", "등산양말", "면양말", "스포츠양말"],
     seedKeywords: [
       "남성 발목양말 10켤레 세트", "여성 덧신 실리콘 미끄럼방지",
       "등산 양말 두꺼운 쿠션", "무지 면 양말 기본 20켤레",
@@ -882,7 +882,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["셀프염색약", "새치염색", "거품염색", "헤나염색", "탈색제", "컬러샴푸"] },
   { id: "ss.beauty.hair.styling", name: "스타일링", level: 3, parent: "ss.beauty.hair",
-    matchKeywords: ["왁스", "스프레이", "젤", "포마드", "고데기", "헤어드라이어", "매트왁스"],
+    matchKeywords: ["왁스", "스프레이", "젤", "포마드", "고데기", "헤어드라이어", "매트왁스", "헤어아이론", "매직기"],
     seedKeywords: [
       "매트 왁스 남성 내추럴", "볼륨 스프레이 뿌리",
       "미니 고데기 여행용 휴대", "음이온 헤어드라이기 접이식",
@@ -895,7 +895,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["바디로션", "바디워시", "입욕제", "각질제거", "핸드크림"],
     seedKeywords: [] },
   { id: "ss.beauty.body.wash", name: "바디워시/비누", level: 3, parent: "ss.beauty.body",
-    matchKeywords: ["바디워시", "비누", "샤워젤", "클렌징바", "천연비누", "수제비누"],
+    matchKeywords: ["바디워시", "비누", "샤워젤", "클렌징바", "천연비누", "수제비누", "핸드워시", "세정제"],
     seedKeywords: [
       "보습 바디워시 1000ml 대용량", "약산성 민감성 바디워시",
       "천연 수제비누 선물세트", "아토피 순한 바디클렌저",
@@ -945,7 +945,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["향수", "퍼퓸", "디퓨저", "방향제", "향기"],
     seedKeywords: [] },
   { id: "ss.beauty.perfume.fragrance", name: "향수", level: 3, parent: "ss.beauty.perfume",
-    matchKeywords: ["향수", "오드퍼퓸", "오드뚜왈렛", "니치향수", "데일리향수", "미니향수"],
+    matchKeywords: ["향수", "오드퍼퓸", "오드뚜왈렛", "니치향수", "데일리향수", "미니향수", "퍼퓸", "바디미스트"],
     seedKeywords: [
       "여성 데일리 향수 플로럴", "남성 우디 향수 시트러스",
       "니치 향수 유니섹스 50ml", "미니 향수 세트 선물용",
@@ -1258,7 +1258,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["욕실", "칫솔", "치약", "수건", "욕실매트"],
     seedKeywords: [] },
   { id: "ss.health.bath.toothcare", name: "구강용품", level: 3, parent: "ss.health.bath",
-    matchKeywords: ["칫솔", "치약", "전동칫솔", "치실", "가글", "구강청결제", "음파칫솔"],
+    matchKeywords: ["칫솔", "치약", "전동칫솔", "치실", "가글", "구강청결제", "음파칫솔", "미백치약", "잇몸치약"],
     seedKeywords: [
       "전동칫솔 음파진동 교체형", "미백 치약 불소 120g 3개",
       "치실 왁스 50m 3개세트", "가글 구강청결제 대용량",
@@ -1295,7 +1295,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["세탁세제", "섬유유연제", "캡슐세제", "드럼세제", "울세제", "산소계표백제"] },
   { id: "ss.health.cleaning.mop", name: "청소용품", level: 3, parent: "ss.health.cleaning",
-    matchKeywords: ["물걸레", "밀대", "청소기", "먼지떨이", "유리세정제", "곰팡이제거제"],
+    matchKeywords: ["물걸레", "밀대", "청소기", "먼지떨이", "유리세정제", "곰팡이제거제", "로봇청소기"],
     seedKeywords: [
       "스프레이 물걸레 밀대 극세사", "무선 핸디 청소기 경량",
       "창문 유리 세정제 스프레이", "화장실 곰팡이 제거 스프레이",
@@ -1303,7 +1303,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["스프레이밀대", "극세사물걸레", "곰팡이제거제", "유리세정제", "정전기먼지떨이", "핸디청소기"] },
   { id: "ss.health.cleaning.organize", name: "정리/수납", level: 3, parent: "ss.health.cleaning",
-    matchKeywords: ["수납", "정리함", "리빙박스", "진공압축", "옷정리", "논슬립옷걸이"],
+    matchKeywords: ["수납", "정리함", "리빙박스", "진공압축", "옷정리", "논슬립옷걸이", "수납박스", "서랍장"],
     seedKeywords: [
       "리빙박스 투명 대형 3개", "진공 압축팩 이불 의류",
       "서랍 칸막이 정리함 속옷", "옷걸이 논슬립 벨벳 50개",
@@ -1357,7 +1357,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["침구", "이불", "베개", "매트리스", "수면"],
     seedKeywords: [] },
   { id: "ss.health.sleep.blanket", name: "이불/이불커버", level: 3, parent: "ss.health.sleep",
-    matchKeywords: ["이불", "이불커버", "여름이불", "차렵이불", "솜이불", "구스이불", "시어서커이불"],
+    matchKeywords: ["이불", "이불커버", "여름이불", "차렵이불", "솜이불", "구스이불", "시어서커이불", "극세사이불"],
     seedKeywords: [
       "여름 시어서커 이불 시원한", "극세사 겨울이불 퀸사이즈",
       "차렵이불 4계절 면 더블", "화이트구스 다운이불 프리미엄",
@@ -1365,7 +1365,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["시어서커이불", "극세사이불", "차렵이불", "구스다운이불", "면이불커버", "여름이불"] },
   { id: "ss.health.sleep.pillow", name: "베개/쿠션", level: 3, parent: "ss.health.sleep",
-    matchKeywords: ["베개", "경추베개", "메모리폼", "라텍스베개", "바디필로우", "쿨링베개"],
+    matchKeywords: ["베개", "경추베개", "메모리폼", "라텍스베개", "바디필로우", "쿨링베개", "메모리폼베개"],
     seedKeywords: [
       "메모리폼 경추베개 낮은높은", "천연 라텍스 베개 목편한",
       "구스다운 호텔 베개 푹신", "바디필로우 긴 베개 임산부",
@@ -1373,7 +1373,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["메모리폼경추베개", "라텍스베개", "구스다운베개", "바디필로우", "쿨링베개", "호텔베개"] },
   { id: "ss.health.sleep.mattress", name: "매트리스/토퍼", level: 3, parent: "ss.health.sleep",
-    matchKeywords: ["매트리스", "토퍼", "매트리스토퍼", "접이식매트리스", "라텍스매트리스", "메모리폼토퍼"],
+    matchKeywords: ["매트리스", "토퍼", "매트리스토퍼", "접이식매트리스", "라텍스매트리스", "메모리폼토퍼", "메모리폼"],
     seedKeywords: [
       "메모리폼 토퍼 7cm 퀸", "접이식 매트리스 원룸 3단",
       "라텍스 매트리스 허리 지지", "양면 사계절 매트리스",
@@ -1452,7 +1452,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["한글교구", "원목퍼즐", "코딩로봇", "과학실험키트", "자석교구", "어린이보드게임"] },
   { id: "ss.baby.toy.outdoor", name: "실외놀이/킥보드", level: 3, parent: "ss.baby.toy",
-    matchKeywords: ["킥보드", "자전거", "그네", "미끄럼틀", "모래놀이", "물놀이", "어린이킥보드"],
+    matchKeywords: ["킥보드", "자전거", "그네", "미끄럼틀", "모래놀이", "물놀이", "어린이킥보드", "전동킥보드"],
     seedKeywords: [
       "접이식 킥보드 어린이 LED", "세발자전거 푸쉬바 12개월",
       "실내 미끄럼틀 그네 세트", "모래놀이 세트 양동이",
@@ -1552,7 +1552,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["원예", "가드닝", "화분", "식물", "정원", "텃밭"],
     seedKeywords: [] },
   { id: "ss.leisure.garden.plant", name: "식물/화분", level: 3, parent: "ss.leisure.garden",
-    matchKeywords: ["화분", "관엽식물", "다육", "선인장", "공기정화식물", "꽃", "몬스테라", "스투키"],
+    matchKeywords: ["화분", "관엽식물", "다육", "선인장", "공기정화식물", "꽃", "몬스테라", "스투키", "플랜트", "화분받침"],
     seedKeywords: [
       "몬스테라 공기정화식물 대형", "다육이 모듬 세트 10종",
       "스투키 공기정화 개업 화분", "미니 화분 선인장 책상용",
@@ -1747,7 +1747,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     ],
     variantKeywords: ["로봇청소기", "무선청소기", "스팀청소기", "의류건조기", "물걸레로봇청소기", "핸디청소기"] },
   { id: "ss.digital.appliance.beauty", name: "뷰티가전", level: 3, parent: "ss.digital.appliance",
-    matchKeywords: ["고데기", "헤어드라이기", "제모기", "피부관리기", "LED마스크", "IPL제모기"],
+    matchKeywords: ["고데기", "헤어드라이기", "제모기", "피부관리기", "LED마스크", "IPL제모기", "헤어아이론", "매직기"],
     seedKeywords: [
       "음이온 헤어드라이기 대풍량", "세라믹 고데기 온도조절",
       "IPL 가정용 제모기 전신용", "LED마스크 피부관리 가정용",
