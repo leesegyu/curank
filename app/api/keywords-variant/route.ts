@@ -15,13 +15,16 @@ export async function GET(req: NextRequest) {
   const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
   if (!keyword) return NextResponse.json({ error: "keyword 파라미터 필요" }, { status: 400 });
 
-  // L1 캐시
-  const l1 = cache.get(keyword);
-  if (l1) return NextResponse.json(l1);
+  // L1 캐시 (빈 결과 캐시는 무시)
+  const l1 = cache.get<{ keywords?: unknown[] }>(keyword);
+  if (l1 && l1.keywords && l1.keywords.length > 0) return NextResponse.json(l1);
 
-  // L2 캐시
-  const l2 = await getL2Cache(keyword, CACHE_TYPE);
-  if (l2) { cache.set(keyword, l2); return NextResponse.json(l2); }
+  // L2 캐시 (빈 결과 캐시는 무시 — 이전 버그로 저장된 빈 데이터 방어)
+  const l2 = await getL2Cache<{ keywords?: unknown[] }>(keyword, CACHE_TYPE);
+  if (l2 && l2.keywords && l2.keywords.length > 0) {
+    cache.set(keyword, l2);
+    return NextResponse.json(l2);
+  }
 
   try {
     const classified = classifyKeyword(keyword, "smartstore");
