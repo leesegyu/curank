@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import NodeCache from "node-cache";
 import { classifyKeyword, getNodes } from "@/lib/ontology/index";
-import { getNaverAdKeywordsForHints } from "@/lib/naver-ad";
+import { getNaverAdKeywords, getNaverAdKeywordsForHints } from "@/lib/naver-ad";
 import { getL2Cache, setL2Cache } from "@/lib/cache-db";
 
 const CACHE_TYPE = "keywords_variant";
@@ -43,22 +43,40 @@ export async function GET(req: NextRequest) {
 
     if (variants.size === 0) return NextResponse.json({ keywords: [], category: currentNode.name });
 
-    // Ad API 배치 호출로 검색량 확보
+    // Ad API로 검색량 확보 — 2단계 전략
+    // 1단계: 시드 키워드의 연관 키워드에서 variant 매칭 (API 1회)
+    // 2단계: 미매칭 variant는 개별 hint 조회 (배치)
     const variantList = [...variants];
-    const batches: string[][] = [];
-    for (let i = 0; i < variantList.length; i += 5) {
-      batches.push(variantList.slice(i, i + 5));
-    }
-
     const volumeMap = new Map<string, { volume: number; compIdx: string }>();
-    const batchResults = await Promise.allSettled(
-      batches.map(b => getNaverAdKeywordsForHints(b))
-    );
-    for (const r of batchResults) {
-      if (r.status !== "fulfilled") continue;
-      for (const ad of r.value) {
+    const variantSet = new Set(variantList);
+
+    // 1단계: 시드 키워드 연관 결과에서 variant 찾기
+    const seedAds = await getNaverAdKeywords(keyword);
+    for (const ad of seedAds) {
+      if (variantSet.has(ad.relKeyword)) {
         const vol = (Number(ad.monthlyPcQcCnt) || 0) + (Number(ad.monthlyMobileQcCnt) || 0);
         volumeMap.set(ad.relKeyword, { volume: vol, compIdx: ad.compIdx ?? "보통" });
+      }
+    }
+
+    // 2단계: 시드에서 못 찾은 variant는 개별 hint로 조회
+    const missing = variantList.filter(v => !volumeMap.has(v));
+    if (missing.length > 0) {
+      const batches: string[][] = [];
+      for (let i = 0; i < missing.length; i += 5) {
+        batches.push(missing.slice(i, i + 5));
+      }
+      const batchResults = await Promise.allSettled(
+        batches.map(b => getNaverAdKeywordsForHints(b))
+      );
+      for (const r of batchResults) {
+        if (r.status !== "fulfilled") continue;
+        for (const ad of r.value) {
+          if (variantSet.has(ad.relKeyword) && !volumeMap.has(ad.relKeyword)) {
+            const vol = (Number(ad.monthlyPcQcCnt) || 0) + (Number(ad.monthlyMobileQcCnt) || 0);
+            volumeMap.set(ad.relKeyword, { volume: vol, compIdx: ad.compIdx ?? "보통" });
+          }
+        }
       }
     }
 
@@ -72,7 +90,7 @@ export async function GET(req: NextRequest) {
         const score = Math.round(volume * mult);
         return { keyword: kw, monthlyVolume: volume, competitionLevel: compIdx, score };
       })
-      .filter(k => k.monthlyVolume > 0)
+      .filter(k => k.monthlyVolume > 0 || volumeMap.size === 0)
       .sort((a, b) => b.score - a.score);
 
     const response = { keywords: results, category: currentNode.name };
