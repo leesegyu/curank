@@ -8,7 +8,7 @@ import { trackEvent } from "@/lib/events";
 import { getUsage } from "@/lib/usage";
 import UsageBadge from "@/components/UsageBadge";
 import TrendChartClient from "./TrendChartClient";
-import KeywordRecommendations from "./KeywordRecommendations";
+import KeywordRecommendationsVariant from "./KeywordRecommendationsVariant";
 import KeywordRecommendationsV2, { FactorPredictionCard } from "./KeywordRecommendationsV2";
 import KeywordRecommendationsGraph from "./KeywordRecommendationsGraph";
 // DemographicsSection 삭제됨 — API 비용 절감
@@ -117,6 +117,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let snapshotTime: string | null = null;
   // snapshotDemographics 삭제됨
   // 키워드 추천 스냅샷 데이터
+  let snapKeywordsVariant: unknown | null = null;
   let snapKeywordsV1: unknown[] | null = null;
   let snapKeywordsV2: unknown[] | null = null;
   let snapKeywordsCreative: unknown[] | null = null;
@@ -134,6 +135,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       // demographics 삭제됨
       snapshotTime = snap.created_at;
       // 키워드 추천 데이터 추출
+      snapKeywordsVariant = snap.snapshot.keywordsVariant ?? null;
       snapKeywordsV1 = (snap.snapshot.keywordsV1 as unknown[] | undefined) ?? null;
       snapKeywordsV2 = (snap.snapshot.keywordsV2 as unknown[] | undefined) ?? null;
       snapKeywordsCreative = (snap.snapshot.keywordsCreative as unknown[] | undefined) ?? null;
@@ -382,8 +384,9 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           {/* 시즌 기회 키워드 — Historical + V2 융합 SOS (STEP 3 첫 번째) */}
           <KeywordRecommendationsSeasonOpportunity keyword={kw} platform={platform} preloadedData={snapKeywordsSeasonOpp} />
 
-          {/* Blue Ocean — 경쟁 적은 틈새 키워드 */}
-          <KeywordRecommendations keyword={kw} platform={platform} preloadedData={snapKeywordsV1} />
+          {/* Blue Ocean 주석 처리 → 변형/품종 키워드로 교체 */}
+          {/* <KeywordRecommendations keyword={kw} platform={platform} preloadedData={snapKeywordsV1} /> */}
+          <KeywordRecommendationsVariant keyword={kw} platform={platform} preloadedData={snapKeywordsVariant as { keywords?: { keyword: string; monthlyVolume: number; competitionLevel: string; score: number }[]; category?: string } | null} />
 
           {/* 심화 키워드 추천 A/B/C */}
           <KeywordRecommendationsV2 keyword={kw} platform={platform} preloadedData={snapKeywordsV2} />

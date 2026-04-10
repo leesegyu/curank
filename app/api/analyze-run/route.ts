@@ -26,7 +26,7 @@ const TIMEOUT_MS = 55 * 1000; // 55초 (Vercel Hobby 60초 제한 대응)
  *  3) 경쟁 분석
  *  4) 트렌드 분석
  *  5) 인구통계 분석
- *  6) Blue Ocean + 크리에이티브 키워드 추천 (병렬)
+ *  6) 변형 키워드 + 크리에이티브 키워드 추천 (병렬)
  *  7) AI 심화 + 판매 성공 지표 추천 (병렬)
  *  8) 그래프 기반 추천
  *  9) 결론 생성
@@ -216,24 +216,24 @@ export async function GET(req: NextRequest) {
         const kw = encodeURIComponent(keyword);
 
         try {
-          // ── Step 6: AI 심화(v2) + Blue Ocean + 판매 지표 (병렬) ──
+          // ── Step 6: AI 심화(v2) + 변형 키워드 + 판매 지표 (병렬) ──
           // v2를 먼저 실행 → 캐시 생성 → Step 7에서 creative가 캐시 재사용
-          send({ step: 6, total: TOTAL, label: "AI 심화 + Blue Ocean + 판매 지표 분석 중...", progress: 52 });
-          const [kosV2, blueOcean, factor] = await Promise.allSettled([
+          send({ step: 6, total: TOTAL, label: "AI 심화 + 변형 키워드 + 판매 지표 분석 중...", progress: 52 });
+          const [kosV2, variant, factor] = await Promise.allSettled([
             fetch(`${BASE_URL}/api/keywords-v2?keyword=${kw}`, fetchOpt).then(r => r.json()),
-            fetch(`${BASE_URL}/api/keywords?keyword=${kw}`, fetchOpt).then(r => r.json()),
+            fetch(`${BASE_URL}/api/keywords-variant?keyword=${kw}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/factor-score?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
           ]);
           const kosV2Data = kosV2.status === "fulfilled" ? kosV2.value : null;
-          const blueOceanData = blueOcean.status === "fulfilled" ? blueOcean.value : null;
+          const variantData = variant.status === "fulfilled" ? variant.value : null;
           const factorData = factor.status === "fulfilled" ? factor.value : null;
           const hasKosV2 = !!kosV2Data?.keywords?.length;
-          const hasBlueOcean = !!blueOceanData?.keywords?.length;
+          const hasVariant = !!variantData?.keywords?.length;
           const hasFactor = !!factorData?.factors?.length;
           send({
             step: 6, total: TOTAL, progress: 64,
-            label: hasKosV2 && hasBlueOcean && hasFactor ? "AI 심화 + Blue Ocean + 판매 지표 완료"
-              : (hasKosV2 || hasBlueOcean || hasFactor) ? "분석 완료 (일부 누락)"
+            label: hasKosV2 && hasVariant && hasFactor ? "AI 심화 + 변형 키워드 + 판매 지표 완료"
+              : (hasKosV2 || hasVariant || hasFactor) ? "분석 완료 (일부 누락)"
               : "AI 분석 (실패)",
           });
 
@@ -283,7 +283,7 @@ export async function GET(req: NextRequest) {
           });
 
           // ── Step 10: 최종 검증 ──
-          const hasAnyKeywordResult = hasBlueOcean || hasKosV2 || hasGraph || hasCreative;
+          const hasAnyKeywordResult = hasVariant || hasKosV2 || hasGraph || hasCreative;
 
           if (!hasAnyKeywordResult && !result) {
             // 핵심 결과가 전혀 없음 → 시스템 오류
@@ -298,7 +298,7 @@ export async function GET(req: NextRequest) {
           }
 
           // 부분 실패 — 핵심 데이터(추천 키워드)만 판정, factor-score는 보조 데이터
-          const partial = !hasBlueOcean || !hasKosV2 || !hasGraph || !hasCreative;
+          const partial = !hasVariant || !hasKosV2 || !hasGraph || !hasCreative;
 
           // 스냅샷 저장 (결과 보기 시 즉시 로드 — 키워드 추천 포함)
           saveSnapshot(userId, keyword, platform, {
@@ -306,7 +306,7 @@ export async function GET(req: NextRequest) {
             trend: trendRaw,
             naverScoreData: naverScore,
             demographics: demographicsData,
-            keywordsV1: blueOceanData?.keywords ?? null,
+            keywordsVariant: variantData ?? null,
             keywordsV2: kosV2Data?.keywords ?? null,
             keywordsCreative: creativeData?.keywords ?? null,
             keywordsHistorical: historicalData?.keywords ?? null,

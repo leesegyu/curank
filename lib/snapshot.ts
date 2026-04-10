@@ -17,6 +17,7 @@ export interface AnalysisSnapshot {
   factorScore?: unknown;     // 판매 성공 지표
   keywordsHistorical?: unknown; // 1년전 인기 키워드
   keywordsSeasonOpp?: unknown;  // 시즌 기회 (Historical + V2 융합)
+  keywordsVariant?: unknown;   // 변형/품종 키워드
   competitorThreat?: unknown; // 경쟁 위협도
   brandDistribution?: unknown; // 브랜드/상호명 분포
 }
