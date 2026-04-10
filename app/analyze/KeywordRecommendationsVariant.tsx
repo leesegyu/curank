@@ -5,6 +5,14 @@ import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 
 interface VariantKeyword { keyword: string }
 
+// 쿠팡 파트너스 추적 ID (클라이언트 노출 가능)
+const COUPANG_PARTNERS_ID = process.env.NEXT_PUBLIC_COUPANG_PARTNERS_ID || "";
+
+function buildCoupangSearchUrl(keyword: string): string {
+  const base = `https://www.coupang.com/np/search?q=${encodeURIComponent(keyword)}`;
+  return COUPANG_PARTNERS_ID ? `${base}&lptag=${COUPANG_PARTNERS_ID}` : base;
+}
+
 export default function KeywordRecommendationsVariant({
   keyword, platform = "naver", preloadedData,
 }: {
@@ -78,7 +86,7 @@ export default function KeywordRecommendationsVariant({
                   {kw.keyword}
                 </AnalyzeKeywordLink>
                 <a
-                  href={`https://www.coupang.com/np/search?q=${encodeURIComponent(kw.keyword)}`}
+                  href={buildCoupangSearchUrl(kw.keyword)}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   title={`${kw.keyword} 쿠팡에서 검색`}
