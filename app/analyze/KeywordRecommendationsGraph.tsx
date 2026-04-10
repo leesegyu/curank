@@ -10,6 +10,7 @@ import { trackEventClient } from "@/lib/events";
 import type { GraphKeyword } from "@/app/api/keywords-graph/route";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
+import { excludeModifierCombinations } from "@/lib/keyword-shape";
 
 function simColor(sim: number): string {
   if (sim >= 0.8) return "text-green-600 bg-green-50 border-green-200";
@@ -51,7 +52,15 @@ export default function KeywordRecommendationsGraph({ keyword, platform = "naver
       .finally(() => setLoading(false));
   }, [keyword, preloadedData]);
 
-  const display = expanded ? data.slice(0, 30) : data.slice(0, 5);
+  // longtail만 수식어 조합 필터링, seed type(형제노드)은 유지
+  const filtered = [
+    ...data.filter((k) => k.type === "seed"),
+    ...excludeModifierCombinations(
+      data.filter((k) => k.type !== "seed"),
+      keyword,
+    ),
+  ];
+  const display = expanded ? filtered.slice(0, 30) : filtered.slice(0, 5);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -89,14 +98,14 @@ export default function KeywordRecommendationsGraph({ keyword, platform = "naver
       )}
 
       {/* 빈 결과 */}
-      {!loading && !error && data.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <p className="text-sm text-gray-400 text-center py-4">
           이 키워드에 대한 그래프 추천이 없습니다
         </p>
       )}
 
       {/* 결과 */}
-      {!loading && !error && data.length > 0 && (
+      {!loading && !error && filtered.length > 0 && (
         <>
           <div className="space-y-1.5">
             {display.map((kw, i) => (
@@ -130,17 +139,17 @@ export default function KeywordRecommendationsGraph({ keyword, platform = "naver
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => downloadCSV(data.map(kw => ({ 키워드: kw.keyword, 유사도: Math.round(kw.similarity * 100), 카테고리: kw.category })), `${keyword}_연관키워드`)}
+                onClick={() => downloadCSV(filtered.map(kw => ({ 키워드: kw.keyword, 유사도: Math.round(kw.similarity * 100), 카테고리: kw.category })), `${keyword}_연관키워드`)}
                 className="text-xs text-gray-400 hover:text-gray-600"
               >
                 CSV
               </button>
-              {data.length > 5 && (
+              {filtered.length > 5 && (
                 <button
                   onClick={() => setExpanded(!expanded)}
                   className="text-xs font-bold text-indigo-600 hover:text-indigo-700"
                 >
-                  {expanded ? "접기 ↑" : `전체보기 (${data.length}) ↓`}
+                  {expanded ? "접기 ↑" : `전체보기 (${filtered.length}) ↓`}
                 </button>
               )}
             </div>

@@ -9,6 +9,8 @@ import { getUsage } from "@/lib/usage";
 import UsageBadge from "@/components/UsageBadge";
 import TrendChartClient from "./TrendChartClient";
 import KeywordRecommendationsVariant from "./KeywordRecommendationsVariant";
+import KeywordRecommendationsModifiers from "./KeywordRecommendationsModifiers";
+import FactorScoreAggregated from "./FactorScoreAggregated";
 import KeywordRecommendationsV2, { FactorPredictionCard } from "./KeywordRecommendationsV2";
 import KeywordRecommendationsGraph from "./KeywordRecommendationsGraph";
 // DemographicsSection 삭제됨 — API 비용 절감
@@ -388,6 +390,18 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           {/* <KeywordRecommendations keyword={kw} platform={platform} preloadedData={snapKeywordsV1} /> */}
           <KeywordRecommendationsVariant keyword={kw} platform={platform} preloadedData={snapKeywordsVariant as { keywords?: { keyword: string; monthlyVolume: number; competitionLevel: string; score: number }[]; category?: string } | null} />
 
+          {/* 수식어 추천 키워드 (여러 소스 통합) */}
+          <KeywordRecommendationsModifiers
+            keyword={kw}
+            platform={platform}
+            sources={{
+              v2: snapKeywordsV2,
+              creative: snapKeywordsCreative,
+              graph: snapKeywordsGraph,
+              sos: (snapKeywordsSeasonOpp as unknown[] | null),
+            }}
+          />
+
           {/* 심화 키워드 추천 A/B/C */}
           <KeywordRecommendationsV2 keyword={kw} platform={platform} preloadedData={snapKeywordsV2} />
 
@@ -398,11 +412,33 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           <KeywordRecommendationsCreative keyword={kw} platform={platform} preloadedData={snapKeywordsCreative} />
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-          {/* 📈 STEP 4: 결과 예측 — 이렇게 하면?             */}
+          {/* 📊 STEP 4: 최종 후보 비교 — 어떤 키워드가 최선?  */}
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
 
           <div className="flex items-center gap-2 pt-4">
-            <span className="text-xs font-bold text-white px-2.5 py-1 rounded-lg bg-purple-500">STEP 4</span>
+            <span className="text-xs font-bold text-white px-2.5 py-1 rounded-lg" style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}>STEP 4</span>
+            <span className="text-sm font-bold text-gray-700">최종 후보 비교</span>
+            <span className="text-xs text-gray-400">STEP 3 추천 키워드들을 6개 지표로 종합 비교</span>
+          </div>
+
+          <FactorScoreAggregated
+            keyword={kw}
+            platform={platform}
+            sources={{
+              v2: snapKeywordsV2,
+              creative: snapKeywordsCreative,
+              graph: snapKeywordsGraph,
+              sos: (snapKeywordsSeasonOpp as unknown[] | null),
+              variant: snapKeywordsVariant,
+            }}
+          />
+
+          {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+          {/* 📈 STEP 5: 결과 예측 — 이렇게 하면?             */}
+          {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+
+          <div className="flex items-center gap-2 pt-4">
+            <span className="text-xs font-bold text-white px-2.5 py-1 rounded-lg bg-purple-500">STEP 5</span>
             <span className="text-sm font-bold text-gray-700">결과 예측</span>
             <span className="text-xs text-gray-400">추천 키워드로 진입하면 어떤 결과가?</span>
           </div>
@@ -430,11 +466,11 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           )}
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-          {/* 🎯 STEP 5: 결론 — 그래서, 이렇게 하세요          */}
+          {/* 🎯 STEP 6: 결론 — 그래서, 이렇게 하세요          */}
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
 
           <div className="flex items-center gap-2 pt-4">
-            <span className="text-xs font-bold text-white px-2.5 py-1 rounded-lg bg-red-500">STEP 5</span>
+            <span className="text-xs font-bold text-white px-2.5 py-1 rounded-lg bg-red-500">STEP 6</span>
             <span className="text-sm font-bold text-gray-700">결론</span>
             <span className="text-xs text-gray-400">그래서, 이렇게 하세요</span>
           </div>
@@ -442,11 +478,11 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           <ConclusionCard keyword={kw} platform={platform} />
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-          {/* 📋 STEP 6: 참고사항                              */}
+          {/* 📋 STEP 7: 참고사항                              */}
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
 
           <div className="flex items-center gap-2 pt-4">
-            <span className="text-xs font-bold text-white px-2.5 py-1 rounded-lg bg-gray-500">STEP 6</span>
+            <span className="text-xs font-bold text-white px-2.5 py-1 rounded-lg bg-gray-500">STEP 7</span>
             <span className="text-sm font-bold text-gray-700">참고사항</span>
             <span className="text-xs text-gray-400">추가로 알아두면 좋은 정보</span>
           </div>

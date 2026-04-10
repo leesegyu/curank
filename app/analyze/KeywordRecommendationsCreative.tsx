@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import type { CreativeKeyword } from "@/app/api/keywords-creative/route";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
+import { excludeModifierCombinations } from "@/lib/keyword-shape";
 
 function scoreColor(score: number): string {
   if (score >= 75) return "text-purple-600 bg-purple-50 border-purple-200";
@@ -56,7 +57,8 @@ export default function KeywordRecommendationsCreative({ keyword, platform, prel
       .finally(() => setLoading(false));
   }, [keyword, platform, preloadedData]);
 
-  const display = expanded ? data : data.slice(0, 5);
+  const filtered = excludeModifierCombinations(data, keyword);
+  const display = expanded ? filtered : filtered.slice(0, 5);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
@@ -98,14 +100,14 @@ export default function KeywordRecommendationsCreative({ keyword, platform, prel
       )}
 
       {/* 결과 없음 */}
-      {!loading && !error && data.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <p className="text-sm text-gray-400 py-4 text-center">
           이 키워드에 대한 크리에이티브 추천이 없습니다
         </p>
       )}
 
       {/* 결과 */}
-      {!loading && !error && data.length > 0 && (
+      {!loading && !error && filtered.length > 0 && (
         <>
           <div className="space-y-1.5">
             {display.map((kw, i) => {
@@ -145,17 +147,17 @@ export default function KeywordRecommendationsCreative({ keyword, platform, prel
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => downloadCSV(data.map(kw => ({ 키워드: kw.keyword, 점수: kw.score, 강점: kw.topFactor })), `${keyword}_크리에이티브`)}
+                onClick={() => downloadCSV(filtered.map(kw => ({ 키워드: kw.keyword, 점수: kw.score, 강점: kw.topFactor })), `${keyword}_크리에이티브`)}
                 className="text-xs text-gray-400 hover:text-gray-600"
               >
                 CSV
               </button>
-              {data.length > 5 && (
+              {filtered.length > 5 && (
                 <button
                   onClick={() => setExpanded(!expanded)}
                   className="text-xs font-bold text-purple-600 hover:text-purple-700"
                 >
-                  {expanded ? "접기 ↑" : `전체보기 (${data.length}) ↓`}
+                  {expanded ? "접기 ↑" : `전체보기 (${filtered.length}) ↓`}
                 </button>
               )}
             </div>

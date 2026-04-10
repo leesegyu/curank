@@ -5,6 +5,7 @@ import type { KeywordV2 } from "@/app/api/keywords-v2/route";
 import { trackEventClient } from "@/lib/events";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
+import { excludeModifierCombinations } from "@/lib/keyword-shape";
 
 async function trackExpose(queryKeyword: string, keywords: { keyword: string }[], modelVersion: string) {
   fetch("/api/rl/expose", {
@@ -125,13 +126,17 @@ export default function KeywordRecommendationsV2({ keyword, platform = "naver", 
   }
 
   if (error) return <div className="bg-white rounded-2xl border border-gray-100 p-5"><p className="text-sm text-gray-400 text-center py-4">데이터를 불러오지 못했습니다.</p></div>;
-  if (data.length === 0) return <div className="bg-white rounded-2xl border border-gray-100 p-5"><p className="text-sm text-gray-400 text-center py-4">추천 키워드가 없습니다.</p></div>;
+
+  // 수식어 조합 제외 — "수박 추천", "수박 가성비" 등은 별도 수식어 전용 카드로 이동
+  const filtered = excludeModifierCombinations(data, keyword);
+
+  if (filtered.length === 0) return <div className="bg-white rounded-2xl border border-gray-100 p-5"><p className="text-sm text-gray-400 text-center py-4">추천 키워드가 없습니다.</p></div>;
 
   // 기회 분석: 기회발굴/구매의도/연관도 3개 팩터 종합점수
   const calcOpportunityScore = (kw: KeywordV2) =>
     Math.round((kw.scoreChance * 0.45 + kw.scoreIntent * 0.30 + kw.scoreRelation * 0.25) * 10);
 
-  const allOpportunity = [...data]
+  const allOpportunity = [...filtered]
     .map((kw) => ({ ...kw, _oppScore: calcOpportunityScore(kw) }))
     .sort((a, b) => b._oppScore - a._oppScore);
 
@@ -142,7 +147,7 @@ export default function KeywordRecommendationsV2({ keyword, platform = "naver", 
     Math.round((kw.scoreDemand * 0.20 + kw.scoreIntent * 0.25 + kw.scoreSpecificity * 0.15
       + kw.scoreGrowth * 0.15 + kw.scorePenetrability * 0.15 + kw.scoreRelation * 0.10) * 10);
 
-  const allDeep = [...data]
+  const allDeep = [...filtered]
     .map((kw) => ({ ...kw, _deepScore: calcDeepScore(kw) }))
     .sort((a, b) => b._deepScore - a._deepScore);
 

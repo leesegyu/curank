@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import type { SeasonOpportunityResult } from "@/app/api/keywords-season-opportunity/route";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
+import { excludeModifierCombinations } from "@/lib/keyword-shape";
 
 function tierBadge(tier: string) {
   switch (tier) {
@@ -67,7 +68,8 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
       .finally(() => setLoading(false));
   }, [keyword, preloadedData]);
 
-  const display = expanded ? data : data.slice(0, 5);
+  const filtered = excludeModifierCombinations(data, keyword);
+  const display = expanded ? filtered : filtered.slice(0, 5);
 
   if (loading) {
     return (
@@ -92,7 +94,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
     );
   }
 
-  if (error || data.length === 0) {
+  if (error || filtered.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center text-gray-400 text-sm">
         {error || "시즌 기회 데이터가 없습니다"}
@@ -100,7 +102,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
     );
   }
 
-  const selected = selectedIdx !== null ? data[selectedIdx] : null;
+  const selected = selectedIdx !== null ? filtered[selectedIdx] : null;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -209,7 +211,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
       </div>
 
       {/* 푸터 */}
-      {data.length > 3 && (
+      {filtered.length > 3 && (
         <div className="mt-3 flex items-center justify-between px-1">
           <p className="text-xs text-gray-400">
             <span className="font-bold text-orange-600">SOS</span> = 시즌 검증 + 진입 가능성 융합 점수
@@ -218,7 +220,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
             <button
               onClick={() =>
                 downloadCSV(
-                  data.map((kw) => ({
+                  filtered.map((kw) => ({
                     키워드: kw.keyword,
                     SOS점수: kw.score,
                     등급: kw.tier,
@@ -240,7 +242,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
               onClick={() => setExpanded(!expanded)}
               className="text-xs font-bold text-orange-600 hover:text-orange-700 transition-colors"
             >
-              {expanded ? "접기" : `전체보기 (${data.length}개)`}
+              {expanded ? "접기" : `전체보기 (${filtered.length}개)`}
             </button>
           </div>
         </div>
