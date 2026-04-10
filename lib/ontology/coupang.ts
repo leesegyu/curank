@@ -65,44 +65,49 @@ export const COUPANG_NODES: OntologyNode[] = [
     ] },
 
   { id: "cp.food.meat.chicken", name: "닭/오리", level: 3, parent: "cp.food.meat",
-    matchKeywords: ["닭고기", "닭가슴살", "오리", "닭발"],
+    matchKeywords: ["닭고기", "닭가슴살", "오리", "닭발", "닭다리", "닭볶음탕용", "닭날개", "통닭", "닭안심"],
     seedKeywords: [
       "훈제 닭가슴살 30팩 대용량", "무항생제 생닭 1kg",
       "오리훈제 슬라이스", "닭발 매콤 양념 냉동",
-    ] },
+    ],
+    variantKeywords: ["닭가슴살", "닭다리", "닭볶음탕용", "닭날개", "훈제닭가슴살", "통닭", "닭안심"] },
 
   { id: "cp.food.meat.seafood", name: "수산물", level: 3, parent: "cp.food.meat",
-    matchKeywords: ["해산물", "생선", "새우", "오징어", "굴"],
+    matchKeywords: ["해산물", "생선", "새우", "오징어", "굴", "연어", "참치", "갈치", "고등어", "전복", "랍스터", "홍게"],
     seedKeywords: [
       "왕새우 냉동 1kg", "손질 오징어 국내산",
       "통영 굴 생굴 1kg", "고등어 순살 필렛",
-    ] },
+    ],
+    variantKeywords: ["연어", "참치", "갈치", "고등어", "전복", "랍스터", "홍게", "활새우"] },
 
   { id: "cp.food.health", name: "건강식품", level: 2, parent: "cp.food",
     matchKeywords: ["건강식품", "다이어트", "프로틴"],
     seedKeywords: [] },
   { id: "cp.food.health.protein", name: "단백질/보충제", level: 3, parent: "cp.food.health",
-    matchKeywords: ["프로틴", "단백질바", "BCAA", "보충제"],
+    matchKeywords: ["프로틴", "단백질바", "BCAA", "보충제", "유청", "WPI", "게이너"],
     seedKeywords: [
       "저당 단백질바 초코 20입", "유청 프로틴 파우더",
       "BCAA 아미노산 2000mg", "비건 프로틴 쉐이크",
-    ] },
+    ],
+    variantKeywords: ["유청프로틴", "단백질바", "단백질쉐이크", "식물성프로틴", "WPI프로틴", "게이너"] },
   { id: "cp.food.health.diet", name: "다이어트식품", level: 3, parent: "cp.food.health",
-    matchKeywords: ["곤약", "저칼로리", "다이어트", "식이섬유"],
+    matchKeywords: ["곤약", "저칼로리", "다이어트", "식이섬유", "곤약젤리", "곤약쌀", "곤약면"],
     seedKeywords: [
       "곤약 젤리 저칼로리 30개", "곤약쌀 즉석밥 10팩",
       "저칼로리 과자 뻥튀기", "식이섬유 분말 30포",
-    ] },
+    ],
+    variantKeywords: ["곤약젤리", "곤약쌀", "곤약면", "다이어트도시락", "저칼로리과자", "단백질쿠키"] },
 
   { id: "cp.food.drink", name: "음료", level: 2, parent: "cp.food",
     matchKeywords: ["커피", "음료", "차", "주스", "생수"],
     seedKeywords: [] },
   { id: "cp.food.drink.coffee", name: "커피", level: 3, parent: "cp.food.drink",
-    matchKeywords: ["커피", "원두", "콜드브루", "캡슐커피"],
+    matchKeywords: ["커피", "원두", "콜드브루", "캡슐커피", "인스턴트커피", "디카페인", "더치커피"],
     seedKeywords: [
       "로켓배송 원두커피 1kg", "콜드브루 커피 1L 대용량",
       "호환 캡슐커피 100개입", "스틱커피 아메리카노 100T",
-    ] },
+    ],
+    variantKeywords: ["원두커피", "캡슐커피", "드립커피", "인스턴트커피", "디카페인커피", "더치커피"] },
 
   // ═══════════════════════════════════════════════════════════════
   // L1: 여성패션 (쿠팡 특수: 성별 분리)
@@ -181,11 +186,12 @@ export const COUPANG_NODES: OntologyNode[] = [
       "쿠팡 로켓배송 에센스", "판테놀 진정크림",
     ] },
   { id: "cp.beauty.skincare.sun", name: "선케어", level: 3, parent: "cp.beauty.skincare",
-    matchKeywords: ["선크림", "자외선차단제", "선스틱"],
+    matchKeywords: ["선크림", "자외선차단제", "선스틱", "선쿠션"],
     seedKeywords: [
       "SPF50 순한 선크림 대용량", "물리적 무기자차 선크림",
       "쿠팡 인기 선스틱 휴대용", "아기 선크림 저자극",
-    ] },
+    ],
+    variantKeywords: ["톤업선크림", "물광선크림", "스틱선크림", "무기자차선크림", "유기자차선크림", "선쿠션"] },
 
   { id: "cp.beauty.makeup", name: "메이크업", level: 2, parent: "cp.beauty",
     matchKeywords: ["색조", "립스틱", "쿠션", "파운데이션"],
@@ -208,21 +214,23 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["이어폰", "스피커", "헤드폰"],
     seedKeywords: [] },
   { id: "cp.digital.audio.earphone", name: "이어폰/헤드폰", level: 3, parent: "cp.digital.audio",
-    matchKeywords: ["무선이어폰", "블루투스이어폰", "에어팟", "헤드셋"],
+    matchKeywords: ["무선이어폰", "블루투스이어폰", "에어팟", "헤드셋", "골전도", "커널형", "스포츠이어폰"],
     seedKeywords: [
       "쿠팡 로켓배송 무선이어폰", "노이즈캔슬링 블루투스",
       "유선 이어폰 게이밍", "오픈형 무선 이어폰 스포츠",
-    ] },
+    ],
+    variantKeywords: ["골전도이어폰", "오픈형이어폰", "유선이어폰", "블루투스이어폰", "커널형이어폰", "스포츠이어폰"] },
 
   { id: "cp.digital.peripheral", name: "PC주변기기", level: 2, parent: "cp.digital",
     matchKeywords: ["키보드", "마우스", "허브"],
     seedKeywords: [] },
   { id: "cp.digital.peripheral.keyboard", name: "키보드", level: 3, parent: "cp.digital.peripheral",
-    matchKeywords: ["기계식키보드", "무선키보드", "텐키리스"],
+    matchKeywords: ["기계식키보드", "무선키보드", "텐키리스", "무접점", "저소음키보드", "미니키보드", "접이식키보드"],
     seedKeywords: [
       "적축 기계식 키보드 RGB", "저소음 무선 키보드 슬림",
       "로켓배송 블루투스 키보드", "가성비 텐키리스 기계식",
-    ] },
+    ],
+    variantKeywords: ["기계식키보드", "무접점키보드", "저소음키보드", "무선키보드", "미니키보드", "접이식키보드"] },
 
   // ═══════════════════════════════════════════════════════════════
   // L1: 주방용품 (쿠팡 특수 — 스마트스토어는 여가/생활에 포함)
@@ -268,11 +276,12 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["소파", "책상", "의자", "침대"],
     seedKeywords: [] },
   { id: "cp.home.furniture.sofa", name: "소파/의자", level: 3, parent: "cp.home.furniture",
-    matchKeywords: ["소파", "암체어", "리클라이너", "좌식"],
+    matchKeywords: ["소파", "암체어", "리클라이너", "좌식", "패브릭소파", "가죽소파", "코너소파", "좌식소파"],
     seedKeywords: [
       "1인소파 패브릭 원룸용", "코너소파 세트 배송설치",
       "리클라이너 전동 소파", "좌식의자 등받이 쿠션",
-    ] },
+    ],
+    variantKeywords: ["리클라이너소파", "패브릭소파", "가죽소파", "1인소파", "코너소파", "좌식소파", "접이식소파"] },
 
   { id: "cp.home.bedding", name: "침구", level: 2, parent: "cp.home",
     matchKeywords: ["이불", "베개", "매트리스", "침구"],
@@ -305,11 +314,12 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["캠핑", "텐트", "캠핑의자"],
     seedKeywords: [] },
   { id: "cp.sports.camping.gear", name: "캠핑장비", level: 3, parent: "cp.sports.camping",
-    matchKeywords: ["텐트", "캠핑의자", "캠핑테이블", "타프"],
+    matchKeywords: ["텐트", "캠핑의자", "캠핑테이블", "타프", "원터치텐트", "돔텐트", "차박텐트", "백패킹텐트"],
     seedKeywords: [
       "원터치 텐트 2인용 팝업", "경량 폴딩 캠핑의자",
       "접이식 알루미늄 테이블", "쿠팡 로켓배송 텐트",
-    ] },
+    ],
+    variantKeywords: ["원터치텐트", "돔텐트", "차박텐트", "백패킹텐트", "캠핑쉘터", "타프텐트"] },
 
   // ═══════════════════════════════════════════════════════════════
   // L1: 반려동물 (쿠팡 특수 카테고리)
@@ -662,26 +672,29 @@ export const COUPANG_NODES: OntologyNode[] = [
     matchKeywords: ["과일", "사과", "딸기", "바나나", "포도", "오렌지"],
     seedKeywords: [] },
   { id: "cp.food.fruit.apple", name: "사과/배", level: 3, parent: "cp.food.fruit",
-    matchKeywords: ["사과", "배", "부사", "홍로", "신고배", "청사과"],
+    matchKeywords: ["사과", "배", "부사", "홍로", "신고배", "청사과", "아오리", "감홍", "황금배"],
     seedKeywords: [
       "로켓프레시 경북 사과 2kg", "부사 사과 가정용 5kg",
       "나주 배 선물세트 프리미엄", "홍로 사과 당도선별",
       "세척사과 간편 3개입 팩",
-    ] },
+    ],
+    variantKeywords: ["부사사과", "홍로사과", "아오리사과", "감홍사과", "사과즙", "배즙", "황금배"] },
   { id: "cp.food.fruit.berry", name: "딸기/베리류", level: 3, parent: "cp.food.fruit",
-    matchKeywords: ["딸기", "블루베리", "체리", "라즈베리", "아보카도"],
+    matchKeywords: ["딸기", "블루베리", "체리", "라즈베리", "아보카도", "설향", "금실", "킹스베리"],
     seedKeywords: [
       "로켓프레시 딸기 설향 500g", "냉동 블루베리 1kg 미국산",
       "생체리 칠레산 항공직송", "아보카도 6개입 숙성",
       "냉동 라즈베리 유기농 500g",
-    ] },
+    ],
+    variantKeywords: ["설향딸기", "금실딸기", "킹스베리", "냉동딸기", "건블루베리", "냉동블루베리"] },
   { id: "cp.food.fruit.citrus", name: "감귤/한라봉", level: 3, parent: "cp.food.fruit",
-    matchKeywords: ["귤", "감귤", "한라봉", "천혜향", "레드향", "오렌지"],
+    matchKeywords: ["귤", "감귤", "한라봉", "천혜향", "레드향", "오렌지", "황금향", "카라향", "노지감귤", "하우스감귤"],
     seedKeywords: [
       "제주 감귤 로켓프레시 3kg", "한라봉 당도선별 2kg",
       "천혜향 제주 프리미엄", "네이블 오렌지 12개입",
       "레드향 선물세트 고급",
-    ] },
+    ],
+    variantKeywords: ["한라봉", "천혜향", "레드향", "황금향", "카라향", "노지감귤", "하우스감귤"] },
   { id: "cp.food.fruit.tropical", name: "열대과일", level: 3, parent: "cp.food.fruit",
     matchKeywords: ["바나나", "망고", "파인애플", "키위", "코코넛"],
     seedKeywords: [
@@ -818,12 +831,13 @@ export const COUPANG_NODES: OntologyNode[] = [
       "벽걸이 TV 브라켓 설치",
     ] },
   { id: "cp.digital.tv.monitor", name: "모니터", level: 3, parent: "cp.digital.tv",
-    matchKeywords: ["모니터", "게이밍모니터", "IPS", "커브드", "듀얼모니터"],
+    matchKeywords: ["모니터", "게이밍모니터", "IPS", "커브드", "듀얼모니터", "울트라와이드", "포터블모니터"],
     seedKeywords: [
       "27인치 QHD IPS 모니터", "32인치 4K 디자인 모니터",
       "게이밍 모니터 165Hz 1ms", "커브드 34인치 울트라와이드",
       "24인치 가성비 모니터 사무용",
-    ] },
+    ],
+    variantKeywords: ["게이밍모니터", "울트라와이드모니터", "커브드모니터", "4K모니터", "포터블모니터"] },
   { id: "cp.digital.tv.projector", name: "빔프로젝터", level: 3, parent: "cp.digital.tv",
     matchKeywords: ["빔프로젝터", "미니빔", "프로젝터", "캠핑빔", "홈시어터"],
     seedKeywords: [
@@ -1106,12 +1120,13 @@ export const COUPANG_NODES: OntologyNode[] = [
 
   // ── 홈인테리어 L3 확장 ──
   { id: "cp.home.furniture.desk", name: "책상/의자", level: 3, parent: "cp.home.furniture",
-    matchKeywords: ["책상", "컴퓨터책상", "사무용의자", "게이밍체어", "게이밍의자", "스탠딩데스크"],
+    matchKeywords: ["책상", "컴퓨터책상", "사무용의자", "게이밍체어", "게이밍의자", "스탠딩데스크", "학생의자", "접이식의자"],
     seedKeywords: [
       "전동 스탠딩데스크 높이조절", "L자형 컴퓨터 책상 코너",
       "메쉬 사무용 의자 요추 받침", "게이밍 체어 리클라이닝",
       "어린이 높이조절 책상 세트",
-    ] },
+    ],
+    variantKeywords: ["게이밍의자", "사무용의자", "학생의자", "메쉬의자", "좌식의자", "접이식의자"] },
   { id: "cp.home.furniture.storage", name: "수납/선반", level: 3, parent: "cp.home.furniture",
     matchKeywords: ["수납장", "선반", "책장", "서랍장", "행거"],
     seedKeywords: [
@@ -1120,12 +1135,13 @@ export const COUPANG_NODES: OntologyNode[] = [
       "미드센추리 책장 5단 원목",
     ] },
   { id: "cp.home.furniture.bed", name: "침대", level: 3, parent: "cp.home.furniture",
-    matchKeywords: ["침대", "침대프레임", "저상침대", "이층침대", "수납침대"],
+    matchKeywords: ["침대", "침대프레임", "저상침대", "이층침대", "수납침대", "원목침대", "호텔침대", "싱글침대"],
     seedKeywords: [
       "퀸 저상 침대프레임 원목", "슈퍼싱글 수납 침대 서랍",
       "이층침대 아이방 분리형", "접이식 간이침대 게스트용",
       "호텔식 침대 헤드보드 포함",
-    ] },
+    ],
+    variantKeywords: ["저상침대", "수납침대", "접이식침대", "이층침대", "원목침대", "호텔침대", "싱글침대"] },
   { id: "cp.home.bedding.blanket", name: "이불/침구커버", level: 3, parent: "cp.home.bedding",
     matchKeywords: ["이불", "이불커버", "차렵이불", "여름이불", "구스다운이불"],
     seedKeywords: [
@@ -1170,12 +1186,13 @@ export const COUPANG_NODES: OntologyNode[] = [
 
   // ── 스포츠/레저 L3 확장 ──
   { id: "cp.sports.fitness.yoga", name: "요가/필라테스", level: 3, parent: "cp.sports.fitness",
-    matchKeywords: ["요가", "필라테스", "요가매트", "스트레칭"],
+    matchKeywords: ["요가", "필라테스", "요가매트", "스트레칭", "폼롤러", "요가블럭", "요가휠"],
     seedKeywords: [
       "TPE 두꺼운 요가매트 8mm", "논슬립 요가 타월 극세사",
       "필라테스 링 소도구 세트", "밸런스 보수반구 코어",
       "요가 블록 2개세트 EVA",
-    ] },
+    ],
+    variantKeywords: ["요가매트", "폼롤러", "요가블럭", "필라테스링", "스트레칭밴드", "요가휠"] },
   { id: "cp.sports.golf", name: "골프", level: 2, parent: "cp.sports",
     matchKeywords: ["골프", "골프채", "골프웨어", "골프백"],
     seedKeywords: [] },

@@ -301,6 +301,13 @@ export function generateOntologyLongtails(
 
   const longtails = new Set<string>();
 
+  // 패턴 0: variantKeywords 직접 추가 — "흑수박", "골전도이어폰" 등 합성어
+  if (currentNode.variantKeywords) {
+    for (const vk of currentNode.variantKeywords) {
+      longtails.add(vk);
+    }
+  }
+
   // 패턴 1: [수식어] + [핵심] — "숙성 삼겹살"
   for (const mod of modifiers) {
     longtails.add(`${mod} ${coreKeyword}`);
@@ -324,6 +331,16 @@ export function generateOntologyLongtails(
     for (const spec of specs.slice(0, 4)) {
       if (longtails.size >= limit * 3) break;
       longtails.add(`${mod} ${coreKeyword} ${spec}`);
+    }
+  }
+
+  // 패턴 5: [변형] + [규격] — "흑수박 추천", "골전도이어폰 가성비"
+  if (currentNode.variantKeywords) {
+    for (const vk of currentNode.variantKeywords.slice(0, 5)) {
+      for (const spec of specs.slice(0, 4)) {
+        if (longtails.size >= limit * 3) break;
+        longtails.add(`${vk} ${spec}`);
+      }
     }
   }
 
@@ -397,6 +414,14 @@ function extractModifiers(
     }
   }
 
+  // ── 소스 4: variantKeywords에서 수식어 추출 ─────────────────
+  // 예: "골전도이어폰" → "골전도", "패브릭소파" → "패브릭"
+  if (currentNodeObj?.variantKeywords) {
+    for (const vk of currentNodeObj.variantKeywords) {
+      modifiers.push(...removeCore(vk, coreKeyword));
+    }
+  }
+
   // 중복 제거 + 빈 문자열/짧은 것 필터
   return [...new Set(modifiers)].filter((m) => m.length >= 2);
 }
@@ -411,6 +436,19 @@ function removeCore(text: string, coreKeyword: string): string[] {
     }
     return w.length >= 2;
   });
+
+  // 합성어 처리: 공백 분리 결과가 비어있을 때, 핵심 키워드를 substring으로 제거
+  // 예: "골전도이어폰" - "이어폰" → "골전도"
+  if (words.length === 0) {
+    const textNorm = text.replace(/\s/g, "");
+    for (const cw of coreWords) {
+      if (textNorm.includes(cw) && textNorm !== cw) {
+        const remainder = textNorm.replace(cw, "").trim();
+        if (remainder.length >= 2) return [remainder];
+      }
+    }
+  }
+
   return words;
 }
 

@@ -18,6 +18,8 @@ export interface OntologyNode {
   matchKeywords: string[];
   /** 이 노드에서 피드 카드로 노출할 시드 키워드 */
   seedKeywords: string[];
+  /** 독립 검색되는 변형/품종/하위유형 키워드 (합성어 포함, 추천 후보 생성용) */
+  variantKeywords?: string[];
 }
 
 /** 유저별 카테고리 가중치 (users.category_weights JSONB 구조) */
