@@ -322,7 +322,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "조절덤벨 24kg 가정용", "TPE 요가매트 8mm 두꺼운",
       "폼롤러 근막이완 45cm", "힙업 저항밴드 5단계",
     ],
-    variantKeywords: ["조절덤벨", "케틀벨", "저항밴드", "풀업바", "악력기", "푸쉬업바"] },
+    variantKeywords: ["조절덤벨", "케틀벨", "저항밴드", "풀업바", "악력기", "푸쉬업바", "요가매트", "폼롤러", "철봉", "스텝퍼", "복근롤러", "로잉머신", "실내자전거"] },
 
   { id: "cp.sports.camping", name: "캠핑", level: 2, parent: "cp.sports",
     matchKeywords: ["캠핑", "텐트", "캠핑의자"],
@@ -333,7 +333,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "원터치 텐트 2인용 팝업", "경량 폴딩 캠핑의자",
       "접이식 알루미늄 테이블", "쿠팡 로켓배송 텐트",
     ],
-    variantKeywords: ["원터치텐트", "돔텐트", "차박텐트", "백패킹텐트", "캠핑쉘터", "타프텐트"] },
+    variantKeywords: ["원터치텐트", "돔텐트", "차박텐트", "백패킹텐트", "캠핑쉘터", "타프텐트", "캠핑의자", "캠핑테이블", "화로대", "캠핑버너", "침낭", "캠핑매트", "랜턴"] },
 
   // ═══════════════════════════════════════════════════════════════
   // L1: 반려동물 (쿠팡 특수 카테고리)
@@ -351,14 +351,14 @@ export const COUPANG_NODES: OntologyNode[] = [
       "강아지 사료 소형견 6kg", "강아지 간식 덴탈껌",
       "소프트 사료 노견용", "연어 그레인프리 사료",
     ],
-    variantKeywords: ["건사료", "습식사료", "그레인프리사료", "덴탈껌", "소프트사료", "수제간식"] },
+    variantKeywords: ["건사료", "습식사료", "그레인프리사료", "덴탈껌", "소프트사료", "수제간식", "동결건조간식", "강아지육포", "노견사료", "퍼피사료", "훈제껌"] },
   { id: "cp.pet.dog.supply", name: "강아지 용품", level: 3, parent: "cp.pet.dog",
     matchKeywords: ["강아지용품", "하네스", "배변패드", "강아지집", "이동장", "캐리어"],
     seedKeywords: [
       "강아지 배변패드 200매", "소형견 하네스 가슴줄",
       "강아지 이동장 캐리어", "반려견 GPS 트래커",
     ],
-    variantKeywords: ["배변패드", "강아지하네스", "이동장캐리어", "강아지울타리", "배변판", "강아지밥그릇"] },
+    variantKeywords: ["배변패드", "강아지하네스", "이동장캐리어", "강아지울타리", "배변판", "강아지밥그릇", "자동급식기", "급수기", "강아지목줄", "강아지방석", "강아지계단"] },
 
   { id: "cp.pet.cat", name: "고양이", level: 2, parent: "cp.pet",
     matchKeywords: ["고양이", "캣", "묘"],
@@ -369,7 +369,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "고양이사료 전연령 6kg", "츄르 고양이 간식 20개",
       "그레인프리 캣사료 연어", "고양이 습식캔 24입",
     ],
-    variantKeywords: ["고양이건사료", "고양이습식캔", "츄르간식", "그레인프리캣사료", "키튼사료", "고양이동결건조간식"] },
+    variantKeywords: ["고양이건사료", "고양이습식캔", "츄르간식", "그레인프리캣사료", "키튼사료", "고양이동결건조간식", "처방식사료", "노령묘사료", "습식파우치", "고양이캔", "헤어볼사료"] },
 
   // ═══════════════════════════════════════════════════════════════
   // L1: 출산/유아동
@@ -434,14 +434,14 @@ export const COUPANG_NODES: OntologyNode[] = [
       "종합비타민 멀티 365일분", "비타민D 5000IU 연질캡슐",
       "마그네슘 수면 보조 90정", "비타민C 1000mg 대용량",
     ],
-    variantKeywords: ["종합비타민", "비타민D", "비타민C", "마그네슘영양제", "아연영양제", "철분제"] },
+    variantKeywords: ["종합비타민", "비타민D", "비타민C", "마그네슘영양제", "아연영양제", "철분제", "비타민B", "비타민E", "멀티비타민", "어린이비타민", "임산부비타민", "칼슘"] },
   { id: "cp.wellness.supplement.probiotics", name: "유산균", level: 3, parent: "cp.wellness.supplement",
     matchKeywords: ["유산균", "프로바이오틱스", "장건강", "모유유산균", "장용성유산균"],
     seedKeywords: [
       "모유유산균 여성 질건강", "장건강 프로바이오틱스",
       "어린이 유산균 츄어블", "100억 장용성 유산균",
     ],
-    variantKeywords: ["모유유산균", "장용성유산균", "어린이유산균", "여성유산균", "신바이오틱스", "포스트바이오틱스"] },
+    variantKeywords: ["모유유산균", "장용성유산균", "어린이유산균", "여성유산균", "신바이오틱스", "포스트바이오틱스", "락토바실러스", "100억유산균", "프리바이오틱스", "다이어트유산균", "변비유산균"] },
 
   { id: "cp.wellness.device", name: "건강기기", level: 2, parent: "cp.wellness",
     matchKeywords: ["마사지건", "안마기", "혈압계", "체중계"],
@@ -452,7 +452,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "미니 마사지건 4헤드", "목어깨 온열 안마기 충전",
       "온열 눈마사지기 접이식", "종아리 에어 마사지기",
     ],
-    variantKeywords: ["마사지건", "목어깨안마기", "눈마사지기", "종아리마사지기", "발마사지기", "두피마사지기"] },
+    variantKeywords: ["마사지건", "목어깨안마기", "눈마사지기", "종아리마사지기", "발마사지기", "두피마사지기", "안마의자", "지압볼", "EMS마사지기", "온열안마기", "저주파마사지기"] },
 
   // ═══════════════════════════════════════════════════════════════
   // 확장 노드 시작 — 기존 노드 이후 append
@@ -466,7 +466,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "강아지 올인원 잠옷 면", "소형견 후드티 귀여운",
       "반려견 쿨링 조끼 여름",
     ],
-    variantKeywords: ["강아지패딩", "강아지레인코트", "강아지잠옷", "쿨링조끼", "강아지후드티", "강아지한복"] },
+    variantKeywords: ["강아지패딩", "강아지레인코트", "강아지잠옷", "쿨링조끼", "강아지후드티", "강아지한복", "강아지티셔츠", "강아지원피스", "강아지맨투맨", "강아지방한복"] },
   { id: "cp.pet.dog.health", name: "강아지 건강/위생", level: 3, parent: "cp.pet.dog",
     matchKeywords: ["강아지샴푸", "강아지영양제", "이빨관리", "귀세정", "애견목욕", "강아지칫솔"],
     seedKeywords: [
@@ -474,7 +474,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "강아지 치석 제거 덴탈스프레이", "귀세정제 반려견 귀청소",
       "강아지 발워시 실리콘 세척기",
     ],
-    variantKeywords: ["강아지샴푸", "강아지영양제", "귀세정제", "덴탈스프레이", "발워시기", "강아지칫솔"] },
+    variantKeywords: ["강아지샴푸", "강아지영양제", "귀세정제", "덴탈스프레이", "발워시기", "강아지칫솔", "관절영양제", "유산균", "눈물자국제거", "저자극샴푸", "치약"] },
   { id: "cp.pet.dog.bed", name: "강아지 침대/하우스", level: 3, parent: "cp.pet.dog",
     matchKeywords: ["강아지침대", "반려견쿠션", "강아지하우스", "켄넬", "울타리", "강아지방석"],
     seedKeywords: [
@@ -482,7 +482,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "강아지 텐트 하우스 실내", "세탁가능 강아지 침대 사계절",
       "강아지 계단 침대용 3단",
     ],
-    variantKeywords: ["강아지방석", "강아지하우스", "켄넬", "접이식울타리", "쿨매트", "강아지계단"] },
+    variantKeywords: ["강아지방석", "강아지하우스", "켄넬", "접이식울타리", "쿨매트", "강아지계단", "도넛방석", "강아지텐트", "메모리폼침대", "강아지쿠션", "강아지매트"] },
   { id: "cp.pet.dog.walk", name: "강아지 산책용품", level: 3, parent: "cp.pet.dog",
     matchKeywords: ["리드줄", "산책줄", "자동줄", "산책가방", "배변봉투", "LED산책줄"],
     seedKeywords: [
@@ -490,7 +490,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "배변봉투 300매 대용량 친환경", "산책 가방 간식 물병 수납",
       "강아지 GPS 트래커 실시간",
     ],
-    variantKeywords: ["자동리드줄", "LED산책줄", "배변봉투", "산책가방", "목줄하네스", "GPS트래커"] },
+    variantKeywords: ["자동리드줄", "LED산책줄", "배변봉투", "산책가방", "목줄하네스", "GPS트래커", "반사산책줄", "입마개", "산책컵", "간식파우치", "야광목걸이"] },
 
   // ── 반려동물 L3 확장: 고양이 세분화 ──
   { id: "cp.pet.cat.supply", name: "고양이 용품", level: 3, parent: "cp.pet.cat",
@@ -500,7 +500,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "골판지 스크래처 대형 리필", "자동 고양이 화장실 셀프클린",
       "고양이 모래 탈취제 무향",
     ],
-    variantKeywords: ["두부모래", "벤토나이트모래", "캣타워", "골판지스크래처", "자동화장실", "모래탈취제"] },
+    variantKeywords: ["두부모래", "벤토나이트모래", "캣타워", "골판지스크래처", "자동화장실", "모래탈취제", "자동급식기", "정수기", "고양이밥그릇", "고양이캐리어", "모래삽"] },
   { id: "cp.pet.cat.toy", name: "고양이 장난감", level: 3, parent: "cp.pet.cat",
     matchKeywords: ["캣닢", "낚싯대장난감", "레이저포인터", "터널", "고양이공", "자동장난감"],
     seedKeywords: [
@@ -508,7 +508,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "고양이 터널 3구 접이식", "낚싯대 깃털 교체형 5개",
       "고양이 공 트랙볼 지능개발",
     ],
-    variantKeywords: ["캣닢인형", "낚싯대장난감", "자동레이저장난감", "고양이터널", "트랙볼", "깃털장난감"] },
+    variantKeywords: ["캣닢인형", "낚싯대장난감", "자동레이저장난감", "고양이터널", "트랙볼", "깃털장난감", "지능개발장난감", "쥐돌이인형", "고양이낚시대", "자동움직이는장난감"] },
   { id: "cp.pet.cat.health", name: "고양이 건강/위생", level: 3, parent: "cp.pet.cat",
     matchKeywords: ["고양이영양제", "고양이샴푸", "헤어볼", "구강관리", "고양이유산균", "눈물자국제거"],
     seedKeywords: [
@@ -516,7 +516,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "고양이 눈물자국 세정제", "고양이 빗 브러쉬 슬리커",
       "고양이 네일캡 발톱 커버 20개",
     ],
-    variantKeywords: ["헤어볼케어", "고양이유산균", "눈물자국세정제", "슬리커브러쉬", "고양이발톱깎이", "고양이샴푸"] },
+    variantKeywords: ["헤어볼케어", "고양이유산균", "눈물자국세정제", "슬리커브러쉬", "고양이발톱깎이", "고양이샴푸", "네일캡", "고양이영양제", "구강스프레이", "귀세정제"] },
   { id: "cp.pet.cat.furniture", name: "고양이 가구", level: 3, parent: "cp.pet.cat",
     matchKeywords: ["캣워크", "캣선반", "고양이침대", "윈도우해먹", "캣휠", "동굴침대"],
     seedKeywords: [
@@ -524,7 +524,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "고양이 윈도우 해먹 흡착형", "고양이 침대 동굴형 겨울",
       "캣워크 구름다리 벽부착",
     ],
-    variantKeywords: ["캣워크", "캣선반", "캣휠", "윈도우해먹", "동굴침대", "캣구름다리"] },
+    variantKeywords: ["캣워크", "캣선반", "캣휠", "윈도우해먹", "동굴침대", "캣구름다리", "고양이방석", "고양이쿠션", "원목캣타워", "천장형캣타워", "고양이해먹"] },
 
   // ── 주방용품 L3 확장: 소형가전 ──
   { id: "cp.kitchen.appliance", name: "주방소형가전", level: 2, parent: "cp.kitchen",
@@ -537,7 +537,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "로티세리 에어프라이어 오븐형", "에어프라이어 종이호일 200매",
       "디지털 터치 에어프라이어 7L",
     ],
-    variantKeywords: ["대용량에어프라이어", "미니에어프라이어", "오븐형에어프라이어", "로티세리에어프라이어", "디지털에어프라이어"] },
+    variantKeywords: ["대용량에어프라이어", "미니에어프라이어", "오븐형에어프라이어", "로티세리에어프라이어", "디지털에어프라이어", "2in1에어프라이어", "유리창에어프라이어", "듀얼에어프라이어", "10L에어프라이어"] },
   { id: "cp.kitchen.appliance.cooker", name: "전기밥솥/압력솥", level: 3, parent: "cp.kitchen.appliance",
     matchKeywords: ["전기밥솥", "IH밥솥", "압력밥솥", "미니밥솥", "1인밥솥", "멀티쿠커"],
     seedKeywords: [
@@ -545,7 +545,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "압력밥솥 10인용 대가족", "잡곡 현미 전기밥솥 맛있는",
       "멀티쿠커 압력 슬로우 겸용",
     ],
-    variantKeywords: ["IH밥솥", "압력밥솥", "미니밥솥", "멀티쿠커", "보온밥솥", "1인용밥솥"] },
+    variantKeywords: ["IH밥솥", "압력밥솥", "미니밥솥", "멀티쿠커", "보온밥솥", "1인용밥솥", "전기압력밥솥", "6인용밥솥", "10인용밥솥", "스텐내솥밥솥"] },
   { id: "cp.kitchen.appliance.blender", name: "믹서기/블렌더", level: 3, parent: "cp.kitchen.appliance",
     matchKeywords: ["믹서기", "블렌더", "착즙기", "초고속블렌더", "핸드블렌더", "원액기"],
     seedKeywords: [
@@ -553,7 +553,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "저속 착즙기 원액기 가정용", "개인용 텀블러 블렌더 USB",
       "대용량 믹서기 주스 1.5L",
     ],
-    variantKeywords: ["초고속블렌더", "핸드블렌더", "저속착즙기", "텀블러블렌더", "진공믹서기", "원액기"] },
+    variantKeywords: ["초고속블렌더", "핸드블렌더", "저속착즙기", "텀블러블렌더", "진공믹서기", "원액기", "이유식마스터", "스무디메이커", "미니믹서기", "분쇄기"] },
   { id: "cp.kitchen.appliance.pot", name: "전기포트/커피머신", level: 3, parent: "cp.kitchen.appliance",
     matchKeywords: ["전기포트", "전기주전자", "커피머신", "에스프레소머신", "커피메이커", "캡슐커피머신"],
     seedKeywords: [
@@ -561,7 +561,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "캡슐 커피머신 로켓배송", "에스프레소 머신 가정용 반자동",
       "드립 커피메이커 타이머",
     ],
-    variantKeywords: ["스텐전기포트", "온도조절주전자", "캡슐커피머신", "에스프레소머신", "드립커피메이커"] },
+    variantKeywords: ["스텐전기포트", "온도조절주전자", "캡슐커피머신", "에스프레소머신", "드립커피메이커", "전자동커피머신", "반자동에스프레소머신", "분유전용포트", "유리전기포트", "토스터기"] },
 
   // ── 주방용품 L3 확장: 식기 ──
   { id: "cp.kitchen.tableware", name: "식기", level: 2, parent: "cp.kitchen",
@@ -574,7 +574,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "멜라민 접시 어린이 깨지지않는", "한식 공기 국그릇 세트",
       "캠핑 식기세트 4인 스텐",
     ],
-    variantKeywords: ["도자기접시", "스텐면기", "멜라민식기", "캠핑식기세트", "한식밥공기", "대접"] },
+    variantKeywords: ["도자기접시", "스텐면기", "멜라민식기", "캠핑식기세트", "한식밥공기", "대접", "유아식기세트", "파스타접시", "1인식기세트", "북유럽그릇", "오븐접시"] },
   { id: "cp.kitchen.tableware.cup", name: "컵/텀블러", level: 3, parent: "cp.kitchen.tableware",
     matchKeywords: ["텀블러", "머그컵", "보온병", "물병", "워터보틀", "빨대텀블러"],
     seedKeywords: [
@@ -582,7 +582,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "유리 머그컵 내열 카페", "빨대 텀블러 대용량 900ml",
       "캠핑 머그컵 스텐 겹겹이",
     ],
-    variantKeywords: ["스텐텀블러", "보온보냉물병", "빨대텀블러", "유리머그컵", "보온병", "트라이탄물병"] },
+    variantKeywords: ["스텐텀블러", "보온보냉물병", "빨대텀블러", "유리머그컵", "보온병", "트라이탄물병", "아이스텀블러", "대용량텀블러", "휴대용물병", "도자기머그컵", "이중유리컵", "워터보틀"] },
   { id: "cp.kitchen.tableware.cutlery", name: "수저/커트러리", level: 3, parent: "cp.kitchen.tableware",
     matchKeywords: ["수저", "젓가락", "커트러리", "포크", "나이프", "스푼", "수저세트"],
     seedKeywords: [
@@ -590,7 +590,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "캠핑 커트러리 접이식 휴대용", "골드 양식 커트러리 세트",
       "나무 젓가락 10쌍 세트",
     ],
-    variantKeywords: ["스텐수저세트", "유아수저세트", "캠핑커트러리", "양식커트러리", "나무젓가락", "골드수저"] },
+    variantKeywords: ["스텐수저세트", "유아수저세트", "캠핑커트러리", "양식커트러리", "나무젓가락", "골드수저", "실리콘유아수저", "티스푼세트", "수저통", "어른수저세트", "1인수저세트"] },
 
   // ── 생활용품 L3 확장: 욕실 ──
   { id: "cp.living.bath", name: "욕실용품", level: 2, parent: "cp.living",
@@ -603,7 +603,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "치실 워터플로서 구강세정기", "가글 구강청결제 1L 대용량",
       "칫솔 살균기 UV 건조 벽걸이",
     ],
-    variantKeywords: ["전동칫솔", "미백치약", "구강세정기", "구강청결제", "칫솔살균기", "치간칫솔"] },
+    variantKeywords: ["전동칫솔", "미백치약", "구강세정기", "구강청결제", "칫솔살균기", "치간칫솔", "음파칫솔", "어린이칫솔", "잇몸치약", "치실", "가글", "죽염치약"] },
   { id: "cp.living.bath.towel", name: "수건/목욕용품", level: 3, parent: "cp.living.bath",
     matchKeywords: ["수건", "목욕수건", "타월", "때밀이", "등밀이", "헤어타월", "세면타월"],
     seedKeywords: [
@@ -611,7 +611,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "때밀이 이태리타올 100장", "등밀이 타올 손잡이 롱",
       "순면 세면타월 10장 무형광",
     ],
-    variantKeywords: ["호텔수건", "극세사헤어타월", "이태리타올", "등밀이타올", "순면세면타월", "목욕가운"] },
+    variantKeywords: ["호텔수건", "극세사헤어타월", "이태리타올", "등밀이타올", "순면세면타월", "목욕가운", "아기수건", "면수건", "스포츠타월", "골프수건", "컬러수건"] },
   { id: "cp.living.bath.mat", name: "욕실매트/커튼", level: 3, parent: "cp.living.bath",
     matchKeywords: ["욕실매트", "규조토", "샤워커튼", "발매트", "미끄럼방지매트", "규조토발매트"],
     seedKeywords: [
@@ -619,7 +619,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "샤워커튼 방수 곰팡이방지 세트", "메모리폼 욕실 발매트 푹신",
       "욕실 배수구 머리카락 거름망",
     ],
-    variantKeywords: ["규조토발매트", "미끄럼방지매트", "방수샤워커튼", "메모리폼발매트", "욕실거름망"] },
+    variantKeywords: ["규조토발매트", "미끄럼방지매트", "방수샤워커튼", "메모리폼발매트", "욕실거름망", "샤워부스", "욕실선반", "샤워헤드", "수전", "비데커버", "욕실수납장"] },
   { id: "cp.living.bath.soap", name: "비누/바디워시", level: 3, parent: "cp.living.bath",
     matchKeywords: ["비누", "바디워시", "핸드워시", "손세정제", "천연비누", "자동디스펜서", "세정제"],
     seedKeywords: [
@@ -627,7 +627,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "천연 수제비누 선물세트", "아이 순한 바디워시 저자극",
       "손세정제 리필 대용량 4L",
     ],
-    variantKeywords: ["보습바디워시", "자동핸드워시", "천연수제비누", "저자극바디워시", "거품손세정제"] },
+    variantKeywords: ["보습바디워시", "자동핸드워시", "천연수제비누", "저자극바디워시", "거품손세정제", "약산성바디워시", "미용비누", "빨래비누", "주방비누", "세안비누", "오가닉바디워시"] },
 
   // ── 생활용품 L3 확장: 세탁 ──
   { id: "cp.living.laundry", name: "세탁용품", level: 2, parent: "cp.living",
@@ -640,7 +640,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "아기 세탁세제 순한 무향료", "산소계 표백제 과탄산소다",
       "찌든때 전용 세탁세제 바 비누",
     ],
-    variantKeywords: ["캡슐세제", "고농축섬유유연제", "아기세탁세제", "산소계표백제", "드럼세제", "액체세탁세제"] },
+    variantKeywords: ["캡슐세제", "고농축섬유유연제", "아기세탁세제", "산소계표백제", "드럼세제", "액체세탁세제", "가루세제", "울샴푸", "울세제", "세탁조클리너", "건조기시트", "섬유탈취제"] },
   { id: "cp.living.laundry.rack", name: "빨래건조대/다리미", level: 3, parent: "cp.living.laundry",
     matchKeywords: ["빨래건조대", "다리미", "스팀다리미", "옷걸이", "세탁망", "빨래바구니"],
     seedKeywords: [
@@ -648,7 +648,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "논슬립 옷걸이 벨벳 50개", "세탁망 미세먼지 대형 3종",
       "빨래바구니 접이식 방수 대형",
     ],
-    variantKeywords: ["접이식빨래건조대", "핸디스팀다리미", "벨벳옷걸이", "세탁망", "빨래바구니"] },
+    variantKeywords: ["접이식빨래건조대", "핸디스팀다리미", "벨벳옷걸이", "세탁망", "빨래바구니", "천장형건조대", "벽걸이건조대", "다림판", "빨래건조봉", "나무옷걸이", "이동식건조대"] },
 
   // ── 생활용품 L3 확장: 종이/일회용 ──
   { id: "cp.living.paper", name: "종이/일회용품", level: 2, parent: "cp.living",
@@ -661,7 +661,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "미용티슈 200매 6박스", "물에녹는 물티슈 60매 10팩",
       "프리미엄 4겹 화장지 대용량",
     ],
-    variantKeywords: ["3겹화장지", "키친타월", "미용티슈", "대용량물티슈", "4겹화장지"] },
+    variantKeywords: ["3겹화장지", "키친타월", "미용티슈", "대용량물티슈", "4겹화장지", "롤화장지", "박스물티슈", "엠보싱화장지", "휴대용물티슈", "유아물티슈"] },
   { id: "cp.living.paper.disposable", name: "일회용품", level: 3, parent: "cp.living.paper",
     matchKeywords: ["종이컵", "비닐봉투", "비닐장갑", "지퍼백", "랩", "쓰레기봉투"],
     seedKeywords: [
@@ -669,7 +669,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "지퍼백 대형 냉동보관 100매", "랩 30cm 100m 대용량",
       "음식물 쓰레기봉투 5L 100매",
     ],
-    variantKeywords: ["종이컵", "위생비닐장갑", "냉동지퍼백", "대용량랩", "쓰레기봉투", "종이호일"] },
+    variantKeywords: ["종이컵", "위생비닐장갑", "냉동지퍼백", "대용량랩", "쓰레기봉투", "종이호일", "위생장갑", "일회용접시", "일회용포크", "일회용수저", "종량제봉투", "종이빨대"] },
 
   // ── 헬스/건강식품 L3 확장: 오메가3 ──
   { id: "cp.wellness.supplement.omega", name: "오메가3/크릴오일", level: 3, parent: "cp.wellness.supplement",
@@ -679,7 +679,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "식물성 오메가3 아마씨유 비건", "EPA DHA 복합 오메가3",
       "어린이 오메가3 츄어블 딸기",
     ],
-    variantKeywords: ["rTG오메가3", "크릴오일", "식물성오메가3", "어린이오메가3", "피쉬오일", "알티지오메가3"] },
+    variantKeywords: ["rTG오메가3", "크릴오일", "식물성오메가3", "어린이오메가3", "피쉬오일", "알티지오메가3", "고순도오메가3", "임산부오메가3", "남극크릴오일", "인지질크릴오일"] },
   { id: "cp.wellness.supplement.collagen", name: "콜라겐/이너뷰티", level: 3, parent: "cp.wellness.supplement",
     matchKeywords: ["콜라겐", "히알루론산", "석류", "이너뷰티", "먹는콜라겐", "저분자콜라겐"],
     seedKeywords: [
@@ -687,7 +687,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "석류 콜라겐 젤리 맛있는", "먹는 콜라겐 분말 피쉬",
       "엘라스틴 콜라겐 복합 60일분",
     ],
-    variantKeywords: ["저분자콜라겐", "먹는콜라겐", "석류콜라겐", "콜라겐젤리", "피쉬콜라겐", "콜라겐분말"] },
+    variantKeywords: ["저분자콜라겐", "먹는콜라겐", "석류콜라겐", "콜라겐젤리", "피쉬콜라겐", "콜라겐분말", "히알루론산", "엘라스틴", "이너뷰티음료", "콜라겐드링크", "비오틴", "콜라겐캡슐"] },
   { id: "cp.wellness.supplement.liver", name: "간건강/밀크시슬", level: 3, parent: "cp.wellness.supplement",
     matchKeywords: ["밀크시슬", "간건강", "실리마린", "간영양제", "간해독", "UDCA"],
     seedKeywords: [
@@ -695,7 +695,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "쿠르쿠민 강황 간보호", "비타민B군 간건강 피로회복",
       "간 디톡스 해독 30일분",
     ],
-    variantKeywords: ["밀크시슬", "실리마린", "간해독영양제", "강황쿠르쿠민", "UDCA", "간디톡스"] },
+    variantKeywords: ["밀크시슬", "실리마린", "간해독영양제", "강황쿠르쿠민", "UDCA", "간디톡스", "아르기닌", "글루타치온", "간건강환", "비타민B간영양제"] },
   { id: "cp.wellness.supplement.joint", name: "관절/뼈건강", level: 3, parent: "cp.wellness.supplement",
     matchKeywords: ["글루코사민", "관절영양제", "MSM", "칼슘", "비타민K", "보스웰리아"],
     seedKeywords: [
@@ -703,7 +703,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "보스웰리아 관절 통증 완화", "초록입홍합 관절영양제",
       "콘드로이친 연골 보호 60캡슐",
     ],
-    variantKeywords: ["글루코사민", "보스웰리아", "초록입홍합", "콘드로이친", "칼슘마그네슘", "MSM관절"] },
+    variantKeywords: ["글루코사민", "보스웰리아", "초록입홍합", "콘드로이친", "칼슘마그네슘", "MSM관절", "비타민K2", "마그네슘칼슘", "관절연골영양제", "연골보호제", "뼈건강영양제"] },
 
   // ── 헬스/건강식품 L3 확장: 다이어트보조 ──
   { id: "cp.wellness.diet", name: "다이어트보조", level: 2, parent: "cp.wellness",
@@ -716,7 +716,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "L-카르니틴 운동전 태움", "녹차추출물 카테킨 다이어트",
       "잔티젠 내장지방 감소 60정",
     ],
-    variantKeywords: ["가르시니아", "CLA공액리놀레산", "L카르니틴", "녹차카테킨", "잔티젠", "체지방감소제"] },
+    variantKeywords: ["가르시니아", "CLA공액리놀레산", "L카르니틴", "녹차카테킨", "잔티젠", "체지방감소제", "키토다이어트", "사과식초", "다이어트환", "대사부스터", "해독주스"] },
 
   // ── 식품 L3 확장: 로켓프레시 과일 ──
   { id: "cp.food.fruit", name: "과일", level: 2, parent: "cp.food",
@@ -729,7 +729,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "나주 배 선물세트 프리미엄", "홍로 사과 당도선별",
       "세척사과 간편 3개입 팩",
     ],
-    variantKeywords: ["부사사과", "홍로사과", "아오리사과", "감홍사과", "사과즙", "배즙", "황금배"] },
+    variantKeywords: ["부사사과", "홍로사과", "아오리사과", "감홍사과", "사과즙", "배즙", "황금배", "시나노골드", "엔비사과", "신고배", "청사과", "세척사과"] },
   { id: "cp.food.fruit.berry", name: "딸기/베리류", level: 3, parent: "cp.food.fruit",
     matchKeywords: ["딸기", "블루베리", "체리", "라즈베리", "아보카도", "설향", "금실", "킹스베리"],
     seedKeywords: [
@@ -737,7 +737,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "생체리 칠레산 항공직송", "아보카도 6개입 숙성",
       "냉동 라즈베리 유기농 500g",
     ],
-    variantKeywords: ["설향딸기", "금실딸기", "킹스베리", "냉동딸기", "건블루베리", "냉동블루베리"] },
+    variantKeywords: ["설향딸기", "금실딸기", "킹스베리", "냉동딸기", "건블루베리", "냉동블루베리", "죽향딸기", "산딸기", "냉동라즈베리", "체리", "아보카도", "크랜베리"] },
   { id: "cp.food.fruit.citrus", name: "감귤/한라봉", level: 3, parent: "cp.food.fruit",
     matchKeywords: ["귤", "감귤", "한라봉", "천혜향", "레드향", "오렌지", "황금향", "카라향", "노지감귤", "하우스감귤"],
     seedKeywords: [
@@ -745,7 +745,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "천혜향 제주 프리미엄", "네이블 오렌지 12개입",
       "레드향 선물세트 고급",
     ],
-    variantKeywords: ["한라봉", "천혜향", "레드향", "황금향", "카라향", "노지감귤", "하우스감귤"] },
+    variantKeywords: ["한라봉", "천혜향", "레드향", "황금향", "카라향", "노지감귤", "하우스감귤", "제주감귤", "네이블오렌지", "자몽", "레몬", "오렌지주스용"] },
   { id: "cp.food.fruit.tropical", name: "열대과일", level: 3, parent: "cp.food.fruit",
     matchKeywords: ["바나나", "망고", "파인애플", "키위", "코코넛", "애플망고", "골드키위"],
     seedKeywords: [
@@ -753,7 +753,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "골드키위 뉴질랜드 10개입", "필리핀 파인애플 통 1개",
       "애플망고 제주산 프리미엄",
     ],
-    variantKeywords: ["골드키위", "애플망고", "냉동망고", "미니바나나", "통파인애플", "그린키위"] },
+    variantKeywords: ["골드키위", "애플망고", "냉동망고", "미니바나나", "통파인애플", "그린키위", "필리핀바나나", "용과", "두리안", "코코넛", "망고스틴", "람부탄"] },
 
   // ── 식품 L3 확장: 채소 ──
   { id: "cp.food.veggie", name: "채소", level: 2, parent: "cp.food",
@@ -766,7 +766,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "양파 10kg 국내산 가정용", "무농약 당근 1kg 주스용",
       "국산 깐마늘 1kg 냉장",
     ],
-    variantKeywords: ["호박고구마", "꿀고구마", "수미감자", "깐마늘", "주스용당근", "햇양파"] },
+    variantKeywords: ["호박고구마", "꿀고구마", "수미감자", "깐마늘", "주스용당근", "햇양파", "알감자", "햇감자", "밤고구마", "자색고구마", "국산무", "생강"] },
   { id: "cp.food.veggie.leaf", name: "엽채/샐러드", level: 3, parent: "cp.food.veggie",
     matchKeywords: ["상추", "양배추", "시금치", "샐러드", "깻잎", "브로콜리", "혼합샐러드"],
     seedKeywords: [
@@ -774,7 +774,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "브로콜리 2송이 신선 세척", "깻잎 50매 팩 향긋한",
       "유기농 시금치 300g 무농약",
     ],
-    variantKeywords: ["혼합샐러드", "유기농시금치", "세척브로콜리", "쌈채소", "양배추즙", "케일"] },
+    variantKeywords: ["혼합샐러드", "유기농시금치", "세척브로콜리", "쌈채소", "양배추즙", "케일", "로메인", "적상추", "청상추", "어린잎채소", "깻잎", "샐러드채소믹스"] },
   { id: "cp.food.veggie.mushroom", name: "버섯/나물", level: 3, parent: "cp.food.veggie",
     matchKeywords: ["버섯", "팽이버섯", "새송이", "표고", "느타리", "나물", "건표고"],
     seedKeywords: [
@@ -782,7 +782,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "팽이버섯 3봉 묶음", "건나물 세트 5종 명절용",
       "느타리버섯 싱싱 국산 300g",
     ],
-    variantKeywords: ["새송이버섯", "건표고버섯", "팽이버섯", "느타리버섯", "건나물세트", "목이버섯"] },
+    variantKeywords: ["새송이버섯", "건표고버섯", "팽이버섯", "느타리버섯", "건나물세트", "목이버섯", "양송이버섯", "노루궁뎅이버섯", "버섯세트", "고사리", "취나물", "시래기"] },
 
   // ── 식품 L3 확장: 유제품 ──
   { id: "cp.food.dairy", name: "유제품", level: 2, parent: "cp.food",
@@ -795,7 +795,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "오트밀크 바리스타 1L", "저지방 우유 900ml 팩",
       "유기농 우유 아이 간식용",
     ],
-    variantKeywords: ["저지방우유", "무첨가두유", "오트밀크", "아몬드밀크", "유기농우유", "검은콩두유"] },
+    variantKeywords: ["저지방우유", "무첨가두유", "오트밀크", "아몬드밀크", "유기농우유", "검은콩두유", "서울우유", "매일우유", "초코우유", "딸기우유", "바나나우유", "락토프리우유"] },
   { id: "cp.food.dairy.yogurt", name: "요거트/발효유", level: 3, parent: "cp.food.dairy",
     matchKeywords: ["요거트", "그릭요거트", "발효유", "요플레", "액티비아", "단백질요거트"],
     seedKeywords: [
@@ -803,7 +803,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "단백질 그릭요거트 100g 10개", "떠먹는 요거트 딸기 대용량",
       "유아 요거트 아이간식",
     ],
-    variantKeywords: ["그릭요거트", "단백질요거트", "떠먹는요거트", "비피더스발효유", "유아요거트", "플레인요거트"] },
+    variantKeywords: ["그릭요거트", "단백질요거트", "떠먹는요거트", "비피더스발효유", "유아요거트", "플레인요거트", "마시는요거트", "액티비아", "요플레", "케피어", "홈메이드요거트", "무가당요거트"] },
   { id: "cp.food.dairy.cheese", name: "치즈/버터", level: 3, parent: "cp.food.dairy",
     matchKeywords: ["치즈", "모짜렐라", "크림치즈", "버터", "슬라이스치즈", "스트링치즈"],
     seedKeywords: [
@@ -811,7 +811,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "크림치즈 200g 필라델피아", "무염 버터 450g 베이킹용",
       "스트링 치즈 어린이 간식",
     ],
-    variantKeywords: ["모짜렐라치즈", "슬라이스치즈", "크림치즈", "무염버터", "스트링치즈", "체다치즈"] },
+    variantKeywords: ["모짜렐라치즈", "슬라이스치즈", "크림치즈", "무염버터", "스트링치즈", "체다치즈", "가염버터", "브리치즈", "까망베르", "파마산치즈", "피자치즈", "리코타치즈"] },
 
   // ── 식품 L3 확장: 냉동식품 ──
   { id: "cp.food.frozen", name: "냉동식품", level: 2, parent: "cp.food",
@@ -824,7 +824,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "군만두 바삭한 에프용 500g", "비건 만두 두부야채",
       "김치만두 국산김치 1kg",
     ],
-    variantKeywords: ["왕교자만두", "김치만두", "물만두", "군만두", "새우만두", "고기만두"] },
+    variantKeywords: ["왕교자만두", "김치만두", "물만두", "군만두", "새우만두", "고기만두", "비비고만두", "왕만두", "피자만두", "해물만두", "수제만두", "냉동교자"] },
   { id: "cp.food.frozen.pizza", name: "냉동 피자/간식", level: 3, parent: "cp.food.frozen",
     matchKeywords: ["냉동피자", "치킨너겟", "핫도그", "냉동간식", "프렌치프라이", "냉동붕어빵"],
     seedKeywords: [
@@ -832,7 +832,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "핫도그 모짜렐라 냉동 10개", "감자튀김 프렌치프라이 1kg",
       "냉동 붕어빵 팥앙금 20개",
     ],
-    variantKeywords: ["냉동피자", "치킨너겟", "모짜렐라핫도그", "감자튀김", "냉동붕어빵", "냉동와플"] },
+    variantKeywords: ["냉동피자", "치킨너겟", "모짜렐라핫도그", "감자튀김", "냉동붕어빵", "냉동와플", "냉동떡볶이", "냉동호떡", "돈까스", "닭가슴살너겟", "냉동타코야끼"] },
   { id: "cp.food.frozen.rice", name: "냉동밥/볶음밥", level: 3, parent: "cp.food.frozen",
     matchKeywords: ["냉동밥", "볶음밥", "즉석밥", "비빔밥", "컵밥", "김치볶음밥"],
     seedKeywords: [
@@ -840,7 +840,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "컵밥 즉석 비빔밥 6종세트", "닭가슴살 볶음밥 다이어트",
       "김치볶음밥 대용량 냉동",
     ],
-    variantKeywords: ["새우볶음밥", "김치볶음밥", "닭가슴살볶음밥", "냉동컵밥", "냉동비빔밥", "즉석밥"] },
+    variantKeywords: ["새우볶음밥", "김치볶음밥", "닭가슴살볶음밥", "냉동컵밥", "냉동비빔밥", "즉석밥", "햇반", "오므라이스", "야채볶음밥", "잡곡즉석밥", "곤약밥", "현미즉석밥"] },
 
   // ── 식품 L3 확장: 라면/면류 ──
   { id: "cp.food.noodle", name: "라면/면류", level: 2, parent: "cp.food",
@@ -853,7 +853,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "불닭볶음면 5봉 세트", "비빔면 여름 시원한 10개",
       "컵라면 모음 12종 세트",
     ],
-    variantKeywords: ["봉지라면", "컵라면", "불닭볶음면", "비빔면", "짜파게티", "쌀라면"] },
+    variantKeywords: ["봉지라면", "컵라면", "불닭볶음면", "비빔면", "짜파게티", "쌀라면", "신라면", "진라면", "너구리", "안성탕면", "삼양라면", "짜장라면", "쫄면"] },
   { id: "cp.food.noodle.pasta", name: "파스타/소스", level: 3, parent: "cp.food.noodle",
     matchKeywords: ["파스타", "스파게티", "파스타소스", "펜네", "마카로니", "까르보나라"],
     seedKeywords: [
@@ -861,7 +861,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "크림 파스타소스 까르보나라", "펜네 리가테 500g",
       "밀키트 로제 파스타 2인분",
     ],
-    variantKeywords: ["스파게티면", "토마토파스타소스", "까르보나라소스", "로제파스타밀키트", "펜네", "링귀네"] },
+    variantKeywords: ["스파게티면", "토마토파스타소스", "까르보나라소스", "로제파스타밀키트", "펜네", "링귀네", "마카로니", "라자냐", "오일파스타소스", "알리오올리오", "쌀국수면", "우동면"] },
 
   // ── 식품 L3 확장: 간식/과자 ──
   { id: "cp.food.snack", name: "과자/간식", level: 2, parent: "cp.food",
@@ -874,7 +874,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "새우깡 오리지널 30봉 세트", "프링글스 사워크림 110g",
       "오징어 땅콩 믹스넛 간식",
     ],
-    variantKeywords: ["허니버터칩", "감자칩", "새우깡", "프링글스", "꼬북칩", "대용량과자세트"] },
+    variantKeywords: ["허니버터칩", "감자칩", "새우깡", "프링글스", "꼬북칩", "대용량과자세트", "포카칩", "오징어땅콩", "건조과일칩", "프로틴바", "에너지바", "누룽지과자"] },
   { id: "cp.food.snack.choco", name: "초콜릿/젤리", level: 3, parent: "cp.food.snack",
     matchKeywords: ["초콜릿", "젤리", "사탕", "캐러멜", "곰젤리", "가나", "다크초콜릿"],
     seedKeywords: [
@@ -882,7 +882,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "빼빼로 대용량 박스 20개", "카카오 다크초콜릿 72%",
       "츄파춥스 막대사탕 50개입",
     ],
-    variantKeywords: ["다크초콜릿", "곰젤리", "초콜릿선물세트", "막대사탕", "비타민젤리", "파베초콜릿"] },
+    variantKeywords: ["다크초콜릿", "곰젤리", "초콜릿선물세트", "막대사탕", "비타민젤리", "파베초콜릿", "초코파이", "빼빼로", "가나초콜릿", "밀크초콜릿", "하리보젤리", "츄파춥스"] },
 
   // ── 가전디지털 L3 확장: 대형가전 ──
   { id: "cp.digital.tv", name: "TV/영상가전", level: 2, parent: "cp.digital",
@@ -895,7 +895,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "OLED TV 65인치 프리미엄", "가성비 43인치 FHD TV",
       "벽걸이 TV 브라켓 설치",
     ],
-    variantKeywords: ["4K스마트TV", "OLEDTV", "QLEDTV", "대형TV", "안드로이드TV", "벽걸이TV"] },
+    variantKeywords: ["4K스마트TV", "OLEDTV", "QLEDTV", "대형TV", "안드로이드TV", "벽걸이TV", "55인치TV", "65인치TV", "75인치TV", "UHDTV", "스마트TV", "티비브라켓"] },
   { id: "cp.digital.tv.monitor", name: "모니터", level: 3, parent: "cp.digital.tv",
     matchKeywords: ["모니터", "게이밍모니터", "IPS", "커브드", "듀얼모니터", "울트라와이드", "포터블모니터"],
     seedKeywords: [
@@ -903,7 +903,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "게이밍 모니터 165Hz 1ms", "커브드 34인치 울트라와이드",
       "24인치 가성비 모니터 사무용",
     ],
-    variantKeywords: ["게이밍모니터", "울트라와이드모니터", "커브드모니터", "4K모니터", "포터블모니터"] },
+    variantKeywords: ["게이밍모니터", "울트라와이드모니터", "커브드모니터", "4K모니터", "포터블모니터", "27인치모니터", "32인치모니터", "IPS모니터", "듀얼모니터", "모니터암", "QHD모니터"] },
   { id: "cp.digital.tv.projector", name: "빔프로젝터", level: 3, parent: "cp.digital.tv",
     matchKeywords: ["빔프로젝터", "미니빔", "프로젝터", "캠핑빔", "홈시어터", "스마트프로젝터"],
     seedKeywords: [
@@ -911,7 +911,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "LED 빔프로젝터 밝기 3000", "프로젝터 스크린 100인치",
       "스마트 프로젝터 넷플릭스 내장",
     ],
-    variantKeywords: ["미니빔프로젝터", "캠핑빔프로젝터", "LED빔프로젝터", "스마트프로젝터", "포터블프로젝터"] },
+    variantKeywords: ["미니빔프로젝터", "캠핑빔프로젝터", "LED빔프로젝터", "스마트프로젝터", "포터블프로젝터", "4K프로젝터", "홈시어터프로젝터", "프로젝터스크린", "천장형프로젝터", "휴대용빔"] },
 
   // ── 가전디지털 L3 확장: 대형가전 ──
   { id: "cp.digital.major", name: "대형가전", level: 2, parent: "cp.digital",
@@ -924,7 +924,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "4도어 냉장고 메탈 프리미엄", "김치냉장고 스탠드형 300L",
       "원룸 냉장고 냉동겸용 150L",
     ],
-    variantKeywords: ["양문형냉장고", "미니냉장고", "4도어냉장고", "김치냉장고", "원룸냉장고", "비스포크냉장고"] },
+    variantKeywords: ["양문형냉장고", "미니냉장고", "4도어냉장고", "김치냉장고", "원룸냉장고", "비스포크냉장고", "스탠드김치냉장고", "쇼케이스냉장고", "냉동고", "소형냉장고", "빌트인냉장고"] },
   { id: "cp.digital.major.washer", name: "세탁기/건조기", level: 3, parent: "cp.digital.major",
     matchKeywords: ["세탁기", "건조기", "드럼세탁기", "통돌이", "일체형", "미니세탁기", "세탁건조기"],
     seedKeywords: [
@@ -932,7 +932,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "의류건조기 히트펌프 9kg", "미니 세탁기 아기옷 3kg",
       "세탁건조기 올인원 일체형",
     ],
-    variantKeywords: ["드럼세탁기", "통돌이세탁기", "히트펌프건조기", "미니세탁기", "올인원세탁건조기"] },
+    variantKeywords: ["드럼세탁기", "통돌이세탁기", "히트펌프건조기", "미니세탁기", "올인원세탁건조기", "전기건조기", "가스건조기", "워시타워", "삶는세탁기", "벽걸이세탁기"] },
   { id: "cp.digital.major.ac", name: "에어컨/선풍기", level: 3, parent: "cp.digital.major",
     matchKeywords: ["에어컨", "선풍기", "서큘레이터", "냉풍기", "제습기", "이동식에어컨", "냉방기", "에어서큘레이터"],
     seedKeywords: [
@@ -940,7 +940,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "타워형 선풍기 DC모터 저소음", "서큘레이터 3D회전 강력",
       "제습기 10L 원룸 소형 저소음",
     ],
-    variantKeywords: ["벽걸이에어컨", "이동식에어컨", "타워선풍기", "DC서큘레이터", "소형제습기", "냉풍기"] },
+    variantKeywords: ["벽걸이에어컨", "이동식에어컨", "타워선풍기", "DC서큘레이터", "소형제습기", "냉풍기", "스탠드에어컨", "창문형에어컨", "무풍에어컨", "미니선풍기", "탁상용선풍기", "공기청정기"] },
 
   // ── 가전디지털 L3 확장: 소형가전 ──
   { id: "cp.digital.small", name: "소형가전", level: 2, parent: "cp.digital",
@@ -953,7 +953,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "가성비 로봇청소기 저소음", "로봇청소기 소모품 사이드브러쉬",
       "물걸레 로봇 전용패드 20매",
     ],
-    variantKeywords: ["물걸레로봇청소기", "자동비움로봇청소기", "LDS로봇청소기", "가성비로봇청소기", "물걸레로봇패드"] },
+    variantKeywords: ["물걸레로봇청소기", "자동비움로봇청소기", "LDS로봇청소기", "가성비로봇청소기", "물걸레로봇패드", "무선청소기", "핸디청소기", "차량용청소기", "스팀청소기", "진공청소기"] },
   { id: "cp.digital.small.iron", name: "다리미/스티머", level: 3, parent: "cp.digital.small",
     matchKeywords: ["다리미", "스팀다리미", "핸디스티머", "옷주름", "스팀기", "무선다리미"],
     seedKeywords: [
@@ -961,7 +961,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "스탠드 스팀다리미 걸이형", "여행용 미니 다리미 접이식",
       "스팀 브러쉬 옷주름 제거",
     ],
-    variantKeywords: ["핸디스팀다리미", "무선다리미", "스탠드스팀다리미", "여행용미니다리미", "스팀브러쉬"] },
+    variantKeywords: ["핸디스팀다리미", "무선다리미", "스탠드스팀다리미", "여행용미니다리미", "스팀브러쉬", "전기다리미", "옷관리기", "의류관리기", "다림판", "스팀청소기"] },
   { id: "cp.digital.small.shaver", name: "전기면도기/이발기", level: 3, parent: "cp.digital.small",
     matchKeywords: ["전기면도기", "이발기", "코털정리기", "바리깡", "트리머", "셀프이발기"],
     seedKeywords: [
@@ -969,7 +969,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "코털정리기 귀털 USB 충전", "턱수염 트리머 길이조절",
       "여성 전기면도기 비키니라인",
     ],
-    variantKeywords: ["3중날전기면도기", "무선바리깡", "코털정리기", "턱수염트리머", "여성전기면도기", "셀프이발기"] },
+    variantKeywords: ["3중날전기면도기", "무선바리깡", "코털정리기", "턱수염트리머", "여성전기면도기", "셀프이발기", "회전식면도기", "왕복식면도기", "필립스면도기", "브라운면도기", "아기이발기"] },
 
   // ── 가전디지털: 노트북/태블릿 ──
   { id: "cp.digital.laptop", name: "노트북", level: 2, parent: "cp.digital",
@@ -982,7 +982,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "사무용 노트북 i5 16GB SSD", "맥북에어 M시리즈 최신",
       "LG그램 15인치 초경량 배터리",
     ],
-    variantKeywords: ["경량노트북", "학생노트북", "사무용노트북", "맥북에어", "LG그램", "울트라북"] },
+    variantKeywords: ["경량노트북", "학생노트북", "사무용노트북", "맥북에어", "LG그램", "울트라북", "삼성노트북", "2in1노트북", "크롬북", "넷북", "i5노트북", "인강용노트북"] },
   { id: "cp.digital.laptop.gaming", name: "게이밍 노트북", level: 3, parent: "cp.digital.laptop",
     matchKeywords: ["게이밍노트북", "RTX", "고사양", "게임용", "144Hz"],
     seedKeywords: [
@@ -990,7 +990,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "고사양 영상편집 노트북", "17인치 대화면 게이밍",
       "게이밍 노트북 쿨링패드 세트",
     ],
-    variantKeywords: ["RTX게이밍노트북", "144Hz게이밍노트북", "고사양노트북", "영상편집노트북", "가성비게이밍노트북"] },
+    variantKeywords: ["RTX게이밍노트북", "144Hz게이밍노트북", "고사양노트북", "영상편집노트북", "가성비게이밍노트북", "17인치노트북", "쿨링패드", "게이밍마우스", "게이밍키보드세트", "고주사율노트북"] },
   { id: "cp.digital.tablet", name: "태블릿", level: 2, parent: "cp.digital",
     matchKeywords: ["태블릿", "아이패드", "갤럭시탭"],
     seedKeywords: [] },
@@ -1001,7 +1001,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "가성비 태블릿 영상 10인치", "아이패드 미니 휴대용",
       "학생용 태블릿 필기 추천",
     ],
-    variantKeywords: ["아이패드", "갤럭시탭", "아이패드미니", "가성비태블릿", "학생용태블릿", "안드로이드태블릿"] },
+    variantKeywords: ["아이패드", "갤럭시탭", "아이패드미니", "가성비태블릿", "학생용태블릿", "안드로이드태블릿", "아이패드프로", "아이패드에어", "갤럭시탭S", "셀룰러태블릿", "11인치태블릿"] },
   { id: "cp.digital.tablet.accessory", name: "태블릿 액세서리", level: 3, parent: "cp.digital.tablet",
     matchKeywords: ["태블릿케이스", "애플펜슬", "키보드케이스", "필름", "터치펜", "태블릿거치대"],
     seedKeywords: [
@@ -1009,7 +1009,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "종이질감 필름 필기용", "갤럭시탭 북커버 케이스",
       "태블릿 거치대 각도조절 알루미늄",
     ],
-    variantKeywords: ["아이패드케이스", "키보드케이스", "애플펜슬호환", "종이질감필름", "태블릿거치대"] },
+    variantKeywords: ["아이패드케이스", "키보드케이스", "애플펜슬호환", "종이질감필름", "태블릿거치대", "갤럭시탭케이스", "강화유리필름", "스타일러스펜", "태블릿스탠드", "태블릿파우치"] },
 
   // ── 가전디지털: 카메라 ──
   { id: "cp.digital.camera", name: "카메라", level: 2, parent: "cp.digital",
@@ -1022,7 +1022,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "인물용 단렌즈 50mm F1.8", "DSLR 카메라 가방 방수",
       "카메라 삼각대 경량 여행용",
     ],
-    variantKeywords: ["입문미러리스", "풀프레임미러리스", "단렌즈", "줌렌즈", "카메라삼각대", "카메라가방"] },
+    variantKeywords: ["입문미러리스", "풀프레임미러리스", "단렌즈", "줌렌즈", "카메라삼각대", "카메라가방", "크롭바디", "망원렌즈", "광각렌즈", "폴라로이드", "즉석카메라", "카메라스트랩"] },
   { id: "cp.digital.camera.action", name: "액션캠/브이로그", level: 3, parent: "cp.digital.camera",
     matchKeywords: ["액션캠", "고프로", "브이로그카메라", "짐벌", "셀카봉", "4K액션캠"],
     seedKeywords: [
@@ -1030,7 +1030,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "셀카봉 삼각대 겸용 무선", "브이로그 카메라 소형 유튜브",
       "고프로 액세서리 키트 50종",
     ],
-    variantKeywords: ["4K액션캠", "스마트폰짐벌", "셀카봉삼각대", "브이로그카메라", "고프로액세서리"] },
+    variantKeywords: ["4K액션캠", "스마트폰짐벌", "셀카봉삼각대", "브이로그카메라", "고프로액세서리", "고프로마운트", "DJI오즈모", "웹캠", "삼각대미니", "조명링라이트"] },
 
   // ── 여성패션 L3 확장 ──
   { id: "cp.wfashion.dress", name: "원피스", level: 2, parent: "cp.wfashion",
@@ -1043,7 +1043,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "A라인 캐주얼 원피스 봄", "오버사이즈 티셔츠 원피스",
       "체크 셔츠원피스 허리끈 포함",
     ],
-    variantKeywords: ["린넨원피스", "셔츠원피스", "면원피스", "A라인원피스", "티셔츠원피스", "롱원피스"] },
+    variantKeywords: ["린넨원피스", "셔츠원피스", "면원피스", "A라인원피스", "티셔츠원피스", "롱원피스", "니트원피스", "랩원피스", "체크원피스", "데님원피스", "맥시원피스", "미니원피스"] },
   { id: "cp.wfashion.dress.party", name: "파티/하객 원피스", level: 3, parent: "cp.wfashion.dress",
     matchKeywords: ["하객룩", "파티드레스", "결혼식원피스", "하객원피스", "레이스원피스"],
     seedKeywords: [
@@ -1051,7 +1051,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "블랙 미니 파티 드레스", "쉬폰 플리츠 하객 원피스",
       "정장 원피스 무릎길이 오피스",
     ],
-    variantKeywords: ["하객원피스", "레이스원피스", "칵테일드레스", "쉬폰원피스", "정장원피스", "플리츠원피스"] },
+    variantKeywords: ["하객원피스", "레이스원피스", "칵테일드레스", "쉬폰원피스", "정장원피스", "플리츠원피스", "머메이드드레스", "새틴드레스", "이브닝드레스", "블랙드레스", "롱드레스파티"] },
   { id: "cp.wfashion.outer", name: "여성 아우터", level: 2, parent: "cp.wfashion",
     matchKeywords: ["여성자켓", "여성코트", "여성점퍼", "여성패딩"],
     seedKeywords: [] },
@@ -1062,7 +1062,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "울 코트 여성 겨울 롱", "데님 자켓 여성 봄가을",
       "경량 패딩 여성 숏 가을",
     ],
-    variantKeywords: ["트렌치코트", "크롭블레이저", "울코트", "데님자켓", "경량패딩", "롱가디건"] },
+    variantKeywords: ["트렌치코트", "크롭블레이저", "울코트", "데님자켓", "경량패딩", "롱가디건", "퍼자켓", "무스탕", "가죽자켓", "플리스자켓", "숏패딩", "롱패딩"] },
   { id: "cp.wfashion.underwear", name: "여성 속옷", level: 2, parent: "cp.wfashion",
     matchKeywords: ["여성속옷", "브라", "팬티", "보정속옷"],
     seedKeywords: [] },
@@ -1073,7 +1073,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "볼륨업 누드브라 실리콘", "수면브라 코튼 무봉제",
       "운동용 스포츠브라 미디엄",
     ],
-    variantKeywords: ["노와이어브라", "스포츠브라", "누드브라", "심리스브라렛", "수면브라", "볼륨업브라"] },
+    variantKeywords: ["노와이어브라", "스포츠브라", "누드브라", "심리스브라렛", "수면브라", "볼륨업브라", "와이어브라", "푸쉬업브라", "속옷세트", "웨딩이너", "레이스브라"] },
   { id: "cp.wfashion.underwear.panty", name: "여성팬티/보정", level: 3, parent: "cp.wfashion.underwear",
     matchKeywords: ["여성팬티", "거들", "보정속옷", "쿨팬티", "레이스팬티", "심리스팬티"],
     seedKeywords: [
@@ -1081,7 +1081,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "하이웨이스트 보정 거들 팬티", "레이스 팬티 세트 로맨틱",
       "심리스 노라인 팬티 누디",
     ],
-    variantKeywords: ["면팬티", "쿨링팬티", "보정거들", "레이스팬티", "심리스팬티", "하이웨이스트팬티"] },
+    variantKeywords: ["면팬티", "쿨링팬티", "보정거들", "레이스팬티", "심리스팬티", "하이웨이스트팬티", "생리팬티", "위생팬티", "티팬티", "드로즈팬티", "임부팬티"] },
 
   // ── 남성패션 L3 확장 ──
   { id: "cp.mfashion.tops.shirt", name: "남성 셔츠", level: 3, parent: "cp.mfashion.tops",
@@ -1091,7 +1091,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "구김방지 스판 셔츠 출근", "린넨 반팔 셔츠 여름 남성",
       "체크 셔츠 플란넬 가을",
     ],
-    variantKeywords: ["슬림핏와이셔츠", "옥스포드셔츠", "린넨셔츠", "구김방지셔츠", "플란넬셔츠", "체크셔츠"] },
+    variantKeywords: ["슬림핏와이셔츠", "옥스포드셔츠", "린넨셔츠", "구김방지셔츠", "플란넬셔츠", "체크셔츠", "화이트셔츠", "캐주얼셔츠", "반팔셔츠", "스트라이프셔츠", "핸리넥셔츠"] },
   { id: "cp.mfashion.outer", name: "남성 아우터", level: 2, parent: "cp.mfashion",
     matchKeywords: ["남성자켓", "남성코트", "남성점퍼"],
     seedKeywords: [] },
@@ -1102,7 +1102,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "울 코트 남성 겨울 롱", "항공점퍼 봄버자켓 남성",
       "경량 패딩 숏 남성 가을",
     ],
-    variantKeywords: ["경량바람막이", "캐주얼블레이저", "울코트", "항공점퍼", "경량패딩", "봄버자켓"] },
+    variantKeywords: ["경량바람막이", "캐주얼블레이저", "울코트", "항공점퍼", "경량패딩", "봄버자켓", "가죽자켓", "무스탕", "롱패딩", "숏패딩", "후드집업", "플리스자켓"] },
   { id: "cp.mfashion.suit", name: "남성 정장", level: 2, parent: "cp.mfashion",
     matchKeywords: ["남성정장", "수트", "양복", "정장세트"],
     seedKeywords: [] },
@@ -1113,7 +1113,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "구김방지 정장바지 슬랙스", "캐주얼 셋업 린넨 세트",
       "블랙 정장 세트 예복 격식",
     ],
-    variantKeywords: ["슬림핏정장세트", "면접정장", "캐주얼셋업", "린넨셋업", "예복정장", "정장슬랙스"] },
+    variantKeywords: ["슬림핏정장세트", "면접정장", "캐주얼셋업", "린넨셋업", "예복정장", "정장슬랙스", "쓰리피스정장", "턱시도", "체크수트", "블랙정장", "네이비정장", "수트재킷"] },
   { id: "cp.mfashion.underwear", name: "남성 속옷", level: 2, parent: "cp.mfashion",
     matchKeywords: ["남성속옷", "사각팬티", "드로즈", "런닝"],
     seedKeywords: [] },
@@ -1124,7 +1124,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "쿨링 여름 팬티 냉감 남성", "런닝 셔츠 순면 3장",
       "스포츠 기능성 남성 속옷",
     ],
-    variantKeywords: ["면사각팬티", "기능성드로즈", "쿨링팬티", "순면런닝셔츠", "스포츠속옷", "트렁크팬티"] },
+    variantKeywords: ["면사각팬티", "기능성드로즈", "쿨링팬티", "순면런닝셔츠", "스포츠속옷", "트렁크팬티", "심리스드로즈", "노라인팬티", "발열내의", "기모내복", "남성삼각팬티"] },
   { id: "cp.mfashion.socks", name: "양말", level: 2, parent: "cp.mfashion",
     matchKeywords: ["양말", "남성양말", "발목양말", "스포츠양말"],
     seedKeywords: [] },
@@ -1135,7 +1135,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "무지 면양말 기본 20켤레", "스포츠 양말 쿠션 러닝",
       "겨울 기모양말 방한 5켤레",
     ],
-    variantKeywords: ["면발목양말", "등산양말", "무지면양말", "스포츠양말", "기모양말", "골프양말"] },
+    variantKeywords: ["면발목양말", "등산양말", "무지면양말", "스포츠양말", "기모양말", "골프양말", "수면양말", "압박스타킹", "패션양말", "장목양말", "니삭스", "페이크삭스"] },
 
   // ── 뷰티 L3 확장: 헤어/바디/향수 ──
   { id: "cp.beauty.hair", name: "헤어케어", level: 2, parent: "cp.beauty",
@@ -1148,7 +1148,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "손상모 영양 컨디셔너 대용량", "비듬 가려움 두피 샴푸",
       "로켓배송 인기 샴푸 세트",
     ],
-    variantKeywords: ["탈모샴푸", "약산성샴푸", "두피샴푸", "비듬샴푸", "손상모컨디셔너", "아미노산샴푸"] },
+    variantKeywords: ["탈모샴푸", "약산성샴푸", "두피샴푸", "비듬샴푸", "손상모컨디셔너", "아미노산샴푸", "유아샴푸", "남성샴푸", "노푸샴푸", "실리콘프리샴푸", "염색용샴푸", "향수샴푸"] },
   { id: "cp.beauty.hair.treatment", name: "트리트먼트/오일", level: 3, parent: "cp.beauty.hair",
     matchKeywords: ["트리트먼트", "헤어팩", "헤어오일", "에센스", "손상모", "아르간오일"],
     seedKeywords: [
@@ -1156,7 +1156,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "단백질 트리트먼트 복구 집중", "열보호 에센스 드라이전",
       "야간 헤어 슬리핑팩",
     ],
-    variantKeywords: ["손상모헤어팩", "아르간헤어오일", "단백질트리트먼트", "열보호에센스", "헤어슬리핑팩"] },
+    variantKeywords: ["손상모헤어팩", "아르간헤어오일", "단백질트리트먼트", "열보호에센스", "헤어슬리핑팩", "헤어미스트", "헤어세럼", "케라틴트리트먼트", "모발영양제", "두피스케일러"] },
   { id: "cp.beauty.hair.styling", name: "스타일링/기기", level: 3, parent: "cp.beauty.hair",
     matchKeywords: ["왁스", "고데기", "헤어드라이기", "스프레이", "젤", "컬링아이론", "헤어아이론", "매직기"],
     seedKeywords: [
@@ -1164,7 +1164,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "음이온 헤어드라이기 대풍량", "볼륨 스프레이 뿌리 셋팅",
       "컬링 아이론 32mm 긴머리",
     ],
-    variantKeywords: ["매트왁스", "미니고데기", "음이온드라이기", "볼륨스프레이", "컬링아이론", "셋팅스프레이"] },
+    variantKeywords: ["매트왁스", "미니고데기", "음이온드라이기", "볼륨스프레이", "컬링아이론", "셋팅스프레이", "매직기", "헤어아이론", "다이슨드라이기", "염색약", "헤어젤", "프로스프레이"] },
   { id: "cp.beauty.body", name: "바디케어", level: 2, parent: "cp.beauty",
     matchKeywords: ["바디워시", "바디로션", "핸드크림", "바디스크럽"],
     seedKeywords: [] },
@@ -1175,7 +1175,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "천연 수제비누 선물세트 6개", "향기좋은 샤워젤 프리미엄",
       "아토피 순한 바디워시 아이",
     ],
-    variantKeywords: ["보습바디워시", "약산성바디워시", "천연수제비누", "프리미엄샤워젤", "아토피바디워시"] },
+    variantKeywords: ["보습바디워시", "약산성바디워시", "천연수제비누", "프리미엄샤워젤", "아토피바디워시", "향수바디워시", "남성바디워시", "거품바디워시", "미용비누", "샤워오일"] },
   { id: "cp.beauty.body.lotion", name: "바디로션/핸드크림", level: 3, parent: "cp.beauty.body",
     matchKeywords: ["바디로션", "바디크림", "핸드크림", "바디버터", "요소크림"],
     seedKeywords: [
@@ -1183,7 +1183,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "세라마이드 바디로션 아토피", "요소크림 발뒤꿈치 건조",
       "향기 바디밀크 보습 촉촉",
     ],
-    variantKeywords: ["시어버터바디크림", "핸드크림세트", "세라마이드바디로션", "요소크림", "바디밀크", "바디버터"] },
+    variantKeywords: ["시어버터바디크림", "핸드크림세트", "세라마이드바디로션", "요소크림", "바디밀크", "바디버터", "풋크림", "바디오일", "튼살크림", "태닝로션", "임산부바디로션", "바디스크럽"] },
   { id: "cp.beauty.perfume", name: "향수/디퓨저", level: 2, parent: "cp.beauty",
     matchKeywords: ["향수", "디퓨저", "캔들", "방향제"],
     seedKeywords: [] },
@@ -1194,7 +1194,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "미니 향수 세트 선물용 5ml", "니치 향수 유니섹스 50ml",
       "가성비 향수 지속력 좋은",
     ],
-    variantKeywords: ["데일리향수", "니치향수", "미니향수세트", "남성향수", "여성향수", "유니섹스향수"] },
+    variantKeywords: ["데일리향수", "니치향수", "미니향수세트", "남성향수", "여성향수", "유니섹스향수", "오드퍼퓸", "오드뚜왈렛", "바디미스트", "헤어퍼퓸", "샤넬향수", "코스향수"] },
   { id: "cp.beauty.perfume.diffuser", name: "디퓨저/캔들", level: 3, parent: "cp.beauty.perfume",
     matchKeywords: ["디퓨저", "캔들", "향초", "차량방향제", "인센스", "소이캔들"],
     seedKeywords: [
@@ -1202,7 +1202,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "차량용 방향제 송풍구 클립", "인센스 스틱 명상 백단향",
       "섬유향수 옷 스프레이 고급",
     ],
-    variantKeywords: ["리드디퓨저", "소이캔들", "인센스스틱", "차량방향제", "섬유향수", "향초선물세트"] },
+    variantKeywords: ["리드디퓨저", "소이캔들", "인센스스틱", "차량방향제", "섬유향수", "향초선물세트", "대용량디퓨저", "무드등캔들", "욕실디퓨저", "천연왁스캔들", "가습기겸용디퓨저"] },
   { id: "cp.beauty.nail", name: "네일", level: 2, parent: "cp.beauty",
     matchKeywords: ["네일", "매니큐어", "젤네일", "네일아트"],
     seedKeywords: [] },
@@ -1213,7 +1213,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "빠른건조 매니큐어 누드톤", "젤 네일 스티커 세미큐어",
       "네일 리무버 아세톤프리",
     ],
-    variantKeywords: ["셀프젤네일세트", "젤폴리시", "세미큐어스티커", "네일리무버", "LED네일램프", "빠른건조매니큐어"] },
+    variantKeywords: ["셀프젤네일세트", "젤폴리시", "세미큐어스티커", "네일리무버", "LED네일램프", "빠른건조매니큐어", "네일스티커", "네일팁", "젤네일리무버", "네일파일", "네일아트스티커", "큐티클오일"] },
 
   // ── 홈인테리어 L3 확장 ──
   { id: "cp.home.furniture.desk", name: "책상/의자", level: 3, parent: "cp.home.furniture",
@@ -1223,7 +1223,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "메쉬 사무용 의자 요추 받침", "게이밍 체어 리클라이닝",
       "어린이 높이조절 책상 세트",
     ],
-    variantKeywords: ["게이밍의자", "사무용의자", "학생의자", "메쉬의자", "좌식의자", "접이식의자"] },
+    variantKeywords: ["게이밍의자", "사무용의자", "학생의자", "메쉬의자", "좌식의자", "접이식의자", "스탠딩데스크", "컴퓨터책상", "L자형책상", "모션데스크", "화장대"] },
   { id: "cp.home.furniture.storage", name: "수납/선반", level: 3, parent: "cp.home.furniture",
     matchKeywords: ["수납장", "선반", "책장", "서랍장", "행거", "신발장"],
     seedKeywords: [
@@ -1231,7 +1231,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "스틸 행거 이동식 커버포함", "아크릴 투명 서랍장 3단",
       "미드센추리 책장 5단 원목",
     ],
-    variantKeywords: ["조립식수납장", "벽걸이선반", "스틸행거", "투명서랍장", "원목책장", "신발장"] },
+    variantKeywords: ["조립식수납장", "벽걸이선반", "스틸행거", "투명서랍장", "원목책장", "신발장", "플라스틱수납함", "철제선반", "3단선반", "오픈행거", "코너선반"] },
   { id: "cp.home.furniture.bed", name: "침대", level: 3, parent: "cp.home.furniture",
     matchKeywords: ["침대", "침대프레임", "저상침대", "이층침대", "수납침대", "원목침대", "호텔침대", "싱글침대"],
     seedKeywords: [
@@ -1239,7 +1239,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "이층침대 아이방 분리형", "접이식 간이침대 게스트용",
       "호텔식 침대 헤드보드 포함",
     ],
-    variantKeywords: ["저상침대", "수납침대", "접이식침대", "이층침대", "원목침대", "호텔침대", "싱글침대"] },
+    variantKeywords: ["저상침대", "수납침대", "접이식침대", "이층침대", "원목침대", "호텔침대", "싱글침대", "퀸침대", "킹침대", "슈퍼싱글침대", "패밀리침대", "전동침대"] },
   { id: "cp.home.bedding.blanket", name: "이불/침구커버", level: 3, parent: "cp.home.bedding",
     matchKeywords: ["이불", "이불커버", "차렵이불", "여름이불", "구스다운이불", "시어서커이불", "극세사이불"],
     seedKeywords: [
@@ -1247,7 +1247,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "차렵이불 4계절 면 더블", "구스다운 이불 프리미엄",
       "순면 이불커버 200수 세트",
     ],
-    variantKeywords: ["시어서커이불", "극세사이불", "차렵이불", "구스다운이불", "순면이불커버", "여름이불"] },
+    variantKeywords: ["시어서커이불", "극세사이불", "차렵이불", "구스다운이불", "순면이불커버", "여름이불", "겨울이불", "사계절이불", "호텔이불", "차이슬이불", "누빔이불", "캠핑이불"] },
   { id: "cp.home.curtain", name: "커튼/블라인드", level: 2, parent: "cp.home",
     matchKeywords: ["커튼", "블라인드", "롤스크린", "암막"],
     seedKeywords: [] },
@@ -1258,7 +1258,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "원룸 암막커튼 창문 차광", "그레이 암막커튼 세트",
       "아이방 암막커튼 귀여운 패턴",
     ],
-    variantKeywords: ["100%암막커튼", "3중방한커튼", "단열커튼", "차광커튼", "아이방암막커튼"] },
+    variantKeywords: ["100%암막커튼", "3중방한커튼", "단열커튼", "차광커튼", "아이방암막커튼", "링고리커튼", "나비주름커튼", "거실암막커튼", "방음커튼", "창문암막시트", "암막봉커튼"] },
   { id: "cp.home.curtain.blind", name: "블라인드/롤스크린", level: 3, parent: "cp.home.curtain",
     matchKeywords: ["블라인드", "롤스크린", "콤비블라인드", "우드블라인드", "허니콤블라인드"],
     seedKeywords: [
@@ -1266,7 +1266,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "우드 블라인드 거실 원목", "허니콤 블라인드 단열 효과",
       "미니 블라인드 사무실 창문",
     ],
-    variantKeywords: ["콤비블라인드", "무타공롤스크린", "우드블라인드", "허니콤블라인드", "맞춤블라인드"] },
+    variantKeywords: ["콤비블라인드", "무타공롤스크린", "우드블라인드", "허니콤블라인드", "맞춤블라인드", "버티칼블라인드", "롤블라인드", "조광블라인드", "로만쉐이드", "전동블라인드"] },
   { id: "cp.home.deco", name: "인테리어소품", level: 2, parent: "cp.home",
     matchKeywords: ["인테리어소품", "액자", "시계", "거울", "화병"],
     seedKeywords: [] },
@@ -1277,7 +1277,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "사진 액자 나무 프레임 A4", "추상화 그림 액자 거실",
       "LED 네온사인 벽장식 인테리어",
     ],
-    variantKeywords: ["인테리어액자", "캔버스포스터", "갤러리월세트", "LED네온사인", "그림액자", "사진액자"] },
+    variantKeywords: ["인테리어액자", "캔버스포스터", "갤러리월세트", "LED네온사인", "그림액자", "사진액자", "태피스트리", "벽걸이장식", "무아레포스터", "아크릴액자", "압화액자"] },
   { id: "cp.home.deco.clock", name: "시계/거울", level: 3, parent: "cp.home.deco",
     matchKeywords: ["벽시계", "탁상시계", "전신거울", "벽거울", "화장거울", "LED거울"],
     seedKeywords: [
@@ -1285,7 +1285,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "LED 화장거울 조명 탁상", "빈티지 탁상시계 우드",
       "라운드 벽거울 욕실 인테리어",
     ],
-    variantKeywords: ["무소음벽시계", "전신거울", "LED화장거울", "빈티지탁상시계", "라운드벽거울"] },
+    variantKeywords: ["무소음벽시계", "전신거울", "LED화장거울", "빈티지탁상시계", "라운드벽거울", "스마트벽시계", "원목벽시계", "알람시계", "디지털시계", "바닥스탠드거울", "욕실거울"] },
 
   // ── 스포츠/레저 L3 확장 ──
   { id: "cp.sports.fitness.yoga", name: "요가/필라테스", level: 3, parent: "cp.sports.fitness",
@@ -1295,7 +1295,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "필라테스 링 소도구 세트", "밸런스 보수반구 코어",
       "요가 블록 2개세트 EVA",
     ],
-    variantKeywords: ["요가매트", "폼롤러", "요가블럭", "필라테스링", "스트레칭밴드", "요가휠"] },
+    variantKeywords: ["요가매트", "폼롤러", "요가블럭", "필라테스링", "스트레칭밴드", "요가휠", "짐볼", "밸런스패드", "요가타월", "요가양말", "발란스보드", "보수볼"] },
   { id: "cp.sports.golf", name: "골프", level: 2, parent: "cp.sports",
     matchKeywords: ["골프", "골프채", "골프웨어", "골프백"],
     seedKeywords: [] },
@@ -1306,7 +1306,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "골프공 2피스 연습용 20개", "퍼터 말렛형 투볼 정렬",
       "골프 드라이버 시니어 고반발",
     ],
-    variantKeywords: ["골프풀세트", "골프드라이버", "골프아이언", "골프퍼터", "연습용골프공", "골프백"] },
+    variantKeywords: ["골프풀세트", "골프드라이버", "골프아이언", "골프퍼터", "연습용골프공", "골프백", "우드골프채", "웨지", "골프연습네트", "골프매트", "골프티", "골프캐리어"] },
   { id: "cp.sports.golf.wear", name: "골프웨어/액세서리", level: 3, parent: "cp.sports.golf",
     matchKeywords: ["골프웨어", "골프바지", "골프모자", "골프장갑", "거리측정기", "골프치마"],
     seedKeywords: [
@@ -1314,7 +1314,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "골프 캡 모자 UV차단 여성", "레이저 골프 거리측정기",
       "양피 골프장갑 남성 왼손",
     ],
-    variantKeywords: ["골프폴로셔츠", "골프치마바지", "골프거리측정기", "골프장갑", "골프모자", "골프양말"] },
+    variantKeywords: ["골프폴로셔츠", "골프치마바지", "골프거리측정기", "골프장갑", "골프모자", "골프양말", "골프바지", "골프가디건", "골프화", "골프팔토시", "GPS골프워치"] },
   { id: "cp.sports.swimming", name: "수영", level: 2, parent: "cp.sports",
     matchKeywords: ["수영", "수영복", "래쉬가드", "물안경"],
     seedKeywords: [] },
@@ -1325,7 +1325,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "비키니 세트 하이웨이스트", "원피스 수영복 체형커버",
       "아동 래쉬가드 세트 UV차단",
     ],
-    variantKeywords: ["여성래쉬가드", "남성보드숏", "비키니세트", "원피스수영복", "아동래쉬가드", "모노키니"] },
+    variantKeywords: ["여성래쉬가드", "남성보드숏", "비키니세트", "원피스수영복", "아동래쉬가드", "모노키니", "하프수영복", "수영복세트", "실내수영복", "반신수영복", "미니비치웨어"] },
   { id: "cp.sports.swimming.gear", name: "수영 용품", level: 3, parent: "cp.sports.swimming",
     matchKeywords: ["물안경", "수모", "킥판", "오리발", "스노클", "수영귀마개"],
     seedKeywords: [
@@ -1333,7 +1333,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "킥판 수영 보드 훈련", "스노클링 마스크 세트 풀페이스",
       "수영 귀마개 코클립 세트",
     ],
-    variantKeywords: ["김서림방지수경", "실리콘수모", "수영킥판", "스노클링마스크", "수영귀마개", "수영오리발"] },
+    variantKeywords: ["김서림방지수경", "실리콘수모", "수영킥판", "스노클링마스크", "수영귀마개", "수영오리발", "아쿠아슈즈", "수경렌즈", "수영가방", "튜브", "구명조끼"] },
   { id: "cp.sports.cycling", name: "자전거", level: 2, parent: "cp.sports",
     matchKeywords: ["자전거", "MTB", "로드바이크", "전기자전거"],
     seedKeywords: [] },
@@ -1344,7 +1344,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "MTB 산악자전거 26인치 시마노", "입문 로드바이크 알루미늄",
       "어린이 자전거 보조바퀴 16인치",
     ],
-    variantKeywords: ["접이식자전거", "전기자전거", "미니벨로", "산악자전거", "로드바이크", "어린이자전거"] },
+    variantKeywords: ["접이식자전거", "전기자전거", "미니벨로", "산악자전거", "로드바이크", "어린이자전거", "하이브리드자전거", "픽시자전거", "BMX", "전동킥보드", "세발자전거", "20인치자전거"] },
   { id: "cp.sports.cycling.accessory", name: "자전거 용품", level: 3, parent: "cp.sports.cycling",
     matchKeywords: ["자전거헬멧", "라이트", "자전거락", "안장", "사이클복", "자전거거치대"],
     seedKeywords: [
@@ -1352,7 +1352,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "자전거 와이어락 번호키", "쿠션 안장커버 젤 편한",
       "사이클 장갑 반장갑 여름용",
     ],
-    variantKeywords: ["자전거헬멧", "자전거라이트", "자전거잠금장치", "안장커버", "사이클장갑", "자전거거치대"] },
+    variantKeywords: ["자전거헬멧", "자전거라이트", "자전거잠금장치", "안장커버", "사이클장갑", "자전거거치대", "자전거펌프", "속도계", "자전거휴대가방", "자전거안장", "자전거벨", "자전거패니어"] },
   { id: "cp.sports.running", name: "런닝", level: 2, parent: "cp.sports",
     matchKeywords: ["러닝", "마라톤", "조깅", "런닝화"],
     seedKeywords: [] },
@@ -1363,7 +1363,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "여성 러닝화 가벼운 핑크", "트레일 러닝화 방수 겸용",
       "넓은발볼 러닝화 4E 남성",
     ],
-    variantKeywords: ["쿠셔닝러닝화", "경량마라톤화", "트레일러닝화", "넓은발볼러닝화", "여성러닝화", "카본플레이트러닝화"] },
+    variantKeywords: ["쿠셔닝러닝화", "경량마라톤화", "트레일러닝화", "넓은발볼러닝화", "여성러닝화", "카본플레이트러닝화", "나이키러닝화", "아디다스러닝화", "조깅화", "워킹화", "아식스러닝화"] },
   { id: "cp.sports.running.gear", name: "런닝 용품", level: 3, parent: "cp.sports.running",
     matchKeywords: ["러닝벨트", "러닝워치", "암밴드", "무릎보호대", "러닝양말"],
     seedKeywords: [
@@ -1371,7 +1371,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "스마트폰 암밴드 러닝 방수", "무릎보호대 스포츠 러닝",
       "러닝양말 쿠션 발목 5켤레",
     ],
-    variantKeywords: ["러닝벨트", "GPS러닝워치", "러닝암밴드", "무릎보호대", "러닝양말", "스포츠힙색"] },
+    variantKeywords: ["러닝벨트", "GPS러닝워치", "러닝암밴드", "무릎보호대", "러닝양말", "스포츠힙색", "러닝고글", "러닝비니", "러닝점퍼", "러닝팬츠", "압박스타킹", "아이스팩"] },
 
   // ── 출산/유아동 L3 확장 ──
   { id: "cp.baby.stroller", name: "유모차", level: 2, parent: "cp.baby",
@@ -1384,7 +1384,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "트래블시스템 유모차 카시트호환", "유모차 풋머프 겨울 방한",
       "유모차 모기장 방충망 여름",
     ],
-    variantKeywords: ["디럭스유모차", "절충형유모차", "양대면유모차", "트래블시스템유모차", "신생아유모차"] },
+    variantKeywords: ["디럭스유모차", "절충형유모차", "양대면유모차", "트래블시스템유모차", "신생아유모차", "쌍둥이유모차", "전동유모차", "유모차풋머프", "유모차모기장", "유모차레인커버"] },
   { id: "cp.baby.stroller.light", name: "초경량/휴대용", level: 3, parent: "cp.baby.stroller",
     matchKeywords: ["초경량유모차", "휴대용유모차", "포켓유모차", "세컨유모차", "기내반입유모차"],
     seedKeywords: [
@@ -1392,7 +1392,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "세컨 유모차 여행용 소형", "한손접이 경량 유모차",
       "유모차 레인커버 투명 방풍",
     ],
-    variantKeywords: ["초경량유모차", "포켓유모차", "세컨유모차", "기내반입유모차", "접이식유모차"] },
+    variantKeywords: ["초경량유모차", "포켓유모차", "세컨유모차", "기내반입유모차", "접이식유모차", "원터치유모차", "한손접이유모차", "버기유모차", "트래블유모차", "아기띠호환유모차"] },
   { id: "cp.baby.carseat", name: "카시트", level: 2, parent: "cp.baby",
     matchKeywords: ["카시트", "회전형카시트", "부스터", "ISOFIX"],
     seedKeywords: [] },
@@ -1403,7 +1403,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "바구니형 카시트 캐리어겸용", "올인원 카시트 0~12세",
       "카시트 보호매트 시트커버",
     ],
-    variantKeywords: ["회전형카시트", "ISOFIX카시트", "바구니카시트", "올인원카시트", "신생아카시트"] },
+    variantKeywords: ["회전형카시트", "ISOFIX카시트", "바구니카시트", "올인원카시트", "신생아카시트", "360도회전카시트", "브리백스카시트", "조이카시트", "키즈카시트", "카시트매트"] },
   { id: "cp.baby.carseat.booster", name: "부스터/주니어", level: 3, parent: "cp.baby.carseat",
     matchKeywords: ["부스터시트", "주니어카시트", "등받이부스터", "휴대용부스터"],
     seedKeywords: [
@@ -1411,7 +1411,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "주니어 카시트 컵홀더 팔걸이", "접이식 부스터 시트 간편",
       "카시트 쿨시트 여름 통풍",
     ],
-    variantKeywords: ["등받이부스터", "휴대용부스터", "주니어카시트", "접이식부스터", "카시트쿨시트"] },
+    variantKeywords: ["등받이부스터", "휴대용부스터", "주니어카시트", "접이식부스터", "카시트쿨시트", "ISOFIX부스터", "3단부스터", "여행용부스터", "슬림부스터", "어린이부스터"] },
   { id: "cp.baby.toy", name: "장난감/교구", level: 2, parent: "cp.baby",
     matchKeywords: ["장난감", "블록", "인형", "교구"],
     seedKeywords: [] },
@@ -1422,7 +1422,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "원목 블록 100개 무독성", "아기 소프트블록 12개월",
       "테크닉 레고 호환 자동차",
     ],
-    variantKeywords: ["자석블록", "레고호환블록", "원목블록", "소프트블록", "나노블록", "듀플로블록"] },
+    variantKeywords: ["자석블록", "레고호환블록", "원목블록", "소프트블록", "나노블록", "듀플로블록", "실리콘블록", "맥포머스", "공기놀이블록", "폼블록", "옥수수블록"] },
   { id: "cp.baby.toy.doll", name: "인형/피규어", level: 3, parent: "cp.baby.toy",
     matchKeywords: ["인형", "봉제인형", "피규어", "애착인형", "캐릭터", "곰인형"],
     seedKeywords: [
@@ -1430,7 +1430,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "실바니안 패밀리 세트", "공룡 피규어 12종 세트",
       "산리오 캐릭터 인형 시나모롤",
     ],
-    variantKeywords: ["대형곰인형", "애착인형", "공룡피규어", "캐릭터인형", "봉제인형", "실바니안"] },
+    variantKeywords: ["대형곰인형", "애착인형", "공룡피규어", "캐릭터인형", "봉제인형", "실바니안", "뽀로로인형", "디즈니인형", "시나모롤", "포켓몬피규어", "LOL인형"] },
   { id: "cp.baby.toy.outdoor", name: "실외놀이/킥보드", level: 3, parent: "cp.baby.toy",
     matchKeywords: ["킥보드", "세발자전거", "미끄럼틀", "모래놀이", "물놀이", "LED킥보드", "전동킥보드"],
     seedKeywords: [
@@ -1438,7 +1438,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "실내 미끄럼틀 그네세트", "모래놀이 양동이 세트",
       "물총 대형 여름 물놀이",
     ],
-    variantKeywords: ["LED킥보드", "세발자전거", "실내미끄럼틀", "모래놀이세트", "물총", "어린이그네"] },
+    variantKeywords: ["LED킥보드", "세발자전거", "실내미끄럼틀", "모래놀이세트", "물총", "어린이그네", "전동킥보드", "어린이풀장", "트램펄린", "자동차장난감", "RC자동차", "훌라후프"] },
   { id: "cp.baby.clothing", name: "유아 의류", level: 2, parent: "cp.baby",
     matchKeywords: ["아기옷", "유아의류", "바디슈트", "신생아옷"],
     seedKeywords: [] },
@@ -1449,7 +1449,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "배냇저고리 선물세트 출산", "아기 우주복 겨울 패딩",
       "손발싸개 모자 선물세트",
     ],
-    variantKeywords: ["순면바디슈트", "가제속싸개", "배냇저고리세트", "아기우주복", "신생아선물세트"] },
+    variantKeywords: ["순면바디슈트", "가제속싸개", "배냇저고리세트", "아기우주복", "신생아선물세트", "겉싸개", "신생아모자", "손발싸개", "아기외출복", "신생아턱받이", "오가닉바디슈트"] },
   { id: "cp.baby.clothing.toddler", name: "유아 외출복", level: 3, parent: "cp.baby.clothing",
     matchKeywords: ["유아외출복", "아이상하의", "키즈패딩", "아동원피스", "유아잠옷"],
     seedKeywords: [
@@ -1457,7 +1457,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "아동 원피스 꽃무늬 봄", "유아 레깅스 편한 바지",
       "아이 잠옷 파자마 세트 면",
     ],
-    variantKeywords: ["유아상하세트", "키즈패딩", "아동원피스", "유아레깅스", "유아잠옷", "아이파자마"] },
+    variantKeywords: ["유아상하세트", "키즈패딩", "아동원피스", "유아레깅스", "유아잠옷", "아이파자마", "아동맨투맨", "유아후드티", "아동코트", "아동청바지", "아동수영복"] },
 
   // ── 생활용품: 추가 ──
   { id: "cp.living.storage", name: "수납/정리", level: 2, parent: "cp.living",
@@ -1470,7 +1470,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "서랍 칸막이 정리함 속옷용", "다용도 접이식 수납박스",
       "옷걸이 논슬립 벨벳 50개",
     ],
-    variantKeywords: ["투명리빙박스", "진공압축팩", "서랍정리함", "접이식수납박스", "속옷정리함"] },
+    variantKeywords: ["투명리빙박스", "진공압축팩", "서랍정리함", "접이식수납박스", "속옷정리함", "주방정리함", "화장품정리함", "신발정리함", "서류정리함", "이불수납가방", "원목수납함"] },
   { id: "cp.living.storage.hanger", name: "옷걸이/빨래용품", level: 3, parent: "cp.living.storage",
     matchKeywords: ["옷걸이", "빨래건조대", "세탁망", "빨래바구니", "빨래집게"],
     seedKeywords: [
@@ -1478,7 +1478,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "빨래바구니 접이식 대형 방수", "나무 옷걸이 원목 20개",
       "빨래집게 스텐 40개 녹슬지않는",
     ],
-    variantKeywords: ["원목옷걸이", "접이식건조대", "세탁망세트", "접이식빨래바구니", "스텐빨래집게"] },
+    variantKeywords: ["원목옷걸이", "접이식건조대", "세탁망세트", "접이식빨래바구니", "스텐빨래집게", "논슬립옷걸이", "플라스틱옷걸이", "벨벳옷걸이", "브래지어세탁망", "수건걸이"] },
 
   // ── 자동차용품 ──
   { id: "cp.auto", name: "자동차용품", level: 1, parent: null,
@@ -1494,7 +1494,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "맥세이프 차량 거치대 자석", "시거잭 멀티 소켓 3구",
       "차량용 태블릿 뒷좌석 거치대",
     ],
-    variantKeywords: ["차량고속충전기", "무선충전거치대", "맥세이프거치대", "시거잭소켓", "태블릿거치대"] },
+    variantKeywords: ["차량고속충전기", "무선충전거치대", "맥세이프거치대", "시거잭소켓", "태블릿거치대", "PD충전기", "대시보드거치대", "자석거치대", "차량USB충전기", "뒷좌석거치대"] },
   { id: "cp.auto.interior.scent", name: "차량 방향제/시트", level: 3, parent: "cp.auto.interior",
     matchKeywords: ["차량방향제", "시트커버", "핸들커버", "차량쿠션", "차량목쿠션"],
     seedKeywords: [
@@ -1502,7 +1502,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "핸들커버 가죽 미끄럼방지", "차량 목쿠션 메모리폼",
       "차량용 쓰레기통 차량휴지통",
     ],
-    variantKeywords: ["차량방향제", "가죽시트커버", "핸들커버", "차량목쿠션", "차량쓰레기통", "차량쿨시트"] },
+    variantKeywords: ["차량방향제", "가죽시트커버", "핸들커버", "차량목쿠션", "차량쓰레기통", "차량쿨시트", "차량용공기청정기", "차량햇빛가리개", "트렁크매트", "차량수납함", "차량허리쿠션"] },
   { id: "cp.auto.exterior", name: "세차/외부용품", level: 2, parent: "cp.auto",
     matchKeywords: ["세차", "블랙박스", "코팅", "워셔액"],
     seedKeywords: [] },
@@ -1513,7 +1513,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "극세사 세차타월 400g 대형", "카샴푸 중성 무스 세차",
       "휠 클리너 브레이크 먼지 제거",
     ],
-    variantKeywords: ["셀프세차폼건", "유리막코팅제", "극세사세차타월", "카샴푸", "휠클리너", "세차스폰지"] },
+    variantKeywords: ["셀프세차폼건", "유리막코팅제", "극세사세차타월", "카샴푸", "휠클리너", "세차스폰지", "자동차왁스", "에어건", "고압세차기", "차량흠집제거제", "타이어광택제", "유리발수코팅"] },
   { id: "cp.auto.exterior.dashcam", name: "블랙박스", level: 3, parent: "cp.auto.exterior",
     matchKeywords: ["블랙박스", "대시캠", "전후방", "주차모드", "4K블랙박스"],
     seedKeywords: [
@@ -1521,7 +1521,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "2채널 블랙박스 설치 간편", "블랙박스 보조배터리 주차녹화",
       "블랙박스 GPS 안테나 외장",
     ],
-    variantKeywords: ["전후방블랙박스", "4K블랙박스", "2채널블랙박스", "블랙박스보조배터리", "GPS블랙박스"] },
+    variantKeywords: ["전후방블랙박스", "4K블랙박스", "2채널블랙박스", "블랙박스보조배터리", "GPS블랙박스", "1채널블랙박스", "QHD블랙박스", "나이트비전블랙박스", "블랙박스메모리카드", "히든블랙박스"] },
 
   // ── 문구/오피스 ──
   { id: "cp.office", name: "문구/오피스", level: 1, parent: null,
@@ -1537,7 +1537,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "형광펜 파스텔 6색 세트", "무독성 연필 HB 12자루",
       "자동 샤프 0.5mm 제도용",
     ],
-    variantKeywords: ["제트스트림볼펜", "입문만년필", "파스텔형광펜", "제도용샤프", "젤펜", "3색볼펜"] },
+    variantKeywords: ["제트스트림볼펜", "입문만년필", "파스텔형광펜", "제도용샤프", "젤펜", "3색볼펜", "유성매직", "색연필", "수채색연필", "마카펜", "지우개연필", "연필깎이"] },
   { id: "cp.office.note", name: "노트/다이어리", level: 2, parent: "cp.office",
     matchKeywords: ["노트", "다이어리", "플래너", "스프링노트"],
     seedKeywords: [] },
@@ -1548,7 +1548,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "위클리 플래너 2026년도", "스프링 노트 B5 줄간격",
       "가죽 다이어리 커버 프리미엄",
     ],
-    variantKeywords: ["6공바인더", "무지노트", "위클리플래너", "스프링노트", "가죽다이어리", "데일리플래너"] },
+    variantKeywords: ["6공바인더", "무지노트", "위클리플래너", "스프링노트", "가죽다이어리", "데일리플래너", "만년다이어리", "먼슬리플래너", "독서노트", "연습장", "유선노트", "모눈노트"] },
   { id: "cp.office.supply", name: "사무용품", level: 2, parent: "cp.office",
     matchKeywords: ["테이프", "가위", "풀", "스테이플러", "라벨"],
     seedKeywords: [] },
@@ -1559,7 +1559,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "클리어파일 20포켓 A4", "라벨프린터 라벨지 호환",
       "문서세단기 가정용 소형",
     ],
-    variantKeywords: ["포스트잇", "스카치테이프", "클리어파일", "라벨프린터", "문서세단기", "코팅기"] },
+    variantKeywords: ["포스트잇", "스카치테이프", "클리어파일", "라벨프린터", "문서세단기", "코팅기", "A4용지", "스테이플러", "펀치기", "사무용가위", "양면테이프", "바인더링"] },
 
   // ── 식품: 양념/소스 ──
   { id: "cp.food.sauce", name: "양념/소스", level: 2, parent: "cp.food",
@@ -1572,7 +1572,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "전통 재래식 된장 1kg", "쌈장 국산콩 500g",
       "진간장 골드 1L",
     ],
-    variantKeywords: ["양조간장", "국산고추장", "재래식된장", "쌈장", "진간장", "조선간장"] },
+    variantKeywords: ["양조간장", "국산고추장", "재래식된장", "쌈장", "진간장", "조선간장", "국간장", "맛간장", "저염간장", "청국장", "태양초고추장", "춘장"] },
   { id: "cp.food.sauce.oil", name: "식용유/오일", level: 3, parent: "cp.food.sauce",
     matchKeywords: ["참기름", "올리브유", "식용유", "들기름", "카놀라유", "아보카도오일"],
     seedKeywords: [
@@ -1580,7 +1580,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "카놀라유 500ml 요리용", "들기름 국내산 생들기름",
       "아보카도오일 요리 스프레이",
     ],
-    variantKeywords: ["국산참기름", "엑스트라버진올리브유", "카놀라유", "생들기름", "아보카도오일", "코코넛오일"] },
+    variantKeywords: ["국산참기름", "엑스트라버진올리브유", "카놀라유", "생들기름", "아보카도오일", "코코넛오일", "포도씨유", "해바라기유", "옥수수기름", "MCT오일", "콩기름"] },
   { id: "cp.food.sauce.spice", name: "향신료/조미료", level: 3, parent: "cp.food.sauce",
     matchKeywords: ["고춧가루", "후추", "소금", "설탕", "맛소금", "다시다", "천일염"],
     seedKeywords: [
@@ -1588,7 +1588,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "천일염 굵은소금 3kg", "다시다 쇠고기맛 1kg",
       "다진마늘 국산 큐브 1kg",
     ],
-    variantKeywords: ["태양초고춧가루", "통후추그라인더", "천일염", "다시다", "다진마늘큐브", "히말라야핑크솔트"] },
+    variantKeywords: ["태양초고춧가루", "통후추그라인더", "천일염", "다시다", "다진마늘큐브", "히말라야핑크솔트", "맛소금", "설탕", "계핏가루", "카레가루", "사골육수", "국멸치가루"] },
 
   // ── 식품: 김치/반찬 ──
   { id: "cp.food.side", name: "김치/반찬", level: 2, parent: "cp.food",
@@ -1601,7 +1601,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "깍두기 2kg 시원한 냉장", "백김치 담백한 3kg",
       "총각김치 국내산 재료 2kg",
     ],
-    variantKeywords: ["포기김치", "맛김치", "깍두기", "백김치", "총각김치", "열무김치"] },
+    variantKeywords: ["포기김치", "맛김치", "깍두기", "백김치", "총각김치", "열무김치", "갓김치", "파김치", "오이소박이", "묵은지", "나박김치", "김장김치"] },
   { id: "cp.food.side.banchan", name: "반찬/젓갈", level: 3, parent: "cp.food.side",
     matchKeywords: ["밑반찬", "젓갈", "장조림", "멸치볶음", "반찬배달", "새우젓"],
     seedKeywords: [
@@ -1609,7 +1609,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "메추리알 장조림 맛간장", "멸치볶음 고추 5팩세트",
       "반찬 구독 세트 주간배달",
     ],
-    variantKeywords: ["밑반찬세트", "새우젓", "메추리알장조림", "멸치볶음", "반찬구독", "명란젓"] },
+    variantKeywords: ["밑반찬세트", "새우젓", "메추리알장조림", "멸치볶음", "반찬구독", "명란젓", "깻잎장아찌", "오징어젓갈", "창란젓", "황석어젓", "어묵볶음", "콩자반"] },
 
   // ── 식품: 베이커리 ──
   { id: "cp.food.bakery", name: "베이커리/떡", level: 2, parent: "cp.food",
@@ -1622,7 +1622,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "베이글 플레인 6개입 냉동", "모닝빵 미니 30개 대용량",
       "호밀빵 독일식 사워도우",
     ],
-    variantKeywords: ["통밀식빵", "냉동크로와상", "플레인베이글", "모닝빵", "호밀빵", "사워도우빵"] },
+    variantKeywords: ["통밀식빵", "냉동크로와상", "플레인베이글", "모닝빵", "호밀빵", "사워도우빵", "우유식빵", "초코베이글", "카스테라", "단팥빵", "마늘바게트", "잡곡식빵"] },
   { id: "cp.food.bakery.tteok", name: "떡/약과", level: 3, parent: "cp.food.bakery",
     matchKeywords: ["떡", "인절미", "약과", "송편", "떡케이크", "찹쌀떡"],
     seedKeywords: [
@@ -1630,7 +1630,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "영양찰떡 견과 10개입", "현미 가래떡 다이어트용",
       "떡케이크 백일상 돌 주문제작",
     ],
-    variantKeywords: ["인절미", "꿀약과", "영양찰떡", "현미가래떡", "떡케이크", "찹쌀떡"] },
+    variantKeywords: ["인절미", "꿀약과", "영양찰떡", "현미가래떡", "떡케이크", "찹쌀떡", "송편", "개성약과", "꿀떡", "쑥떡", "백설기", "흑임자떡"] },
 
   // ── 식품: 쌀/잡곡 ──
   { id: "cp.food.grain", name: "쌀/잡곡", level: 2, parent: "cp.food",
@@ -1643,7 +1643,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "즉석밥 210g 24개 대용량", "찰현미 찹쌀현미 5kg",
       "유기농 쌀 GAP 10kg",
     ],
-    variantKeywords: ["이천햅쌀", "무농약현미", "즉석밥", "찰현미", "유기농쌀", "잡곡쌀"] },
+    variantKeywords: ["이천햅쌀", "무농약현미", "즉석밥", "찰현미", "유기농쌀", "잡곡쌀", "해남쌀", "철원오대쌀", "찹쌀", "흑미", "백미", "기능성쌀"] },
   { id: "cp.food.grain.cereal", name: "시리얼/오트밀", level: 3, parent: "cp.food.grain",
     matchKeywords: ["시리얼", "오트밀", "그래놀라", "콘푸레이크", "귀리", "프로틴그래놀라"],
     seedKeywords: [
@@ -1651,7 +1651,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "콘푸레이크 시리얼 대용량 1kg", "초코 시리얼 아이 아침간식",
       "프로틴 그래놀라 단백질 300g",
     ],
-    variantKeywords: ["유기농오트밀", "무가당그래놀라", "콘푸레이크", "초코시리얼", "프로틴그래놀라", "퀵오트밀"] },
+    variantKeywords: ["유기농오트밀", "무가당그래놀라", "콘푸레이크", "초코시리얼", "프로틴그래놀라", "퀵오트밀", "첵스초코", "그래놀라바", "뮤즐리", "귀리시리얼", "아몬드그래놀라"] },
 
   // ── 식품: 견과류 ──
   { id: "cp.food.nuts", name: "견과류", level: 2, parent: "cp.food",
@@ -1664,7 +1664,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "프리미엄 매일견과 60봉", "저염 무가염 견과 500g",
       "견과류 선물세트 명절용",
     ],
-    variantKeywords: ["하루견과", "혼합견과", "매일견과", "무가염견과", "견과류선물세트", "믹스넛"] },
+    variantKeywords: ["하루견과", "혼합견과", "매일견과", "무가염견과", "견과류선물세트", "믹스넛", "건강한하루", "다이어트견과", "프리미엄견과", "건과일견과믹스", "오리지널믹스넛"] },
   { id: "cp.food.nuts.single", name: "단일견과", level: 3, parent: "cp.food.nuts",
     matchKeywords: ["아몬드", "호두", "캐슈넛", "피스타치오", "마카다미아", "허니버터아몬드"],
     seedKeywords: [
@@ -1672,7 +1672,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "깐호두 국산 500g", "피스타치오 구운 소금",
       "마카다미아 무가염 프리미엄",
     ],
-    variantKeywords: ["구운아몬드", "허니버터아몬드", "깐호두", "피스타치오", "마카다미아", "캐슈넛"] },
+    variantKeywords: ["구운아몬드", "허니버터아몬드", "깐호두", "피스타치오", "마카다미아", "캐슈넛", "통아몬드", "브라질너트", "헤이즐넛", "피칸", "생아몬드", "잣"] },
 
   // ── 식품: 음료 확장 ──
   { id: "cp.food.drink.tea", name: "차/건강음료", level: 3, parent: "cp.food.drink",
@@ -1682,7 +1682,7 @@ export const COUPANG_NODES: OntologyNode[] = [
       "루이보스 허브차 카페인프리", "보이차 다이어트 티백",
       "캐모마일 수면차 릴렉스",
     ],
-    variantKeywords: ["녹차티백", "콤부차", "루이보스차", "보이차", "캐모마일차", "허브차세트"] },
+    variantKeywords: ["녹차티백", "콤부차", "루이보스차", "보이차", "캐모마일차", "허브차세트", "보성녹차", "페퍼민트차", "우엉차", "돼지감자차", "옥수수수염차", "둥굴레차"] },
   { id: "cp.food.drink.water", name: "생수/탄산수", level: 3, parent: "cp.food.drink",
     matchKeywords: ["생수", "미네랄워터", "탄산수", "2L생수", "정수기", "삼다수"],
     seedKeywords: [
@@ -1690,5 +1690,5 @@ export const COUPANG_NODES: OntologyNode[] = [
       "탄산수 500ml 24캔 무라벨", "백산수 미네랄워터 2L",
       "어린이 미니 생수 200ml 24개",
     ],
-    variantKeywords: ["2L생수", "삼다수", "탄산수", "백산수", "무라벨생수", "미니생수"] },
+    variantKeywords: ["2L생수", "삼다수", "탄산수", "백산수", "무라벨생수", "미니생수", "페리에", "레몬탄산수", "이온음료", "제로콜라", "스파클링워터", "500ml생수"] },
 ];
