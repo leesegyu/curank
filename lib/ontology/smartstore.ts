@@ -354,7 +354,7 @@ export const SMARTSTORE_NODES: OntologyNode[] = [
     matchKeywords: ["이어폰", "헤드폰", "스피커", "음향"],
     seedKeywords: [] },
   { id: "ss.digital.audio.earphone", name: "이어폰/헤드폰", level: 3, parent: "ss.digital.audio",
-    matchKeywords: ["이어폰", "헤드폰", "에어팟", "무선이어폰", "TWS", "노이즈캔슬링", "골전도", "커널형", "스포츠이어폰"],
+    matchKeywords: ["이어폰", "헤드폰", "헤드셋", "에어팟", "무선이어폰", "TWS", "노이즈캔슬링", "골전도", "커널형", "스포츠이어폰"],
     seedKeywords: [
       "노이즈캔슬링 무선 이어폰", "유선 고음질 이어폰",
       "오픈형 무선 이어폰", "게이밍 헤드셋 7.1",
