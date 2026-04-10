@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import NodeCache from "node-cache";
-import { classifyKeyword, getNodes } from "@/lib/ontology/index";
+import { classifyKeywordV2, getNodesV2 } from "@/lib/ontology/index";
 
 const cache = new NodeCache({ stdTTL: 3600 });
 
@@ -12,10 +12,11 @@ export async function GET(req: NextRequest) {
   const l1 = cache.get<{ keywords: { keyword: string }[]; category: string | null }>(cacheKey);
   if (l1 && l1.keywords.length > 0) return NextResponse.json(l1);
 
-  const classified = classifyKeyword(keyword, "smartstore");
+  // V2 온톨로지 사용 — 슬래시 분리 노드로 품목별 정확한 매칭
+  const classified = classifyKeywordV2(keyword, "smartstore");
   if (!classified) return NextResponse.json({ keywords: [], category: null });
 
-  const nodes = getNodes(classified.platform);
+  const nodes = getNodesV2(classified.platform);
   const currentNode = nodes.find(n => n.id === classified.path);
   if (!currentNode) return NextResponse.json({ keywords: [], category: null });
 

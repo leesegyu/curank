@@ -12,6 +12,8 @@
 import type { OntologyNode, Platform, CategoryWeights } from "./types";
 import { SMARTSTORE_NODES } from "./smartstore";
 import { COUPANG_NODES }    from "./coupang";
+import { SMARTSTORE_NODES_V2 } from "./smartstore-v2";
+import { COUPANG_NODES_V2 }    from "./coupang-v2";
 import { getLearned, learnMapping } from "./learned-mappings";
 
 export type { OntologyNode, Platform, CategoryWeights } from "./types";
@@ -23,8 +25,21 @@ const PLATFORM_NODES: Record<Platform, OntologyNode[]> = {
   coupang:    COUPANG_NODES,
 };
 
+const PLATFORM_NODES_V2: Record<Platform, OntologyNode[]> = {
+  smartstore: SMARTSTORE_NODES_V2,
+  coupang:    COUPANG_NODES_V2,
+};
+
 export function getNodes(platform: Platform): OntologyNode[] {
   return PLATFORM_NODES[platform];
+}
+
+/**
+ * V2 노드 접근 — "세부 유형 키워드" 카드 전용.
+ * 슬래시로 묶인 노드가 품목별로 분리된 버전.
+ */
+export function getNodesV2(platform: Platform): OntologyNode[] {
+  return PLATFORM_NODES_V2[platform];
 }
 
 export function getAllNodes(): OntologyNode[] {
@@ -42,26 +57,36 @@ export function classifyKeyword(
   keyword: string,
   platform?: Platform
 ): { path: string; platform: Platform } | null {
+  return classifyKeywordWithSource(keyword, PLATFORM_NODES, platform);
+}
+
+/**
+ * V2 온톨로지 기반 분류 — "세부 유형 키워드" 카드 전용.
+ * 슬래시로 묶인 노드가 품목별로 분리된 V2 트리를 사용.
+ */
+export function classifyKeywordV2(
+  keyword: string,
+  platform?: Platform
+): { path: string; platform: Platform } | null {
+  return classifyKeywordWithSource(keyword, PLATFORM_NODES_V2, platform);
+}
+
+/** 내부 공통 분류 로직 — 노드 소스(v1 또는 v2)를 파라미터로 받음 */
+function classifyKeywordWithSource(
+  keyword: string,
+  nodeSource: Record<Platform, OntologyNode[]>,
+  platform?: Platform
+): { path: string; platform: Platform } | null {
   const kw = keyword.toLowerCase().replace(/\s+/g, "");
   const platforms: Platform[] = platform ? [platform] : ["smartstore", "coupang"];
 
-  // ── 1차: matchKeywords 직접 매칭 ──────────────────────────────
-  // 매칭 품질 점수: (matchKeyword 길이 / 키워드 길이) × level
-  // → "게"(1자) 가 "게이밍의자"(5자)에 매칭되면 비율 0.2 → 낮은 점수
-  // → "의자"(2자) 가 "게이밍의자"(5자)에 매칭되면 비율 0.4 → 더 높은 점수
-  // → "게이밍체어"(5자)가 정확히 매칭되면 비율 1.0 → 최고 점수
   let bestMatch: { path: string; platform: Platform; level: number; quality: number } | null = null;
 
-  // 짧은 matchKeyword의 substring 오매칭 방지:
-  // - 1글자 matchKeyword: 키워드와 완전 일치(kw === mkNorm)만 허용
-  //   예: "게"는 "게" 검색 시에만 매칭, "게이밍의자"에는 매칭 안 됨
-  // - 2글자 matchKeyword: 키워드 끝이 일치하거나 키워드와 동일할 때만
-  //   예: "의자"는 "게이밍의자"(끝 일치) OK, "의자놀이"는 OK
-  //   예: "차"는 "자동차"(끝 일치) 안 됨(1자), "녹차"(끝 일치)도 2자로 "차" 매칭 불가
-  const MIN_SUBSTR_LEN = 2; // substring 매칭 최소 길이
+  // 짧은 matchKeyword의 substring 오매칭 방지
+  const MIN_SUBSTR_LEN = 2;
 
   for (const p of platforms) {
-    const nodes = PLATFORM_NODES[p];
+    const nodes = nodeSource[p];
     for (const node of nodes) {
       for (const mk of node.matchKeywords) {
         const mkNorm = mk.toLowerCase().replace(/\s+/g, "");
@@ -69,28 +94,18 @@ export function classifyKeyword(
         let matched = false;
 
         if (kw === mkNorm) {
-          // 완전 일치 — 항상 허용
           matched = true;
         } else if (mkNorm.length < MIN_SUBSTR_LEN) {
-          // 1글자 matchKeyword는 완전 일치만 허용 (위에서 처리됨)
           matched = false;
         } else if (mkNorm.length <= 2) {
-          // 2글자 matchKeyword: kw가 mkNorm으로 끝나거나 시작할 때만 (접두사/접미사)
-          // 예: "의자" → "게이밍의자"(접미사 O), "의자커버"(접두사 O)
-          // 역방향(mkNorm.includes(kw))은 kw도 2글자 이상일 때만 허용
-          // → "차"(1자)가 "차돌"(2자)에 매칭되는 오류 방지
           if (kw.length >= MIN_SUBSTR_LEN) {
             matched = kw.endsWith(mkNorm) || kw.startsWith(mkNorm) || mkNorm.includes(kw);
           }
-          // kw가 1글자이면 2글자 matchKeyword와 substring 매칭 불허 (위 exact match만)
         } else if (kw.length >= MIN_SUBSTR_LEN && (kw.includes(mkNorm) || mkNorm.includes(kw))) {
-          // 3글자 이상 matchKeyword: 기존 substring 매칭 유지
-          // 단, kw도 2글자 이상이어야 함 (1글자 kw의 false positive 방지)
           matched = true;
         }
 
         if (matched) {
-          // 매칭 품질: matchKeyword 커버리지 비율 × level
           const coverage = Math.min(mkNorm.length, kw.length) / Math.max(mkNorm.length, kw.length);
           const quality = coverage * node.level;
 
@@ -104,10 +119,12 @@ export function classifyKeyword(
 
   if (bestMatch) return { path: bestMatch.path, platform: bestMatch.platform };
 
-  // ── 2차: 학습 캐시 조회 (이전 역추적 결과) ────────────────────
-  const learned = getLearned(keyword);
-  if (learned && (!platform || learned.platform === platform)) {
-    return { path: learned.path, platform: learned.platform };
+  // 학습 캐시는 v1에서만 사용 (v2는 정확도 우선)
+  if (nodeSource === PLATFORM_NODES) {
+    const learned = getLearned(keyword);
+    if (learned && (!platform || learned.platform === platform)) {
+      return { path: learned.path, platform: learned.platform };
+    }
   }
 
   return null;
