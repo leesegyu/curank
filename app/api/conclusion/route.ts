@@ -222,7 +222,58 @@ export async function GET(req: NextRequest) {
       // 크리에이티브 실패해도 결론 생성은 계속
     }
 
-    // 4. GPT-4o mini로 결론 생성
+    // 5. 최종 후보 비교 Top (factor-score-batch 재사용, L1 캐시 HIT 시 추가 비용 0)
+    let topAggregatedKeyword:
+      | { keyword: string; overallScore: number; topFactorKey: string; topFactorScore: number }
+      | undefined;
+    try {
+      const candidates = [
+        keyword,
+        ...v2Keywords.slice(0, 5).map((k: { keyword: string }) => k.keyword),
+      ];
+      const batchUrl = new URL("/api/factor-score-batch", req.nextUrl.origin);
+      batchUrl.searchParams.set("keywords", candidates.join(","));
+      batchUrl.searchParams.set("platform", platform);
+      const batchRes = await fetch(batchUrl.toString());
+      if (batchRes.ok) {
+        const batchData = await batchRes.json();
+        const results: Array<{ keyword: string; factors: Array<{ key: string; score: number }> }> =
+          batchData.results ?? [];
+        const scored = results
+          .map((r) => {
+            const avg = r.factors.reduce((sum, f) => sum + f.score, 0) / r.factors.length;
+            const topFactor = [...r.factors].sort((a, b) => b.score - a.score)[0];
+            return {
+              keyword: r.keyword,
+              overallScore: Math.round(avg),
+              topFactorKey: topFactor?.key ?? "ranking",
+              topFactorScore: topFactor?.score ?? 0,
+            };
+          })
+          .sort((a, b) => b.overallScore - a.overallScore);
+        if (scored.length > 0) topAggregatedKeyword = scored[0];
+      }
+    } catch {
+      // 실패해도 결론 생성은 계속
+    }
+
+    // 6. 세부 유형(합성어) Top1 수집
+    let topVariantKeyword: string | undefined;
+    try {
+      const varUrl = new URL("/api/keywords-variant", req.nextUrl.origin);
+      varUrl.searchParams.set("keyword", keyword);
+      const varRes = await fetch(varUrl.toString());
+      if (varRes.ok) {
+        const varData = await varRes.json();
+        if (Array.isArray(varData.keywords) && varData.keywords.length > 0) {
+          topVariantKeyword = varData.keywords[0].keyword;
+        }
+      }
+    } catch {
+      // 실패해도 결론 생성은 계속
+    }
+
+    // 7. GPT-4o mini로 결론 생성
     const result = await generateConclusion({
       keyword,
       platform,
@@ -230,6 +281,8 @@ export async function GET(req: NextRequest) {
       recommendedKeywords,
       opportunityKeywords,
       creativeKeyword,
+      topAggregatedKeyword,
+      topVariantKeyword,
     });
 
     // 4. DB에 저장 (upsert) + 재생성 카운트 증가

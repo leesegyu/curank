@@ -28,6 +28,15 @@ interface ConclusionInput {
   recommendedKeywords: { keyword: string; score: number }[];
   opportunityKeywords?: { keyword: string; scoreChance: number }[]; // 기회분석 상위 키워드
   creativeKeyword?: string; // 크리에이티브 발굴 top1 키워드 (마지막 안에 포함)
+  // ── STEP 4 최종 후보 비교 Top (종합점수 1위) ──
+  topAggregatedKeyword?: {
+    keyword: string;
+    overallScore: number;
+    topFactorKey: string;   // ranking, conversion 등
+    topFactorScore: number;
+  };
+  // ── 세부 유형(합성어) Top1 ──
+  topVariantKeyword?: string;
 }
 
 const PLATFORM_RULES: Record<string, string> = {
@@ -54,8 +63,20 @@ const FACTOR_LABELS: Record<string, { name: string; highDesc: string; lowDesc: s
 };
 
 function buildPrompt(input: ConclusionInput): string {
-  const { keyword, platform, factorScores, recommendedKeywords } = input;
+  const { keyword, platform, factorScores, recommendedKeywords, topAggregatedKeyword, topVariantKeyword } = input;
   const platformName = platform === "naver" ? "스마트스토어" : "쿠팡";
+
+  // 시드 키워드의 가장 강한 factor (세부 유형 전략에서 사용)
+  const seedTopFactor = [...factorScores.factors].sort((a, b) => b.score - a.score)[0];
+  const seedTopFactorName = FACTOR_LABELS[seedTopFactor?.key]?.name ?? seedTopFactor?.label ?? "";
+
+  // 신규 제안 입력 한 줄 요약
+  const aggLine = topAggregatedKeyword
+    ? `[최종 후보 Top] "${topAggregatedKeyword.keyword}" (종합 ${topAggregatedKeyword.overallScore}점, 강점 ${FACTOR_LABELS[topAggregatedKeyword.topFactorKey]?.name ?? topAggregatedKeyword.topFactorKey} ${topAggregatedKeyword.topFactorScore})`
+    : "";
+  const varLine = topVariantKeyword
+    ? `[세부 유형 Top] "${topVariantKeyword}" (시드 강점: ${seedTopFactorName})`
+    : "";
 
   const factorSummary = factorScores.factors.map((f) => {
     const label = FACTOR_LABELS[f.key];
@@ -73,10 +94,14 @@ function buildPrompt(input: ConclusionInput): string {
     (k) => `  "${k.keyword}" (기회발굴 점수: ${k.scoreChance})`
   ).join("\n");
 
+  const extraCount = (topAggregatedKeyword ? 1 : 0) + (topVariantKeyword ? 1 : 0);
+  const totalMin = 3 + extraCount;
+  const totalMax = 4 + extraCount;
+
   return `당신은 ${platformName} 상품 등록 전문가입니다.
 
 셀러가 "${keyword}" 관련 상품을 ${platformName}에 등록하려 합니다.
-아래 분석 데이터를 바탕으로, 전략이 서로 다른 상품 제목+태그 조합을 3~4개 만들어주세요.
+아래 분석 데이터를 바탕으로, 전략이 서로 다른 상품 제목+태그 조합을 ${totalMin}~${totalMax}개 만들어주세요.
 
 [6 Factor 분석 결과]
 ${factorSummary}
@@ -87,7 +112,7 @@ ${oppList ? `
 [기회 분석 추천 키워드 (기회발굴 점수순)]
 ${oppList}
 — 기회 분석은 셀러가 진입할 수 있는 틈새 키워드를 찾는 것입니다. 경쟁이 적으면서 구매 의도가 높은 키워드입니다.
-` : ""}
+` : ""}${aggLine ? `${aggLine}\n` : ""}${varLine ? `${varLine}\n` : ""}
 ${PLATFORM_RULES[platform]}
 
 ${input.creativeKeyword ? `[크리에이티브 키워드]
@@ -99,7 +124,9 @@ ${input.creativeKeyword ? `[크리에이티브 키워드]
 4. 태그 10개는 제목에 포함되지 않은 보조 키워드도 활용하세요
 5. 각 조합에 대해 6 Factor 중 어떤 강점 때문에 이 전략을 추천하는지 한줄로 설명하세요
 6. highlightFactor는 6개 중 가장 핵심인 factor의 key값입니다: ranking, conversion, growth, profitability, entryBarrier, crossPlatform${input.creativeKeyword ? `
-7. 반드시 마지막 조합은 "크리에이티브 전략"이라는 이름으로, 위 크리에이티브 키워드 "${input.creativeKeyword}"를 제목과 태그에 자연스럽게 포함시키세요. 이 조합은 남들과 차별화된 틈새 시장 공략 전략입니다.` : ""}
+7. 반드시 하나의 조합은 "크리에이티브 전략"이라는 이름으로, 위 크리에이티브 키워드 "${input.creativeKeyword}"를 제목과 태그에 자연스럽게 포함시키세요. 이 조합은 남들과 차별화된 틈새 시장 공략 전략입니다.` : ""}${topAggregatedKeyword ? `
+8. 반드시 하나의 조합은 "최종 후보 Top 전략"이라는 이름으로, [최종 후보 Top] 키워드 "${topAggregatedKeyword.keyword}"를 제목 앞부분에 배치하세요. highlightFactor는 "${topAggregatedKeyword.topFactorKey}"로 설정하고, reasoning에 6 Factor 종합점수가 가장 높다는 점과 강점 Factor를 반영하세요.` : ""}${topVariantKeyword ? `
+9. 반드시 하나의 조합은 "세부 유형 특화" 전략이라는 이름으로, [세부 유형 Top] 키워드 "${topVariantKeyword}"를 제목 맨 앞에 주어로 배치하세요. highlightFactor는 시드 키워드의 가장 높은 점수 factor인 "${seedTopFactor?.key ?? "ranking"}"를 사용하고, 나머지 제목/태그는 이 강점에 맞춰 구성하세요.` : ""}
 
 [중요] 제목과 태그에 사용하는 키워드 조합이 의미적으로 자연스러운지 반드시 검증하세요.
 - "${keyword}"와 어울리지 않는 수식어 조합은 절대 사용하지 마세요 (예: 식품에 "접이식", "무선", "충전식" 등 물리적 속성 수식어)
@@ -122,7 +149,7 @@ export async function generateConclusion(input: ConclusionInput): Promise<Conclu
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.7,
-    max_tokens: 2000,
+    max_tokens: 2800,
     response_format: { type: "json_object" },
   });
 

@@ -17,7 +17,7 @@ import KeywordRecommendationsGraph from "./KeywordRecommendationsGraph";
 import { ProfitSimulator, MonthlyVolumeCard } from "./ClientWidgets";
 import OpportunitySummary from "./OpportunitySummary";
 import DwellTracker from "./DwellTracker";
-import PlatformInsightCard from "./PlatformInsightCard";
+// import PlatformInsightCard from "./PlatformInsightCard"; // 비활성화 — 추후 복원 가능
 import FactorScoreCard from "./FactorScoreCard";
 import CompetitorThreatCard from "./CompetitorThreatCard";
 import BrandDistributionCard from "./BrandDistributionCard";
@@ -457,8 +457,8 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           {/* 시장 기회 요약 */}
           <OpportunitySummary result={result} trend={trend} platform={platform} />
 
-          {/* 플랫폼 전략 인사이트 */}
-          <PlatformInsightCard result={result} platform={platform} />
+          {/* 플랫폼 전략 인사이트 — 비활성화 (추후 복원 가능) */}
+          {/* <PlatformInsightCard result={result} platform={platform} /> */}
 
           {/* 진입 실행 가이드 — STEP 1~4 종합 액션 플랜 */}
           <ActionPlanCard
