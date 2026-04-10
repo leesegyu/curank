@@ -22,7 +22,7 @@ const PLANS: Array<{
       { label: "추천 키워드 효과 비교", value: "5회" },
       { label: "결론 재생성", value: "키워드당 1회" },
       { label: "분석 이력 보관", value: "최근 10개" },
-      { label: "스냅샷 보관", value: "30일" },
+      { label: "스냅샷 보관", value: "10일" },
       { label: "CSV 다운로드", value: "O", positive: true },
       { label: "PDF 보고서", value: "X", negative: true },
     ],

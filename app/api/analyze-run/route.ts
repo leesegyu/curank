@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { consumeUsage, getUsage } from "@/lib/usage";
 import { unifiedSearch, fetchNaverScoreData } from "@/lib/search";
 import { analyze } from "@/lib/analyzer";
-import { getKeywordTrend, getKeywordDemographics } from "@/lib/datalab";
+import { getKeywordTrend } from "@/lib/datalab";
 import { trackEvent } from "@/lib/events";
 import { createClient } from "@supabase/supabase-js";
 import type { SearchPlatform } from "@/components/PlatformSelector";
@@ -111,12 +111,20 @@ export async function GET(req: NextRequest) {
             const planLimits = isAdmin(userId) ? { historyMax: 50 } : getPlanLimits(usage?.plan ?? "free");
             const { data: rows } = await supabaseAdmin
               .from("analysis_history")
-              .select("id, analyzed_at")
+              .select("id, keyword, platform, analyzed_at")
               .eq("user_id", userId)
               .order("analyzed_at", { ascending: false });
             if (rows && rows.length > planLimits.historyMax) {
-              const deleteIds = rows.slice(planLimits.historyMax).map((r) => r.id);
+              const overflow = rows.slice(planLimits.historyMax);
+              const deleteIds = overflow.map((r) => r.id);
               await supabaseAdmin.from("analysis_history").delete().in("id", deleteIds);
+              // 연동 삭제: 삭제된 이력의 snapshot/conclusion도 함께 정리
+              for (const r of overflow) {
+                supabaseAdmin.from("analysis_snapshots").delete()
+                  .eq("user_id", userId).eq("keyword", r.keyword).eq("platform", r.platform).then(() => {});
+                supabaseAdmin.from("analysis_conclusions").delete()
+                  .eq("user_id", userId).eq("keyword", r.keyword).eq("platform", r.platform).then(() => {});
+              }
             }
           });
 
@@ -196,15 +204,9 @@ export async function GET(req: NextRequest) {
         const trendDirection = trendRaw?.direction ?? "안정";
         send({ step: 4, total: TOTAL, label: "트렌드 분석 완료", progress: 38, trendDirection });
 
-        // ── Step 5: 인구통계 분석 ──
-        let demographicsData = null;
-        if (trendRaw && trendRaw.data.length > 0) {
-          send({ step: 5, total: TOTAL, label: "검색자 성별/연령 분석 중...", progress: 42 });
-          demographicsData = await getKeywordDemographics(keyword).catch(() => null);
-          send({ step: 5, total: TOTAL, label: "인구통계 분석 완료", progress: 48 });
-        } else {
-          send({ step: 5, total: TOTAL, label: "트렌드 데이터 부족 — 인구통계 건너뜀", progress: 48 });
-        }
+        // ── Step 5: 인구통계 삭제됨 — API 비용 절감 ──
+        const demographicsData = null;
+        send({ step: 5, total: TOTAL, label: "다음 단계 진행 중...", progress: 48 });
 
         // ── Step 6~9: 키워드 추천 + 결론 (타임아웃 적용) ──
         const abortCtrl = new AbortController();

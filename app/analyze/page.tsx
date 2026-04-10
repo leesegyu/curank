@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { unifiedSearch, fetchNaverScoreData } from "@/lib/search";
@@ -12,7 +11,7 @@ import TrendChartClient from "./TrendChartClient";
 import KeywordRecommendations from "./KeywordRecommendations";
 import KeywordRecommendationsV2, { FactorPredictionCard } from "./KeywordRecommendationsV2";
 import KeywordRecommendationsGraph from "./KeywordRecommendationsGraph";
-import DemographicsSection, { DemographicsSkeleton } from "./DemographicsSection";
+// DemographicsSection 삭제됨 — API 비용 절감
 import { ProfitSimulator, MonthlyVolumeCard } from "./ClientWidgets";
 import OpportunitySummary from "./OpportunitySummary";
 import DwellTracker from "./DwellTracker";
@@ -116,7 +115,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let trend: Awaited<ReturnType<typeof getKeywordTrend>> | null = null;
   let errorMsg: string | null = null;
   let snapshotTime: string | null = null;
-  let snapshotDemographics: Awaited<ReturnType<typeof import("@/lib/datalab").getKeywordDemographics>> | null = null;
+  // snapshotDemographics 삭제됨
   // 키워드 추천 스냅샷 데이터
   let snapKeywordsV1: unknown[] | null = null;
   let snapKeywordsV2: unknown[] | null = null;
@@ -132,7 +131,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
     if (snap) {
       result = snap.snapshot.result as AnalysisResult;
       trend = snap.snapshot.trend as typeof trend;
-      snapshotDemographics = snap.snapshot.demographics as typeof snapshotDemographics ?? null;
+      // demographics 삭제됨
       snapshotTime = snap.created_at;
       // 키워드 추천 데이터 추출
       snapKeywordsV1 = (snap.snapshot.keywordsV1 as unknown[] | undefined) ?? null;
@@ -349,10 +348,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
             </div>
           )}
 
-          {/* 검색자 인구통계 */}
-          <Suspense fallback={<DemographicsSkeleton />}>
-            <DemographicsSection keyword={kw} preloaded={snapshotDemographics} />
-          </Suspense>
+          {/* 검색자 인구통계 카드 삭제됨 — API 비용 절감 */}
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           {/* ⚠️ STEP 2: 문제 진단 — 어떤 점이 어렵나?        */}

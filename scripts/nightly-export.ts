@@ -125,6 +125,58 @@ async function main() {
   else console.log(`  → Supabase에서 ${count ?? 0}개 삭제 (${HOT_RETENTION_DAYS}일 초과)`);
 
   // ══════════════════════════════════════════════════════════════
+  // STEP 2.5: 만료 스냅샷/결론/캐시 정리 (snapshotDays 기반)
+  // ══════════════════════════════════════════════════════════════
+  console.log(`  → 만료 스냅샷/결론/캐시 정리 시작`);
+
+  // 플랜별 snapshotDays: free=10, standard=30, business/premium/membership=Infinity
+  // 무한 보관 플랜 유저는 삭제하지 않음 → free/standard만 대상
+  const SNAPSHOT_CLEANUP_RULES = [
+    { plan: "free", days: 10 },
+    { plan: "standard", days: 30 },
+  ];
+
+  let snapshotsCleaned = 0;
+  for (const rule of SNAPSHOT_CLEANUP_RULES) {
+    const snapshotCutoff = new Date(Date.now() - rule.days * 86400_000).toISOString();
+    // 해당 플랜 유저의 만료 스냅샷 삭제
+    const { count: snapCount } = await supabase
+      .from("analysis_snapshots")
+      .delete({ count: "exact" })
+      .lt("created_at", snapshotCutoff)
+      .in("user_id",
+        (await supabase.from("users").select("id").eq("plan", rule.plan).limit(10000))
+          .data?.map((u) => u.id) ?? []
+      );
+    // 해당 플랜 유저의 만료 결론 삭제
+    const { count: concCount } = await supabase
+      .from("analysis_conclusions")
+      .delete({ count: "exact" })
+      .lt("generated_at", snapshotCutoff)
+      .in("user_id",
+        (await supabase.from("users").select("id").eq("plan", rule.plan).limit(10000))
+          .data?.map((u) => u.id) ?? []
+      );
+    snapshotsCleaned += (snapCount ?? 0) + (concCount ?? 0);
+  }
+  console.log(`  → 만료 스냅샷/결론 ${snapshotsCleaned}개 삭제`);
+
+  // 만료된 analysis_cache 정리
+  const { count: cacheCount } = await supabase
+    .from("analysis_cache")
+    .delete({ count: "exact" })
+    .lt("expires_at", new Date().toISOString());
+  console.log(`  → 만료 analysis_cache ${cacheCount ?? 0}개 삭제`);
+
+  // 30일 이상 미사용 keyword_cache 정리
+  const kwCacheCutoff = new Date(Date.now() - 30 * 86400_000).toISOString();
+  const { count: kwCacheCount } = await supabase
+    .from("keyword_cache")
+    .delete({ count: "exact" })
+    .lt("updated_at", kwCacheCutoff);
+  console.log(`  → 오래된 keyword_cache ${kwCacheCount ?? 0}개 삭제`);
+
+  // ══════════════════════════════════════════════════════════════
   // STEP 3: users.category_weights JSONB 재계산
   //   최근 7일 user_events → 온톨로지 경로 매핑 → 가중치 집계
   //   weight = Σ(event_score × recency_decay)
