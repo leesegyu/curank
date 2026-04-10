@@ -15,7 +15,8 @@ import { calcFactorScores, type FactorInput, type Platform, type FactorScoreSet 
  */
 
 const factorCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
-const MAX_KEYWORDS = 12; // 과도한 API 호출 방지
+const MAX_KEYWORDS = 100; // CSV 최대치
+const CONCURRENCY = 10; // 동시 호출 제한 (네이버 rate limit 보호)
 
 async function computeFactor(keyword: string, platform: Platform): Promise<FactorScoreSet | null> {
   // L1 캐시 — 단일 factor-score와 동일한 키 사용하여 재활용
@@ -109,13 +110,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [] });
   }
 
-  // 병렬 계산 (캐시 히트는 즉시 반환됨)
-  const settled = await Promise.allSettled(keywords.map((kw) => computeFactor(kw, platform)));
-
+  // 동시성 제한 배치 처리 (한 번에 CONCURRENCY개씩)
   const results: FactorScoreSet[] = [];
-  for (const r of settled) {
-    if (r.status === "fulfilled" && r.value) {
-      results.push(r.value);
+  for (let i = 0; i < keywords.length; i += CONCURRENCY) {
+    const chunk = keywords.slice(i, i + CONCURRENCY);
+    const settled = await Promise.allSettled(chunk.map((kw) => computeFactor(kw, platform)));
+    for (const r of settled) {
+      if (r.status === "fulfilled" && r.value) {
+        results.push(r.value);
+      }
     }
   }
 

@@ -2,17 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
-import { dedupeByTokens } from "@/lib/keyword-shape";
+import { downloadCSV } from "@/lib/csv-export";
 
 /**
  * STEP 3 추천 카드들의 top 키워드를 6개 Factor로 종합 비교하는 카드
  *
- * 동작:
- * 1. 각 카드 preloadedData에서 상위 키워드 추출
- * 2. 시드 키워드 포함 (baseline)
- * 3. 중복 제거
- * 4. /api/factor-score-batch 호출
- * 5. 종합 점수 내림차순 정렬
+ * - 기본 표시: 상위 10개
+ * - 전체보기: 최대 40개 (마운트 시 pre-fetch)
+ * - CSV 다운로드: 최대 100개 (클릭 시 lazy fetch)
  */
 
 interface FactorResult {
@@ -32,15 +29,15 @@ interface FactorScoreSet {
 }
 
 interface Props {
-  keyword: string;          // 시드 키워드
+  keyword: string;
   platform?: string;
   sources: {
     v2?: unknown[] | null;
     creative?: unknown[] | null;
     graph?: unknown[] | null;
     sos?: unknown[] | null;
-    variant?: unknown | null;  // { keywords?: [{keyword}] }
-    modifiers?: Array<{ keyword: string }>; // 수식어 카드 결과 (옵션)
+    variant?: unknown | null;
+    modifiers?: Array<{ keyword: string }>;
   };
 }
 
@@ -49,70 +46,73 @@ interface CandidateWithSource {
   source: string;
 }
 
-/** 각 카드에서 상위 키워드 N개씩 추출 */
+const INITIAL_FETCH = 40;
+const MAX_FETCH = 100;
+const DISPLAY_COLLAPSED = 10;
+const DISPLAY_EXPANDED = 40;
+
+/**
+ * 각 카드에서 상위 키워드 충분히 수집 (최대 ~100개)
+ */
 function collectCandidates(props: Props): CandidateWithSource[] {
   const { keyword, sources } = props;
   const candidates: CandidateWithSource[] = [];
 
-  // 1) 시드 키워드 (baseline)
+  // 1) 시드 (baseline)
   candidates.push({ keyword, source: "seed" });
 
-  // 2) V2 상위 3개
+  // 2) V2 상위 25개
   if (Array.isArray(sources.v2)) {
     const top = sources.v2
-      .slice(0, 10)
       .map((raw) => raw as { keyword?: string; score?: number })
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-      .slice(0, 3);
+      .slice(0, 25);
     for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "기회분석" });
   }
 
-  // 3) Creative 상위 3개
+  // 3) Creative 상위 20개
   if (Array.isArray(sources.creative)) {
     const top = sources.creative
-      .slice(0, 10)
       .map((raw) => raw as { keyword?: string; score?: number })
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-      .slice(0, 3);
+      .slice(0, 20);
     for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "크리에이티브" });
   }
 
-  // 4) Graph 상위 2개
+  // 4) Graph 상위 15개
   if (Array.isArray(sources.graph)) {
     const top = sources.graph
-      .slice(0, 10)
       .map((raw) => raw as { keyword?: string; similarity?: number })
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
-      .slice(0, 2);
+      .slice(0, 15);
     for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "연관" });
   }
 
-  // 5) SOS 상위 2개
+  // 5) SOS 상위 15개
   if (Array.isArray(sources.sos)) {
     const top = sources.sos
-      .slice(0, 10)
       .map((raw) => raw as { keyword?: string; sosScore?: number })
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.sosScore ?? 0) - (a.sosScore ?? 0))
-      .slice(0, 2);
+      .slice(0, 15);
     for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "시즌" });
   }
 
-  // 6) Variant 상위 2개
+  // 6) Variant 상위 10개
   if (sources.variant && typeof sources.variant === "object") {
     const v = sources.variant as { keywords?: Array<{ keyword: string }> };
     if (Array.isArray(v.keywords)) {
-      const top = v.keywords.slice(0, 2);
+      const top = v.keywords.slice(0, 10);
       for (const kw of top) candidates.push({ keyword: kw.keyword, source: "세부유형" });
     }
   }
 
-  // 7) Modifiers 상위 2개
+  // 7) Modifiers 상위 15개
   if (Array.isArray(sources.modifiers)) {
-    const top = sources.modifiers.slice(0, 2);
+    const top = sources.modifiers.slice(0, 15);
     for (const kw of top) candidates.push({ keyword: kw.keyword, source: "수식어" });
   }
 
@@ -126,10 +126,10 @@ function collectCandidates(props: Props): CandidateWithSource[] {
       deduped.push(c);
     }
   }
-  return deduped.slice(0, 12); // 최대 12개 (API 제한)
+  return deduped.slice(0, MAX_FETCH);
 }
 
-/** 6 Factor 평균으로 종합 점수 계산 (0~100) */
+/** 6 Factor 평균으로 종합 점수 계산 */
 function overallScore(result: FactorScoreSet): number {
   if (!result.factors || result.factors.length === 0) return 0;
   const sum = result.factors.reduce((acc, f) => acc + (f.score ?? 0), 0);
@@ -158,14 +158,34 @@ function ScoreBar({ value }: { value: number }) {
   );
 }
 
+/** 주어진 키워드 배열로 API 호출 후 맵 반환 */
+async function fetchFactorBatch(
+  keywords: string[],
+  platform: string,
+): Promise<Map<string, FactorScoreSet>> {
+  if (keywords.length === 0) return new Map();
+  const res = await fetch(
+    `/api/factor-score-batch?keywords=${encodeURIComponent(keywords.join(","))}&platform=${platform}`,
+  );
+  const json: { results?: FactorScoreSet[] } = await res.json();
+  const map = new Map<string, FactorScoreSet>();
+  for (const r of json.results ?? []) {
+    map.set(r.keyword, r);
+  }
+  return map;
+}
+
 export default function FactorScoreAggregated(props: Props) {
   const { keyword, platform = "naver" } = props;
   const [results, setResults] = useState<Map<string, FactorScoreSet>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [csvLoading, setCsvLoading] = useState(false);
 
   const candidates = useMemo(() => collectCandidates(props), [props]);
 
+  // 마운트 시 상위 INITIAL_FETCH개 pre-fetch
   useEffect(() => {
     if (candidates.length === 0) {
       setLoading(false);
@@ -174,20 +194,9 @@ export default function FactorScoreAggregated(props: Props) {
     setLoading(true);
     setError(false);
 
-    const keywordList = candidates.map((c) => c.keyword).join(",");
-    fetch(`/api/factor-score-batch?keywords=${encodeURIComponent(keywordList)}&platform=${platform}`)
-      .then((r) => r.json())
-      .then((json: { results?: FactorScoreSet[] }) => {
-        if (!json.results) {
-          setError(true);
-          return;
-        }
-        const map = new Map<string, FactorScoreSet>();
-        for (const r of json.results) {
-          map.set(r.keyword, r);
-        }
-        setResults(map);
-      })
+    const initialBatch = candidates.slice(0, INITIAL_FETCH).map((c) => c.keyword);
+    fetchFactorBatch(initialBatch, platform)
+      .then((map) => setResults(map))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [candidates, platform]);
@@ -207,6 +216,62 @@ export default function FactorScoreAggregated(props: Props) {
       .sort((a, b) => b.score - a.score);
   }, [candidates, results]);
 
+  const displayed = expanded
+    ? sorted.slice(0, DISPLAY_EXPANDED)
+    : sorted.slice(0, DISPLAY_COLLAPSED);
+
+  /** CSV 다운로드 — 필요하면 lazy fetch로 최대 100개까지 */
+  const handleCsvDownload = async () => {
+    // 미조회 후보가 있으면 추가 fetch
+    const missing = candidates
+      .filter((c) => !results.has(c.keyword))
+      .slice(0, MAX_FETCH - results.size);
+
+    let finalResults = results;
+    if (missing.length > 0) {
+      setCsvLoading(true);
+      try {
+        const additional = await fetchFactorBatch(
+          missing.map((c) => c.keyword),
+          platform,
+        );
+        const merged = new Map(results);
+        for (const [k, v] of additional) merged.set(k, v);
+        finalResults = merged;
+        setResults(merged);
+      } catch {
+        // 일부만이라도 다운로드
+      } finally {
+        setCsvLoading(false);
+      }
+    }
+
+    // 전체 정렬 후 CSV 추출
+    const allSorted = candidates
+      .map((c) => ({ candidate: c, result: finalResults.get(c.keyword) }))
+      .filter((item) => !!item.result)
+      .map((item) => ({
+        ...item,
+        score: overallScore(item.result!),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, MAX_FETCH);
+
+    const rows = allSorted.map(({ candidate, result, score }) => {
+      const row: Record<string, string | number> = {
+        키워드: candidate.keyword,
+        출처: candidate.source,
+        종합점수: score,
+      };
+      for (const f of result!.factors) {
+        row[f.label] = f.score;
+      }
+      return row;
+    });
+
+    downloadCSV(rows, `${keyword}_최종후보비교`);
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -216,7 +281,7 @@ export default function FactorScoreAggregated(props: Props) {
             <div key={i} className="h-10 bg-gray-100 rounded-xl animate-pulse" />
           ))}
           <p className="text-xs text-center text-gray-400 mt-2">
-            추천 키워드 {candidates.length}개 종합 비교 중... (약 10초)
+            추천 키워드 {Math.min(candidates.length, INITIAL_FETCH)}개 종합 비교 중... (약 10~15초)
           </p>
         </div>
       </div>
@@ -233,11 +298,16 @@ export default function FactorScoreAggregated(props: Props) {
     );
   }
 
+  const canExpand = sorted.length > DISPLAY_COLLAPSED;
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-sm font-bold text-gray-700">최종 후보 비교</span>
-        <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}>
+        <span
+          className="text-xs px-2 py-0.5 rounded-full font-bold text-white"
+          style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
+        >
           AI
         </span>
       </div>
@@ -265,7 +335,7 @@ export default function FactorScoreAggregated(props: Props) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map(({ candidate, result, score }) => (
+            {displayed.map(({ candidate, result, score }) => (
               <tr key={candidate.keyword} className="border-b border-gray-50 hover:bg-purple-50/30 transition-colors">
                 <td className="py-2.5 px-2">
                   <AnalyzeKeywordLink
@@ -312,9 +382,30 @@ export default function FactorScoreAggregated(props: Props) {
         </table>
       </div>
 
-      <p className="mt-3 text-[10px] text-gray-400 text-center">
-        종합점수는 6개 Factor(상위 노출·구매전환·시장성장·수익성·진입난이도·크로스플랫폼) 평균
-      </p>
+      <div className="mt-3 flex items-center justify-between px-1">
+        <p className="text-[10px] text-gray-400">
+          종합점수는 6개 Factor(상위 노출·구매전환·시장성장·수익성·진입난이도·크로스플랫폼) 평균
+        </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleCsvDownload}
+            disabled={csvLoading}
+            className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-wait"
+          >
+            {csvLoading
+              ? `CSV 준비중 (${Math.min(candidates.length, MAX_FETCH)}개)...`
+              : `CSV (${Math.min(candidates.length, MAX_FETCH)}개)`}
+          </button>
+          {canExpand && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-xs font-bold text-purple-600 hover:text-purple-700"
+            >
+              {expanded ? "접기 ↑" : `전체보기 (${Math.min(sorted.length, DISPLAY_EXPANDED)}) ↓`}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
