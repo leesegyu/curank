@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import PlatformCategoryPicker from "@/components/PlatformCategoryPicker";
 import type { PlatformCategories } from "@/components/PlatformCategoryPicker";
+import { detectInAppBrowser, openInExternalBrowser, type InAppBrowserInfo } from "@/lib/in-app-browser";
 
 const CATEGORIES = [
   { name: "패션의류",      code: "50000000", emoji: "👗" },
@@ -52,6 +53,20 @@ export default function SignupPage() {
 
   const [error, setError]   = useState("");
   const [loading, setLoading] = useState(false);
+  const [inApp, setInApp] = useState<InAppBrowserInfo>({ isInApp: false, name: "", isIOS: false, isAndroid: false });
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  useEffect(() => {
+    setInApp(detectInAppBrowser());
+  }, []);
+
+  const handleOpenExternal = () => {
+    const { copied } = openInExternalBrowser(inApp);
+    if (copied) {
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 3000);
+    }
+  };
 
   function toggleCategory(code: string) {
     setMainCategories((prev) =>
@@ -142,11 +157,47 @@ export default function SignupPage() {
               <p className="text-sm text-gray-400 mb-6">무료로 시작하세요</p>
 
               {/* 소셜 로그인 */}
+              {/* 앱 내 브라우저 경고 */}
+              {inApp.isInApp && (
+                <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <p className="text-xs font-bold text-amber-800 mb-1">
+                    ⚠️ {inApp.name} 인앱 브라우저에서는 Google 회원가입이 제한됩니다
+                  </p>
+                  <p className="text-[11px] text-amber-700 leading-relaxed mb-3">
+                    Google 보안 정책으로 인해 앱 내 브라우저에서 로그인이 차단됩니다.
+                    {inApp.isIOS ? " Safari" : " Chrome"}에서 열어주세요.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleOpenExternal}
+                    className="w-full py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors"
+                  >
+                    {urlCopied
+                      ? "✅ URL 복사됨! Safari/Chrome에서 붙여넣기"
+                      : inApp.isAndroid
+                        ? "Chrome에서 열기"
+                        : "URL 복사하기"}
+                  </button>
+                  {inApp.isIOS && (
+                    <p className="mt-2 text-[10px] text-amber-600 leading-relaxed">
+                      💡 또는 화면 우측 상단 <strong>···</strong> 메뉴 → <strong>&ldquo;Safari에서 열기&rdquo;</strong> 선택
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2 mb-5">
                 <button
                   type="button"
-                  onClick={() => signIn("google", { callbackUrl: "/" })}
-                  className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    if (inApp.isInApp) {
+                      setError(`${inApp.name} 인앱 브라우저에서는 Google 회원가입이 제한됩니다. 위의 안내대로 ${inApp.isIOS ? "Safari" : "Chrome"}에서 열어주세요.`);
+                      return;
+                    }
+                    signIn("google", { callbackUrl: "/" });
+                  }}
+                  disabled={inApp.isInApp}
+                  className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
                     <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
