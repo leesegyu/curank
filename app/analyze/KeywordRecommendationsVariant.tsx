@@ -59,7 +59,7 @@ export default function KeywordRecommendationsVariant({
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-gray-700">
-            연관 품종/변형 키워드
+            세부 유형 키워드
           </span>
           {category && (
             <span className="text-xs px-2 py-0.5 rounded-lg bg-violet-50 text-violet-600 border border-violet-100 font-medium">
@@ -68,7 +68,7 @@ export default function KeywordRecommendationsVariant({
           )}
         </div>
         <p className="text-[11px] text-gray-400 mt-1">
-          이 카테고리에서 독립적으로 검색되는 품종/유형/변형 키워드예요. 셀러가 놓치기 쉬운 세부 시장입니다
+          이 카테고리의 세부 유형별로 독립 검색되는 키워드예요. 셀러가 놓치기 쉬운 틈새 시장입니다
         </p>
       </div>
 
@@ -77,7 +77,7 @@ export default function KeywordRecommendationsVariant({
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-9 bg-gray-100 rounded-xl animate-pulse" />
           ))}
-          <p className="text-xs text-center text-gray-400 mt-2">변형 키워드 분석 중...</p>
+          <p className="text-xs text-center text-gray-400 mt-2">세부 유형 키워드 분석 중...</p>
         </div>
       )}
 

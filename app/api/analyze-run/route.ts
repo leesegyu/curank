@@ -26,7 +26,7 @@ const TIMEOUT_MS = 55 * 1000; // 55초 (Vercel Hobby 60초 제한 대응)
  *  3) 경쟁 분석
  *  4) 트렌드 분석
  *  5) 인구통계 분석
- *  6) 변형 키워드 + 크리에이티브 키워드 추천 (병렬)
+ *  6) 세부 유형 + 크리에이티브 키워드 추천 (병렬)
  *  7) AI 심화 + 판매 성공 지표 추천 (병렬)
  *  8) 그래프 기반 추천
  *  9) 결론 생성
@@ -216,9 +216,9 @@ export async function GET(req: NextRequest) {
         const kw = encodeURIComponent(keyword);
 
         try {
-          // ── Step 6: AI 심화(v2) + 변형 키워드 + 판매 지표 (병렬) ──
+          // ── Step 6: AI 심화(v2) + 세부 유형 + 판매 지표 (병렬) ──
           // v2를 먼저 실행 → 캐시 생성 → Step 7에서 creative가 캐시 재사용
-          send({ step: 6, total: TOTAL, label: "AI 심화 + 변형 키워드 + 판매 지표 분석 중...", progress: 52 });
+          send({ step: 6, total: TOTAL, label: "AI 심화 + 세부 유형 + 판매 지표 분석 중...", progress: 52 });
           const [kosV2, variant, factor] = await Promise.allSettled([
             fetch(`${BASE_URL}/api/keywords-v2?keyword=${kw}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/keywords-variant?keyword=${kw}`, fetchOpt).then(r => r.json()),
@@ -232,7 +232,7 @@ export async function GET(req: NextRequest) {
           const hasFactor = !!factorData?.factors?.length;
           send({
             step: 6, total: TOTAL, progress: 64,
-            label: hasKosV2 && hasVariant && hasFactor ? "AI 심화 + 변형 키워드 + 판매 지표 완료"
+            label: hasKosV2 && hasVariant && hasFactor ? "AI 심화 + 세부 유형 + 판매 지표 완료"
               : (hasKosV2 || hasVariant || hasFactor) ? "분석 완료 (일부 누락)"
               : "AI 분석 (실패)",
           });
