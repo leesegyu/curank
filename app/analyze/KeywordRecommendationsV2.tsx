@@ -5,7 +5,7 @@ import type { KeywordV2 } from "@/app/api/keywords-v2/route";
 import { trackEventClient } from "@/lib/events";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
-import { excludeModifierCombinations } from "@/lib/keyword-shape";
+import { excludePureGenericModifiers } from "@/lib/keyword-shape";
 
 async function trackExpose(queryKeyword: string, keywords: { keyword: string }[], modelVersion: string) {
   fetch("/api/rl/expose", {
@@ -127,8 +127,9 @@ export default function KeywordRecommendationsV2({ keyword, platform = "naver", 
 
   if (error) return <div className="bg-white rounded-2xl border border-gray-100 p-5"><p className="text-sm text-gray-400 text-center py-4">데이터를 불러오지 못했습니다.</p></div>;
 
-  // 수식어 조합 제외 — "수박 추천", "수박 가성비" 등은 별도 수식어 전용 카드로 이동
-  const filtered = excludeModifierCombinations(data, keyword);
+  // 범용 수식어 조합만 제외 ("수박 추천", "수박 가성비" 등)
+  // 도메인 가치 있는 longtail("국내산 수박", "수박 1kg", "수박 선물세트")은 유지
+  const filtered = excludePureGenericModifiers(data, keyword);
 
   if (filtered.length === 0) return <div className="bg-white rounded-2xl border border-gray-100 p-5"><p className="text-sm text-gray-400 text-center py-4">추천 키워드가 없습니다.</p></div>;
 

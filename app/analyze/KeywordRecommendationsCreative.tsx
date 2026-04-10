@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import type { CreativeKeyword } from "@/app/api/keywords-creative/route";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
-import { excludeModifierCombinations } from "@/lib/keyword-shape";
+import { excludePureGenericModifiers } from "@/lib/keyword-shape";
 
 function scoreColor(score: number): string {
   if (score >= 75) return "text-purple-600 bg-purple-50 border-purple-200";
@@ -57,7 +57,7 @@ export default function KeywordRecommendationsCreative({ keyword, platform, prel
       .finally(() => setLoading(false));
   }, [keyword, platform, preloadedData]);
 
-  const filtered = excludeModifierCombinations(data, keyword);
+  const filtered = excludePureGenericModifiers(data, keyword);
   const display = expanded ? filtered : filtered.slice(0, 5);
 
   return (

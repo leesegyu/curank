@@ -10,7 +10,7 @@ import { trackEventClient } from "@/lib/events";
 import type { GraphKeyword } from "@/app/api/keywords-graph/route";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
-import { excludeModifierCombinations } from "@/lib/keyword-shape";
+import { excludePureGenericModifiers } from "@/lib/keyword-shape";
 
 function simColor(sim: number): string {
   if (sim >= 0.8) return "text-green-600 bg-green-50 border-green-200";
@@ -55,7 +55,7 @@ export default function KeywordRecommendationsGraph({ keyword, platform = "naver
   // longtail만 수식어 조합 필터링, seed type(형제노드)은 유지
   const filtered = [
     ...data.filter((k) => k.type === "seed"),
-    ...excludeModifierCombinations(
+    ...excludePureGenericModifiers(
       data.filter((k) => k.type !== "seed"),
       keyword,
     ),

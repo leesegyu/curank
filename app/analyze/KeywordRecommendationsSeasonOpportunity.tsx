@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import type { SeasonOpportunityResult } from "@/app/api/keywords-season-opportunity/route";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
-import { excludeModifierCombinations } from "@/lib/keyword-shape";
+import { excludePureGenericModifiers } from "@/lib/keyword-shape";
 
 function tierBadge(tier: string) {
   switch (tier) {
@@ -68,7 +68,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
       .finally(() => setLoading(false));
   }, [keyword, preloadedData]);
 
-  const filtered = excludeModifierCombinations(data, keyword);
+  const filtered = excludePureGenericModifiers(data, keyword);
   const display = expanded ? filtered : filtered.slice(0, 5);
 
   if (loading) {

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
-import { isModifierCombination, dedupeByTokens } from "@/lib/keyword-shape";
+import { isPureGenericModifier, dedupeByTokens } from "@/lib/keyword-shape";
 
 /**
  * 수식어 추천 키워드 카드
@@ -49,7 +49,7 @@ function extractModifiers(props: Props): ModifierItem[] {
     for (const raw of sources.v2) {
       const kw = raw as { keyword?: string; score?: number; monthlyVolume?: number; competitionLevel?: string };
       if (!kw?.keyword) continue;
-      if (!isModifierCombination(kw.keyword, keyword)) continue;
+      if (!isPureGenericModifier(kw.keyword, keyword)) continue;
       out.push({
         keyword: kw.keyword,
         score: normalizeScore(kw.score ?? 0, 1000),
@@ -65,7 +65,7 @@ function extractModifiers(props: Props): ModifierItem[] {
     for (const raw of sources.creative) {
       const kw = raw as { keyword?: string; score?: number };
       if (!kw?.keyword) continue;
-      if (!isModifierCombination(kw.keyword, keyword)) continue;
+      if (!isPureGenericModifier(kw.keyword, keyword)) continue;
       out.push({
         keyword: kw.keyword,
         score: Math.round(kw.score ?? 0),
@@ -79,7 +79,7 @@ function extractModifiers(props: Props): ModifierItem[] {
     for (const raw of sources.graph) {
       const kw = raw as { keyword?: string; similarity?: number; type?: string };
       if (!kw?.keyword) continue;
-      if (!isModifierCombination(kw.keyword, keyword)) continue;
+      if (!isPureGenericModifier(kw.keyword, keyword)) continue;
       out.push({
         keyword: kw.keyword,
         score: Math.round((kw.similarity ?? 0) * 100),
@@ -93,7 +93,7 @@ function extractModifiers(props: Props): ModifierItem[] {
     for (const raw of sources.sos) {
       const kw = raw as { keyword?: string; sosScore?: number };
       if (!kw?.keyword) continue;
-      if (!isModifierCombination(kw.keyword, keyword)) continue;
+      if (!isPureGenericModifier(kw.keyword, keyword)) continue;
       out.push({
         keyword: kw.keyword,
         score: Math.round(kw.sosScore ?? 0),

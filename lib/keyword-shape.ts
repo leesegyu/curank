@@ -1,9 +1,33 @@
 /**
  * 키워드 형태 판별 유틸
  *
- * 쿠랭크의 추천 키워드를 "형태"별로 분류하여,
- * 수식어 조합(예: "수박 추천")과 그 외(합성어, 브랜드, 파생어)를 구분.
+ * 쿠랭크의 추천 키워드를 "형태"별로 분류:
+ * - 순수 범용 수식어 조합 (예: "수박 추천", "수박 가성비") → 수식어 전용 카드로
+ * - 도메인 가치 있는 longtail (예: "국내산 수박", "수박 1kg") → 기존 카드 유지
+ * - 합성어/파생어 (예: "흑수박", "수박화채") → 기존 카드 유지
+ *
+ * 핵심 원칙: "시드+추가토큰" 형태라도 도메인 가치가 있으면 절대 제거하지 않는다.
+ * 범용 수식어 화이트리스트에 있는 토큰만 "범용 조합"으로 간주.
  */
+
+/**
+ * 진짜 범용 수식어 화이트리스트
+ * 어느 카테고리에서나 같은 의미로 쓰이고, 도메인 정보가 없는 수식어들.
+ *
+ * 여기에 해당 = 수식어 전용 카드로 이동
+ * 여기에 미해당 = 도메인 가치가 있음 → 기존 카드에 유지
+ */
+const GENERIC_MODIFIER_TOKENS = new Set<string>([
+  // 평가/순위 (범용)
+  "추천", "인기", "순위", "랭킹", "베스트", "top", "리뷰", "후기", "비교", "판매량", "평가",
+  // 가격/할인 (범용)
+  "가성비", "저렴한", "저렴", "최저가", "할인", "특가", "세일", "쿠폰", "싼곳", "가격",
+  // 인구통계 (너무 범용, 거의 의미 없음)
+  "가정용", "사무용", "남성용", "여성용", "아동용", "아이용",
+  // 구매 행위 (범용)
+  "구매", "주문", "쇼핑", "직구",
+]);
+
 
 /** 공백/대소문자 정규화 */
 function normalize(s: string): string {
@@ -64,7 +88,8 @@ export function isModifierCombination(keyword: string, seed: string): boolean {
 }
 
 /**
- * 키워드 목록에서 수식어 조합만 추출
+ * 키워드 목록에서 수식어 조합만 추출 (넓은 판별)
+ * @deprecated 대부분 경우 filterPureGenericModifiers() 사용 권장
  */
 export function filterModifierCombinations<T extends { keyword: string }>(
   items: T[],
@@ -74,13 +99,64 @@ export function filterModifierCombinations<T extends { keyword: string }>(
 }
 
 /**
- * 키워드 목록에서 수식어 조합을 제외 (비수식어만 남김)
+ * 키워드 목록에서 수식어 조합을 제외 (넓은 판별)
+ * @deprecated 너무 공격적 — 도메인 가치 있는 longtail까지 제거함.
+ * excludePureGenericModifiers() 사용 권장
  */
 export function excludeModifierCombinations<T extends { keyword: string }>(
   items: T[],
   seed: string,
 ): T[] {
   return items.filter((item) => !isModifierCombination(item.keyword, seed));
+}
+
+/**
+ * "순수 범용 수식어 조합" 여부
+ *
+ * 조건:
+ * 1) 시드가 토큰으로 포함되어야 함
+ * 2) 추가 토큰(시드 외)이 1개 이상 있어야 함
+ * 3) 추가 토큰이 **전부** GENERIC_MODIFIER_TOKENS에 속해야 함
+ *
+ * 예시 (시드 "수박"):
+ *   "수박 추천"        → true  (["추천"] 전부 generic)
+ *   "수박 가성비"      → true  (["가성비"] 전부 generic)
+ *   "수박 가성비 추천" → true  (["가성비","추천"] 전부 generic)
+ *   "수박 1kg"         → false ("1kg"은 non-generic, 도메인 가치)
+ *   "국내산 수박"      → false ("국내산"은 non-generic)
+ *   "국내산 수박 추천" → false ("국내산"이 non-generic이라 전부 generic 아님)
+ *   "수박 선물세트"    → false ("선물세트"는 non-generic, 시즌/카테고리 가치)
+ *   "흑수박"           → false (시드가 토큰으로 없음)
+ *   "수박"             → false (추가 토큰 없음)
+ */
+export function isPureGenericModifier(keyword: string, seed: string): boolean {
+  const kwTokens = tokenize(keyword);
+  const seedTokens = tokenize(seed);
+
+  if (seedTokens.length === 0 || kwTokens.length === 0) return false;
+  if (!seedTokens.every((st) => kwTokens.includes(st))) return false;
+
+  const seedSet = new Set(seedTokens);
+  const extras = kwTokens.filter((t) => !seedSet.has(t));
+  if (extras.length === 0) return false;
+
+  return extras.every((e) => GENERIC_MODIFIER_TOKENS.has(e));
+}
+
+/** 순수 범용 수식어 조합만 추출 */
+export function filterPureGenericModifiers<T extends { keyword: string }>(
+  items: T[],
+  seed: string,
+): T[] {
+  return items.filter((item) => isPureGenericModifier(item.keyword, seed));
+}
+
+/** 순수 범용 수식어 조합 제외 (도메인 가치 있는 longtail은 유지) */
+export function excludePureGenericModifiers<T extends { keyword: string }>(
+  items: T[],
+  seed: string,
+): T[] {
+  return items.filter((item) => !isPureGenericModifier(item.keyword, seed));
 }
 
 /**
