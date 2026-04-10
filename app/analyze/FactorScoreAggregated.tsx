@@ -39,6 +39,11 @@ interface Props {
     variant?: unknown | null;
     modifiers?: Array<{ keyword: string }>;
   };
+  /** 스냅샷에 사전 계산된 결과 — 있으면 즉시 렌더, 없으면 기존처럼 fetch */
+  preloaded?: {
+    candidates: Array<{ keyword: string; source: string }>;
+    results: FactorScoreSet[];
+  } | null;
 }
 
 interface CandidateWithSource {
@@ -176,17 +181,38 @@ async function fetchFactorBatch(
 }
 
 export default function FactorScoreAggregated(props: Props) {
-  const { keyword, platform = "naver" } = props;
-  const [results, setResults] = useState<Map<string, FactorScoreSet>>(new Map());
-  const [loading, setLoading] = useState(true);
+  const { keyword, platform = "naver", preloaded } = props;
+
+  // 사전 계산된 결과가 있으면 초기 state에 즉시 주입 (로딩 스킵)
+  const initialMap = useMemo(() => {
+    const map = new Map<string, FactorScoreSet>();
+    if (preloaded?.results && Array.isArray(preloaded.results)) {
+      for (const r of preloaded.results) {
+        if (r?.keyword) map.set(r.keyword, r);
+      }
+    }
+    return map;
+  }, [preloaded]);
+
+  const [results, setResults] = useState<Map<string, FactorScoreSet>>(initialMap);
+  const [loading, setLoading] = useState(initialMap.size === 0);
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [csvLoading, setCsvLoading] = useState(false);
 
-  const candidates = useMemo(() => collectCandidates(props), [props]);
+  // 후보 목록: 스냅샷에 있으면 그대로 사용, 없으면 props로 재계산
+  const candidates = useMemo(() => {
+    if (preloaded?.candidates && preloaded.candidates.length > 0) {
+      return preloaded.candidates;
+    }
+    return collectCandidates(props);
+  }, [props, preloaded]);
 
-  // 마운트 시 상위 INITIAL_FETCH개 pre-fetch
+  // 사전 계산 결과가 없을 때만 마운트 fetch
   useEffect(() => {
+    if (initialMap.size > 0) {
+      return; // 이미 프리로드됨 → 추가 fetch 불필요
+    }
     if (candidates.length === 0) {
       setLoading(false);
       return;
@@ -199,7 +225,7 @@ export default function FactorScoreAggregated(props: Props) {
       .then((map) => setResults(map))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [candidates, platform]);
+  }, [candidates, platform, initialMap]);
 
   // 정렬된 결과
   const sorted = useMemo(() => {

@@ -130,6 +130,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let snapKeywordsSeasonOpp: unknown[] | null = null;
   let snapFactorScore: unknown | null = null;
   let snapBrandDistribution: BrandDistributionData | null = null;
+  let snapFactorAggregated: { candidates: Array<{ keyword: string; source: string }>; results: unknown[] } | null = null;
 
   if (!forceRefresh && userId) {
     const snap = await getSnapshot(userId, kw, platform);
@@ -148,6 +149,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       snapKeywordsSeasonOpp = (snap.snapshot.keywordsSeasonOpp as unknown[] | undefined) ?? null;
       snapFactorScore = snap.snapshot.factorScore ?? null;
       snapBrandDistribution = (snap.snapshot.brandDistribution as BrandDistributionData | undefined) ?? null;
+      snapFactorAggregated = (snap.snapshot.factorAggregated as typeof snapFactorAggregated) ?? null;
       console.log(`[snapshot] HIT: "${kw}" (${platform}) from ${snap.created_at}`, snapKeywordsV2 ? `+keywords` : `(no keywords)`);
     }
   }
@@ -437,6 +439,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
               sos: (snapKeywordsSeasonOpp as unknown[] | null),
               variant: snapKeywordsVariant,
             }}
+            preloaded={snapFactorAggregated as { candidates: Array<{ keyword: string; source: string }>; results: import("@/lib/factor-model").FactorScoreSet[] } | null}
           />
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}

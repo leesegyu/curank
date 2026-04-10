@@ -45,8 +45,9 @@ export async function GET(req: NextRequest) {
   // ── 재생성 한도 정보 헬퍼 ──
   async function getRegenInfo() {
     const usage = await getUsage(userId);
+    // 관리자: 키워드당 3회 재생성 허용 (이전: Infinity)
     const limits = isAdmin(userId)
-      ? { regeneration: Infinity }
+      ? { regeneration: 3 }
       : getPlanLimits(usage?.plan ?? "free");
     const { data: row } = await supabaseAdmin
       .from("analysis_conclusions")

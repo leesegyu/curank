@@ -20,6 +20,7 @@ export interface AnalysisSnapshot {
   keywordsVariant?: unknown;   // 변형/품종 키워드
   competitorThreat?: unknown; // 경쟁 위협도
   brandDistribution?: unknown; // 브랜드/상호명 분포
+  factorAggregated?: unknown;  // STEP 4 최종 후보 비교 — 사전 계산된 FactorScoreSet[] + 후보 메타
 }
 
 /**

@@ -273,8 +273,35 @@ export async function GET(req: NextRequest) {
             label: hasGraph ? "💡 STEP 3 · 그래프 완료" : "💡 STEP 3 · 그래프 실패",
           });
 
-          // ── Step 9: STEP 4 최종 후보 + STEP 6 결론 생성 ──
+          // ── Step 9: STEP 4 최종 후보 비교 프리컴퓨트 + STEP 6 결론 생성 ──
           send({ step: 9, total: TOTAL, label: "🏆 STEP 4 · 🎯 STEP 6 · 최종 후보 비교 + 결론 생성 중...", progress: 88 });
+
+          // STEP 4 — 후보 수집 및 factor-score-batch 사전 호출
+          let factorAggregatedData: { candidates: Array<{ keyword: string; source: string }>; results: unknown[] } | null = null;
+          try {
+            const { collectAggregatedCandidates } = await import("@/lib/aggregated-candidates");
+            const candidates = collectAggregatedCandidates(keyword, {
+              v2: kosV2Data?.keywords ?? null,
+              creative: creativeData?.keywords ?? null,
+              graph: graphRaw?.keywords ?? null,
+              sos: seasonOppData?.keywords ?? null,
+              variant: variantData ?? null,
+            });
+            // 초기 표시용 상위 40개만 채점 (CSV 클릭 시 추가 fetch)
+            const initial = candidates.slice(0, 40);
+            if (initial.length > 0) {
+              const batchUrl = `${BASE_URL}/api/factor-score-batch?keywords=${encodeURIComponent(initial.map(c => c.keyword).join(","))}&platform=${platform}`;
+              const batchRes = await fetch(batchUrl, fetchOpt).then(r => r.json()).catch(() => null);
+              if (batchRes?.results) {
+                factorAggregatedData = {
+                  candidates, // 전체 후보 (CSV용)
+                  results: batchRes.results, // 사전 계산된 상위 40개
+                };
+              }
+            }
+          } catch { /* 실패해도 결론 생성은 계속 */ }
+
+          // STEP 6 — 결론 생성
           const conclusionRaw = await fetch(`${BASE_URL}/api/conclusion?keyword=${kw}&platform=${platform}&generate=true`, fetchOpt).then(r => r.json()).catch(() => null);
           const hasConclusion = !!conclusionRaw?.conclusion;
           send({
@@ -301,7 +328,7 @@ export async function GET(req: NextRequest) {
           // variant는 보조 데이터 (variantKeywords 미정의 카테고리에서 빈 결과 정상)
           const partial = !hasKosV2 || !hasGraph || !hasCreative;
 
-          // 스냅샷 저장 (결과 보기 시 즉시 로드 — 키워드 추천 포함)
+          // 스냅샷 저장 (결과 보기 시 즉시 로드 — 키워드 추천 + STEP 4 사전 계산)
           saveSnapshot(userId, keyword, platform, {
             result,
             trend: trendRaw,
@@ -315,6 +342,7 @@ export async function GET(req: NextRequest) {
             keywordsGraph: graphRaw?.keywords ?? null,
             factorScore: factorData ?? null,
             brandDistribution: { brands: brandDistribution, noBrandRatio, totalProducts },
+            factorAggregated: factorAggregatedData,
           }).catch(() => {});
 
           send({
