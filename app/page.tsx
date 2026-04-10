@@ -8,6 +8,8 @@ import FeedGrid from "@/components/feed/FeedGrid";
 import SearchFormClient from "@/components/SearchFormClient";
 import UsageBadge from "@/components/UsageBadge";
 import AnalysisBlocksSection from "@/components/AnalysisBlocksSection";
+import CoupangBanner from "@/components/CoupangBanner";
+import CoupangSearchWidget from "@/components/CoupangSearchWidget";
 
 export default async function Home() {
   const session = await auth();
@@ -93,8 +95,19 @@ export default async function Home() {
       {isLoggedIn && onboardingComplete && (
         <>
           <Suspense><AnalysisBlocksSection /></Suspense>
+
+          {/* 쿠팡 다이나믹 배너 (분석 블록과 피드 사이) */}
+          <div className="w-full max-w-6xl">
+            <CoupangBanner />
+          </div>
+
           <div className="w-full max-w-6xl">
             <FeedGrid />
+          </div>
+
+          {/* 쿠팡 검색 위젯 (피드 하단) */}
+          <div className="w-full max-w-6xl">
+            <CoupangSearchWidget />
           </div>
         </>
       )}
@@ -123,8 +136,14 @@ export default async function Home() {
         </div>
       )}
 
-      {/* ── 비로그인 시: 빈 화면 + CTA ── */}
+      {/* ── 비로그인 시: 빈 화면 + CTA + 배너 ── */}
       {!isLoggedIn && (
+        <>
+          {/* 쿠팡 다이나믹 배너 */}
+          <div className="w-full max-w-6xl">
+            <CoupangBanner />
+          </div>
+
         <div className="flex flex-col items-center justify-center flex-1 py-20">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center mb-6">
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
@@ -155,6 +174,12 @@ export default async function Home() {
             </Link>
           </div>
         </div>
+
+        {/* 쿠팡 검색 위젯 (비로그인 페이지 하단) */}
+        <div className="w-full max-w-6xl">
+          <CoupangSearchWidget />
+        </div>
+        </>
       )}
 
     </main>
