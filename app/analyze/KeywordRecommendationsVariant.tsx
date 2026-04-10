@@ -63,18 +63,40 @@ export default function KeywordRecommendationsVariant({
       )}
 
       {!loading && data.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {data.map(kw => (
-            <AnalyzeKeywordLink
-              key={kw.keyword}
-              keyword={kw.keyword}
-              platform={platform}
-              className="px-3 py-1.5 rounded-lg border border-violet-100 hover:border-violet-300 hover:bg-violet-50 transition-colors text-sm text-gray-700 hover:text-violet-700 font-medium"
-            >
-              {kw.keyword}
-            </AnalyzeKeywordLink>
-          ))}
-        </div>
+        <>
+          <div className="flex flex-wrap gap-2">
+            {data.map(kw => (
+              <div
+                key={kw.keyword}
+                className="inline-flex items-stretch rounded-lg border border-violet-100 hover:border-violet-300 overflow-hidden group"
+              >
+                <AnalyzeKeywordLink
+                  keyword={kw.keyword}
+                  platform={platform}
+                  className="px-3 py-1.5 hover:bg-violet-50 transition-colors text-sm text-gray-700 group-hover:text-violet-700 font-medium"
+                >
+                  {kw.keyword}
+                </AnalyzeKeywordLink>
+                <a
+                  href={`https://www.coupang.com/np/search?q=${encodeURIComponent(kw.keyword)}`}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  title={`${kw.keyword} 쿠팡에서 검색`}
+                  className="flex items-center justify-center px-2 border-l border-violet-100 bg-white hover:bg-orange-50 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-orange-500">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
+                </a>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-3">
+            🔍 아이콘을 클릭하면 쿠팡에서 해당 키워드 상품을 볼 수 있어요
+          </p>
+        </>
       )}
     </div>
   );

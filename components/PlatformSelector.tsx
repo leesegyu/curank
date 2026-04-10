@@ -7,7 +7,6 @@ export type SearchPlatform = "naver" | "coupang" | "all";
 const PLATFORMS: { value: SearchPlatform; label: string; enabled: boolean }[] = [
   { value: "coupang", label: "쿠팡", enabled: false },
   { value: "naver", label: "스마트스토어", enabled: true },
-  { value: "all", label: "모두보기", enabled: false },
 ];
 
 interface PlatformSelectorProps {
