@@ -102,15 +102,19 @@ export default function KeywordRecommendationsVariant({
 
                 {/* 월간 검색량 */}
                 <span className="text-xs text-gray-500 shrink-0">
-                  월 {kw.monthlyVolume >= 10000
-                    ? `${(kw.monthlyVolume / 10000).toFixed(1)}만`
-                    : kw.monthlyVolume.toLocaleString()}회
+                  {kw.monthlyVolume > 0
+                    ? `월 ${kw.monthlyVolume >= 10000
+                        ? `${(kw.monthlyVolume / 10000).toFixed(1)}만`
+                        : kw.monthlyVolume.toLocaleString()}회`
+                    : kw.monthlyVolume === 0 ? "검색량 적음" : ""}
                 </span>
 
                 {/* 경쟁 강도 */}
-                <span className={`text-xs font-bold shrink-0 ${COMPETITION_STYLE[kw.competitionLevel] ?? "text-gray-500"}`}>
-                  경쟁 {kw.competitionLevel}
-                </span>
+                {kw.competitionLevel && (
+                  <span className={`text-xs font-bold shrink-0 ${COMPETITION_STYLE[kw.competitionLevel] ?? "text-gray-500"}`}>
+                    경쟁 {kw.competitionLevel}
+                  </span>
+                )}
               </AnalyzeKeywordLink>
             ))}
           </div>
