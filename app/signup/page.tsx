@@ -101,14 +101,35 @@ export default function SignupPage() {
     });
 
     const json = await res.json();
-    setLoading(false);
 
     if (!res.ok) {
+      setLoading(false);
       setError(json.error || "회원가입에 실패했습니다");
       setStep(1);
-    } else {
-      // 이메일 인증 안내 페이지로 이동
+      return;
+    }
+
+    // 이메일 인증 필요 여부에 따라 분기
+    if (json.needVerification) {
+      setLoading(false);
       router.push("/verify-email?status=pending");
+      return;
+    }
+
+    // 자동 로그인 (이메일 인증 비활성화 상태)
+    const loginRes = await signIn("credentials", {
+      redirect: false,
+      email: email.toLowerCase().trim(),
+      password,
+    });
+    setLoading(false);
+
+    if (loginRes?.error) {
+      setError("가입은 완료되었으나 자동 로그인에 실패했습니다. 로그인 페이지에서 다시 시도해주세요.");
+      router.push("/login");
+    } else {
+      router.push("/");
+      router.refresh();
     }
   }
 
