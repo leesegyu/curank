@@ -29,6 +29,7 @@ import KeywordRecommendationsSeasonOpportunity from "./KeywordRecommendationsSea
 import FactorCompareCard from "./FactorCompareCard";
 import BackToHomeLink from "./BackToHomeLink";
 import PreventSwipeBack from "./PreventSwipeBack";
+import ActionPlanCard from "./ActionPlanCard";
 import ReportDownloadButton from "./ReportDownloadButton";
 import type { SearchPlatform } from "@/components/PlatformSelector";
 import { getSnapshot, saveSnapshot } from "@/lib/snapshot";
@@ -459,15 +460,13 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           {/* 플랫폼 전략 인사이트 */}
           <PlatformInsightCard result={result} platform={platform} />
 
-          {/* 진입 전략 조언 */}
-          {result.naverPlatformScore && (
-            <div className="bg-green-50 border border-green-100 rounded-2xl px-5 py-4">
-              <p className="text-sm font-bold text-green-700 mb-1">스마트스토어 진입 전략</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {result.naverPlatformScore.advice}
-              </p>
-            </div>
-          )}
+          {/* 진입 실행 가이드 — STEP 1~4 종합 액션 플랜 */}
+          <ActionPlanCard
+            result={result}
+            trend={trend}
+            keyword={kw}
+            topKeywordsV2={snapKeywordsV2}
+          />
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           {/* 🎯 STEP 6: 결론 — 그래서, 이렇게 하세요          */}
