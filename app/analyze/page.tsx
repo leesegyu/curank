@@ -9,6 +9,7 @@ import { getUsage } from "@/lib/usage";
 import UsageBadge from "@/components/UsageBadge";
 import TrendChartClient from "./TrendChartClient";
 import KeywordRecommendationsVariant from "./KeywordRecommendationsVariant";
+import CoupangTopProducts from "./CoupangTopProducts";
 import KeywordRecommendationsV2, { FactorPredictionCard } from "./KeywordRecommendationsV2";
 import KeywordRecommendationsGraph from "./KeywordRecommendationsGraph";
 // DemographicsSection 삭제됨 — API 비용 절감
@@ -387,6 +388,9 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           {/* Blue Ocean 주석 처리 → 변형/품종 키워드로 교체 */}
           {/* <KeywordRecommendations keyword={kw} platform={platform} preloadedData={snapKeywordsV1} /> */}
           <KeywordRecommendationsVariant keyword={kw} platform={platform} preloadedData={snapKeywordsVariant as { keywords?: { keyword: string; monthlyVolume: number; competitionLevel: string; score: number }[]; category?: string } | null} />
+
+          {/* 쿠팡 경쟁 상품 TOP 5 — 경쟁 분석 + 수익화 */}
+          <CoupangTopProducts keyword={kw} />
 
           {/* 심화 키워드 추천 A/B/C */}
           <KeywordRecommendationsV2 keyword={kw} platform={platform} preloadedData={snapKeywordsV2} />
