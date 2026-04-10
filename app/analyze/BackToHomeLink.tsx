@@ -1,17 +1,10 @@
 "use client";
 
+import Link from "next/link";
+
 export default function BackToHomeLink() {
   return (
-    <button
-      onClick={() => {
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          window.location.href = "/";
-        }
-      }}
-      className="cursor-pointer"
-    >
+    <Link href="/" className="cursor-pointer">
       <span
         className="text-2xl font-black"
         style={{
@@ -22,6 +15,6 @@ export default function BackToHomeLink() {
       >
         쿠랭크
       </span>
-    </button>
+    </Link>
   );
 }
