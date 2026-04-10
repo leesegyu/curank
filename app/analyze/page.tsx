@@ -341,9 +341,10 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
               <span className="text-sm font-bold text-gray-900 w-24 shrink-0 text-right">{formatPrice(result.priceStats.max)}</span>
             </div>
             <p className="text-xs text-center text-indigo-600 font-semibold">평균 {formatPrice(result.priceStats.avg)}</p>
-            <div className="mt-3 pt-3 border-t border-gray-50">
+            {/* 월 검색량 카드 비활성화 — 데이터 노이즈 */}
+            {/* <div className="mt-3 pt-3 border-t border-gray-50">
               <MonthlyVolumeCard keyword={kw} />
-            </div>
+            </div> */}
           </div>
 
           {/* 트렌드 차트 */}
@@ -454,8 +455,8 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           {/* 추천 키워드 효과 비교 */}
           <FactorCompareCard mainKeyword={kw} recommendations={[]} platform={platform} />
 
-          {/* 시장 기회 요약 */}
-          <OpportunitySummary result={result} trend={trend} platform={platform} />
+          {/* 시장 기회 요약 — 비활성화 (진입 실행 가이드로 대체) */}
+          {/* <OpportunitySummary result={result} trend={trend} platform={platform} /> */}
 
           {/* 플랫폼 전략 인사이트 — 비활성화 (추후 복원 가능) */}
           {/* <PlatformInsightCard result={result} platform={platform} /> */}
