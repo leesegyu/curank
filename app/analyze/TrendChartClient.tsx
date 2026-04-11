@@ -1,77 +1,25 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { TrendPoint } from "@/lib/datalab";
-
-const PERIODS = [
-  { label: "12개월", months: 12, unit: "monthly" },
-  { label: "6개월",  months: 6,  unit: "monthly" },
-  { label: "3개월",  months: 3,  unit: "weekly" },
-  { label: "1개월",  months: 1,  unit: "weekly" },
-] as const;
-
-type PeriodMonths = 12 | 6 | 3 | 1;
 
 export default function TrendChartClient({
   data,
-  weeklyData: initialWeekly,
   peak,
   current,
-  keyword,
 }: {
   data: TrendPoint[];
-  weeklyData: TrendPoint[];
+  weeklyData?: TrendPoint[];
   peak: number;
   current: number;
   keyword?: string;
 }) {
-  const [period, setPeriod] = useState<PeriodMonths>(12);
-  const [weeklyData, setWeeklyData] = useState<TrendPoint[]>(initialWeekly);
-  const [weeklyLoading, setWeeklyLoading] = useState(false);
-
-  // 주별 데이터 lazy fetch (3개월/1개월 클릭 시)
-  const handlePeriod = useCallback(async (p: PeriodMonths) => {
-    setPeriod(p);
-    const needsWeekly = p === 3 || p === 1;
-    if (needsWeekly && weeklyData.length === 0 && keyword && !weeklyLoading) {
-      setWeeklyLoading(true);
-      try {
-        const res = await fetch(`/api/trend-weekly?keyword=${encodeURIComponent(keyword)}`);
-        const json = await res.json();
-        if (json.weeklyData?.length > 0) setWeeklyData(json.weeklyData);
-      } catch { /* 실패 시 빈 상태 유지 */ }
-      setWeeklyLoading(false);
-    }
-  }, [weeklyData.length, keyword, weeklyLoading]);
-
-  const periodInfo = PERIODS.find((p) => p.months === period)!;
-  const isWeekly = periodInfo.unit === "weekly";
-
-  // 주별 로딩 중 표시
-  if (isWeekly && weeklyLoading) {
-    return (
-      <div>
-        <PeriodButtons period={period} setPeriod={handlePeriod} />
-        <div className="h-28 flex items-center justify-center text-gray-400 text-sm animate-pulse">
-          주별 데이터 불러오는 중...
-        </div>
-      </div>
-    );
-  }
-
-  // 기간에 맞는 데이터 슬라이싱
-  let sliced: TrendPoint[];
-  if (isWeekly) {
-    const weekCount = period === 1 ? 5 : 14;
-    sliced = weeklyData.slice(-weekCount);
-  } else {
-    sliced = data.slice(-period);
-  }
+  const isWeekly = false;
+  const sliced: TrendPoint[] = data.slice(-12);
 
   if (sliced.length === 0) {
     return (
       <div>
-        <PeriodButtons period={period} setPeriod={setPeriod} />
+        <PeriodLabel />
         <div className="h-28 flex items-center justify-center text-gray-400 text-sm">
           데이터 없음
         </div>
@@ -83,7 +31,7 @@ export default function TrendChartClient({
   if (sliced.length === 1) {
     return (
       <div>
-        <PeriodButtons period={period} setPeriod={setPeriod} />
+        <PeriodLabel />
         <div className="flex items-center justify-center h-28 text-center">
           <div>
             <p className="text-4xl font-black text-blue-600">{Math.round(sliced[0].ratio)}</p>
@@ -149,7 +97,7 @@ export default function TrendChartClient({
 
   return (
     <div>
-      <PeriodButtons period={period} setPeriod={setPeriod} />
+      <PeriodLabel />
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto overflow-visible">
         <defs>
           <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
@@ -222,31 +170,13 @@ export default function TrendChartClient({
   );
 }
 
-function PeriodButtons({
-  period,
-  setPeriod,
-}: {
-  period: PeriodMonths;
-  setPeriod: (p: PeriodMonths) => void | Promise<void>;
-}) {
+function PeriodLabel() {
   return (
     <div className="flex gap-1 mb-3">
-      {PERIODS.map((p) => (
-        <button
-          key={p.months}
-          onClick={() => setPeriod(p.months)}
-          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-            period === p.months
-              ? "bg-blue-600 text-white border-blue-600"
-              : "border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600"
-          }`}
-        >
-          {p.label}
-        </button>
-      ))}
-      <span className="ml-auto text-xs text-gray-400 self-center">
-        {PERIODS.find(p => p.months === period)?.unit === "weekly" ? "주별" : "월별"}
+      <span className="text-xs px-2.5 py-1 rounded-full bg-blue-600 text-white border border-blue-600">
+        12개월
       </span>
+      <span className="ml-auto text-xs text-gray-400 self-center">월별</span>
     </div>
   );
 }
