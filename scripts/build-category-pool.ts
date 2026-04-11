@@ -80,14 +80,23 @@ function pickCleanSeed(node: {
 }): string | null {
   const isClean = (s: string) => !!s && !/[\s/]/.test(s) && s.length >= 2;
 
+  // 1순위: node.name 자체가 깨끗하면 사용 — 가장 대표성 있는 시드
+  //        (variantKeywords 최상위가 특수 변형이라 풀이 좁아지는 문제 방지)
+  if (isClean(node.name)) return node.name;
+
+  // 2순위: variantKeywords 중 깨끗한 첫 항목
   if (node.variantKeywords) {
     const hit = node.variantKeywords.find(isClean);
     if (hit) return hit;
   }
+
+  // 3순위: seedKeywords 중 깨끗한 첫 항목
   if (node.seedKeywords) {
     const hit = node.seedKeywords.find(isClean);
     if (hit) return hit;
   }
+
+  // 4순위: 공백/슬래시 제거한 name
   const stripped = node.name.replace(/[\s/]/g, "");
   if (stripped.length >= 2) return stripped;
   return null;
@@ -98,7 +107,7 @@ function collectJobs(platforms: Platform[]): NodeJob[] {
   for (const platform of platforms) {
     const nodes = getNodesV2(platform);
     for (const node of nodes) {
-      if (node.level < 3) continue; // L1/L2 skip (너무 광범위)
+      if (node.level < 2) continue; // L1 skip. L2(음료수 등)는 카테고리 루트로 유용하므로 포함
       const seed = pickCleanSeed(node);
       if (!seed) continue;
       jobs.push({
