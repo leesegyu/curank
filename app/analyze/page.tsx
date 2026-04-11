@@ -122,7 +122,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   // snapshotDemographics 삭제됨
   // 키워드 추천 스냅샷 데이터
   let snapKeywordsVariant: unknown | null = null;
-  let snapKeywordsV1: unknown[] | null = null;
+  // keywordsV1(legacy Blue Ocean) 제거됨 — 모듈 삭제
   let snapKeywordsV2: unknown[] | null = null;
   let snapKeywordsCreative: unknown[] | null = null;
   let snapKeywordsGraph: unknown[] | null = null;
@@ -144,7 +144,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       snapshotTime = snap.created_at;
       // 키워드 추천 데이터 추출
       snapKeywordsVariant = snap.snapshot.keywordsVariant ?? null;
-      snapKeywordsV1 = (snap.snapshot.keywordsV1 as unknown[] | undefined) ?? null;
+      // snapKeywordsV1 제거됨 (legacy)
       snapKeywordsV2 = (snap.snapshot.keywordsV2 as unknown[] | undefined) ?? null;
       snapKeywordsCreative = (snap.snapshot.keywordsCreative as unknown[] | undefined) ?? null;
       snapKeywordsGraph = (snap.snapshot.keywordsGraph as unknown[] | undefined) ?? null;
@@ -413,7 +413,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           <KeywordRecommendationsSeasonOpportunity keyword={kw} platform={platform} preloadedData={snapKeywordsSeasonOpp} />
 
           {/* Blue Ocean 주석 처리 → 변형/품종 키워드로 교체 */}
-          {/* <KeywordRecommendations keyword={kw} platform={platform} preloadedData={snapKeywordsV1} /> */}
+          {/* KeywordRecommendations(Blue Ocean) 제거됨 — variant/수식어/기회분석 카드로 대체 */}
           <KeywordRecommendationsVariant keyword={kw} platform={platform} preloadedData={snapKeywordsVariant as { keywords?: { keyword: string; volume?: number }[]; category?: string; source?: "ontology" | "api-fallback" } | null} />
 
           {/* 수식어 추천 키워드 (여러 소스 통합) */}

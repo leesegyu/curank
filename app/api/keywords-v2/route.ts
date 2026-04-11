@@ -32,8 +32,9 @@ import { calcCreativityScore, calcCreativityChanceScore } from "@/lib/creativity
 import { validateKeyword } from "@/lib/keyword-validator";
 import { getAdKeywordsWithPool } from "@/lib/category-pool";
 import type { Platform as OntoPlatform } from "@/lib/ontology/types";
+import { normalizeCompIdx } from "@/lib/comp-idx";
 
-export const V2_CACHE_TYPE = "keywords_v2_20"; // v20: substring 가점 + 분류 실패 시 substring 강제 필터
+export const V2_CACHE_TYPE = "keywords_v2_21"; // v21: compIdx 정규화 + crossPlatform 비대칭 + compIdx 4단계 NaN 가드
 const CACHE_TYPE = V2_CACHE_TYPE; // 기존 코드 호환용 alias
 /** L1 인메모리 캐시 — keywords-creative에서도 읽기 전용으로 참조 */
 export const v2Cache = new NodeCache({ stdTTL: 3600 });
@@ -42,7 +43,7 @@ const cache = v2Cache; // 기존 코드 호환용 alias
 /** 풀 메타 캐시 (poolSource/poolFetchedAt) — v2Cache와 동기 갱신 */
 interface V2Meta { poolSource: "pool" | "api" | null; poolFetchedAt: string | null }
 const v2MetaCache = new NodeCache({ stdTTL: 3600, maxKeys: 500 });
-const META_L2_TYPE = "keywords_v2_meta_20";
+const META_L2_TYPE = "keywords_v2_meta_21";
 
 export interface KeywordV2 {
   keyword: string;
@@ -272,7 +273,7 @@ export async function GET(req: NextRequest) {
       addOrMerge(ad.relKeyword, {
         volume:      totalMonthlyVolume(ad),
         clicks:      (ad.monthlyAvgPcClkCnt ?? 0) + (ad.monthlyAvgMobileClkCnt ?? 0),
-        compIdx:     ad.compIdx ?? "보통",
+        compIdx:     normalizeCompIdx(ad.compIdx),
         graphWeight: 0,
         inAds:       true,
       });

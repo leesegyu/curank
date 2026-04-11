@@ -16,6 +16,7 @@ import NodeCache from "node-cache";
 import type { Platform } from "./ontology/types";
 import { classifyKeywordV2 } from "./ontology";
 import { getNaverAdKeywords, type NaverAdKeyword } from "./naver-ad";
+import { normalizeCompIdx } from "./comp-idx";
 
 export interface CategoryPoolKeyword {
   keyword: string;
@@ -170,7 +171,7 @@ export function poolToAdKeywords(pool: CategoryPoolResult): NaverAdKeyword[] {
     monthlyMobileQcCnt: k.monthlyMobile,
     monthlyAvgPcClkCnt: 0,
     monthlyAvgMobileClkCnt: 0,
-    compIdx: k.compIdx ?? "보통",
+    compIdx: normalizeCompIdx(k.compIdx),
     plAvgDepth: k.adDepth ?? 0,
   }));
 }

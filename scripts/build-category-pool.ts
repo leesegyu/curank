@@ -18,6 +18,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getNodesV2 } from "../lib/ontology";
 import { getNaverAdKeywords, totalMonthlyVolume, type NaverAdKeyword } from "../lib/naver-ad";
 import type { Platform } from "../lib/ontology/types";
+import { normalizeCompIdx } from "../lib/comp-idx";
 
 // ─────────────────────────────────────────
 // 환경
@@ -137,7 +138,7 @@ function toRows(
     keyword: item.relKeyword,
     monthly_pc: item.monthlyPcQcCnt ?? 0,
     monthly_mobile: item.monthlyMobileQcCnt ?? 0,
-    comp_idx: item.compIdx ?? null,
+    comp_idx: normalizeCompIdx(item.compIdx),
     ad_depth: typeof item.plAvgDepth === "number" ? item.plAvgDepth : null,
     rank: idx + 1,
     fetched_at: new Date().toISOString(),

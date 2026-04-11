@@ -86,7 +86,7 @@ export interface NaverScoreData {
   coupangRatio: number;
   priceStats: { min: number; max: number; avg: number };
   /** 네이버 광고 API 공식 경쟁 지수 — 있으면 product count보다 우선 사용 */
-  compIdx?: "낮음" | "보통" | "높음";
+  compIdx?: "낮음" | "보통" | "높음" | "매우 높음";
 }
 
 /** Naver 경쟁점수 계산용 경량 fetch — 10분 캐시 */
@@ -108,10 +108,15 @@ export async function fetchNaverScoreData(keyword: string): Promise<NaverScoreDa
       .filter((p) => p > 0);
     const coupangCount = data.items.filter((i) => i.mallName === "쿠팡").length;
 
-    // 광고 API 없이 상품 수 기반으로 compIdx 추정
+    // 광고 API 없이 상품 수 기반으로 compIdx 추정 (4단계)
+    // 임계값: 1K 미만(낮음) / 10K 미만(보통) / 100K 미만(높음) / 그 이상(매우 높음)
+    // ⚠️ 이전에는 3단계만 생성해서 "매우 높음"이 없었음 — 4단계 사용하는 factor-model과 불일치
     const total = data.total;
-    const compIdx: "낮음" | "보통" | "높음" =
-      total < 1000 ? "낮음" : total < 10000 ? "보통" : "높음";
+    const compIdx: "낮음" | "보통" | "높음" | "매우 높음" =
+      total < 1000 ? "낮음"
+        : total < 10000 ? "보통"
+        : total < 100000 ? "높음"
+        : "매우 높음";
 
     const result: NaverScoreData = {
       totalCount: total,

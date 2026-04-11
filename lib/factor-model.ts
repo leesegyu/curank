@@ -47,7 +47,7 @@ export interface FactorInput {
   totalCount: number;
   coupangRatio: number;
   priceStats: { min: number; max: number; avg: number };
-  compIdx?: "낮음" | "보통" | "높음";
+  compIdx?: "낮음" | "보통" | "높음" | "매우 높음";
   intentScore: number;          // 0~100
   specificityScore: number;     // 0~100
   trendDirection: "상승" | "하락" | "안정";
@@ -104,8 +104,8 @@ function calcNaverRanking(i: FactorInput): FactorResult {
   const supplyRaw = logNorm(i.totalCount, 1_000_000);
   const supplyFactor = 100 - supplyRaw;
 
-  const adMap: Record<string, number> = { "낮음": 80, "보통": 48, "높음": 18 };
-  const adFactor = i.compIdx ? adMap[i.compIdx] : NEUTRAL;
+  const adMap: Record<string, number> = { "낮음": 80, "보통": 48, "높음": 18, "매우 높음": 6 };
+  const adFactor = i.compIdx ? (adMap[i.compIdx] ?? NEUTRAL) : NEUTRAL;
 
   const salesFactor = NEUTRAL;
   const relevancy = i.specificityScore;
@@ -302,8 +302,8 @@ function calcNaverProfit(i: FactorInput): FactorResult {
 function calcNaverEntryBarrier(i: FactorInput): FactorResult {
   const supplyFactor = logNorm(i.totalCount, 1_000_000);
 
-  const adMap: Record<string, number> = { "낮음": 20, "보통": 52, "높음": 82 };
-  const adFactor = i.compIdx ? adMap[i.compIdx] : NEUTRAL;
+  const adMap: Record<string, number> = { "낮음": 20, "보통": 52, "높음": 82, "매우 높음": 95 };
+  const adFactor = i.compIdx ? (adMap[i.compIdx] ?? NEUTRAL) : NEUTRAL;
 
   // 판매자 독점도
   const top10 = i.products.slice(0, 10).map((p) => p.mallName);
@@ -349,13 +349,23 @@ function calcNaverEntryBarrier(i: FactorInput): FactorResult {
 
 function calcCrossplatform(i: FactorInput, platform: Platform): FactorResult {
   const isNaver = platform === "naver";
-  const hasCoupangData = i.coupangRatio > 0;
 
-  const focusScore = hasCoupangData ? (isNaver ? (100 - i.coupangRatio) : i.coupangRatio) : NEUTRAL;
+  // ⚠️ 측정 출처 주의:
+  // coupangRatio는 "네이버 쇼핑 검색 결과 내 쿠팡 몰 비중"으로, 측정 출처가 네이버 쪽임.
+  //   - 네이버 분석: coupangRatio가 의미 있는 신호 (낮을수록 네이버 독점 → 기회)
+  //   - 쿠팡 분석: coupangRatio=0은 "쿠팡 시장이 없다"가 아니라 "네이버 검색에 쿠팡 상품이
+  //     아직 유입되지 않음"일 뿐 → 측정 부재로 간주해 NEUTRAL 처리
+  const coupangZero = i.coupangRatio === 0;
+
+  const focusScore = isNaver
+    ? clamp(100 - i.coupangRatio) // 네이버: 쿠팡 비중이 낮을수록 기회 높음
+    : (coupangZero ? NEUTRAL : clamp(i.coupangRatio));
+
   const ecosystemFactor = NEUTRAL; // 향후 블로그 API
-  const rocketGap = hasCoupangData
-    ? (isNaver ? clamp(100 - i.coupangRatio * 0.8) : clamp(i.coupangRatio * 0.8))
-    : NEUTRAL;
+
+  const rocketGap = isNaver
+    ? clamp(100 - i.coupangRatio * 0.8)
+    : (coupangZero ? NEUTRAL : clamp(i.coupangRatio * 0.8));
 
   const score = clamp(
     focusScore * 0.50 +
@@ -365,7 +375,9 @@ function calcCrossplatform(i: FactorInput, platform: Platform): FactorResult {
 
   const otherPlatform = isNaver ? "쿠팡" : "스마트스토어";
   let advice: string;
-  if (score >= 65) {
+  if (!isNaver && coupangZero) {
+    advice = `네이버 검색 결과에 쿠팡 상품이 감지되지 않아 쿠팡 자체 시장의 경쟁 강도는 측정이 제한적입니다. 쿠팡 Wing 대시보드에서 직접 경쟁도를 확인하면 정확한 판단이 가능합니다.`;
+  } else if (score >= 65) {
     advice = `이 키워드는 ${isNaver ? "네이버 쇼핑" : "쿠팡"}에서 특히 강세입니다. ${isNaver ? "스마트스토어" : "쿠팡"} 진입에 매우 유리한 환경입니다.`;
   } else if (score >= 40) {
     advice = `양 플랫폼에서 비슷한 수준의 경쟁입니다. ${otherPlatform}에서도 동시 판매를 고려해보세요.`;
@@ -378,9 +390,10 @@ function calcCrossplatform(i: FactorInput, platform: Platform): FactorResult {
     label: "크로스 플랫폼 기회",
     score,
     subfactors: [
-      { name: isNaver ? "네이버 집중도" : "쿠팡 집중도", score: clamp(focusScore), weight: 0.50, measured: hasCoupangData, tip: hasCoupangData ? undefined : "쿠팡 상품 분석 시스템 준비중" },
+      // 측정 여부: 네이버면 항상 측정 가능, 쿠팡이면 coupangRatio>0일 때만 유효
+      { name: isNaver ? "네이버 집중도" : "쿠팡 집중도", score: clamp(focusScore), weight: 0.50, measured: isNaver || !coupangZero, tip: (isNaver || !coupangZero) ? undefined : "네이버 검색에 쿠팡 상품 유입이 없어 측정 제한" },
       { name: "생태계 연동성", score: ecosystemFactor, weight: 0.30, measured: false, tip: "향후 블로그·카페 데이터 연동 시 정밀 분석 가능" },
-      { name: isNaver ? "로켓배송 부재 기회" : "로켓배송 우위", score: clamp(rocketGap), weight: 0.20, measured: hasCoupangData, tip: hasCoupangData ? undefined : "쿠팡 상품 분석 시스템 준비중" },
+      { name: isNaver ? "로켓배송 부재 기회" : "로켓배송 우위", score: clamp(rocketGap), weight: 0.20, measured: isNaver || !coupangZero, tip: (isNaver || !coupangZero) ? undefined : "쿠팡 Wing 대시보드에서 직접 확인 권장" },
     ],
     advice,
   };

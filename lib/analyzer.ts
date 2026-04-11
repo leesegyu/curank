@@ -124,16 +124,16 @@ export function calcNaverScore(
   totalCount: number,
   coupangRatio: number,
   priceStats: { min: number; max: number; avg: number },
-  compIdx?: "낮음" | "보통" | "높음"
+  compIdx?: "낮음" | "보통" | "높음" | "매우 높음"
 ): { score: number; breakdown: ScoreBreakdown } {
   // 1. 공급 포화도: 로그 스케일 (1,000,000개 = 100점 기준)
   const supplyScore = logNorm(totalCount, 1_000_000);
 
   // 2. 네이버 광고 API compIdx 반영 (있으면 supplyScore와 블렌딩)
   //    compIdx는 광고 입찰 경쟁도 → 유기적 랭킹 경쟁도와 강한 상관관계
-  const adCompIdxScore = compIdx
-    ? ({ 낮음: 20, 보통: 52, 높음: 82 }[compIdx])
-    : null;
+  //    FIX: "매우 높음" 엣지 케이스 누락 시 undefined → NaN 전파 방지 (?? null 가드)
+  const adCompIdxMap: Record<string, number> = { "낮음": 20, "보통": 52, "높음": 82, "매우 높음": 95 };
+  const adCompIdxScore = compIdx ? (adCompIdxMap[compIdx] ?? null) : null;
   const blendedSupply = adCompIdxScore !== null
     ? Math.round(supplyScore * 0.4 + adCompIdxScore * 0.6)
     : supplyScore;
