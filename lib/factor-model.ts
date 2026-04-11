@@ -151,7 +151,9 @@ function calcNaverRanking(i: FactorInput): FactorResult {
 
 function calcNaverConversion(i: FactorInput): FactorResult {
   const intentFactor = i.intentScore;
-  const ctrFactor = i.intentScore; // Ad API 비활성 → intentScore 대체
+  // FIX: 기존엔 ctrFactor = intentScore 로 두 신호가 100% 동치 → 가중치 0.55가 같은 축에 몰림.
+  //      Ad API 비활성 시에는 intent + 구체성의 가중평균(0.6/0.4)으로 대체하여 신호 중복을 줄임.
+  const ctrFactor = clamp(i.intentScore * 0.6 + i.specificityScore * 0.4);
   const specFactor = i.specificityScore;
 
   // 가격 적정성: U자 커브 (20~50% 최적)

@@ -29,25 +29,28 @@ const INFORMATIONAL_SIGNALS = [
   "어때요", "어때", "어떤",
 ];
 
-/** 구체성 수식어 (있을수록 롱테일, 전환율 높음) */
+/** 구체성 수식어 (있을수록 롱테일, 전환율 높음)
+ *  주의: lower.includes() 매칭이라 같은 토큰 중복/부분문자열 포함은 더블카운트 유발 →
+ *  중복 제거 + 길이 내림차순으로 정렬하여 긴 매치 우선 1회만 카운트 (아래 매칭 루프 참조).
+ */
 const SPECIFICITY_MODIFIERS = [
   // 성별/연령
   "남성", "여성", "남자", "여자", "아동", "유아", "신생아", "어린이", "유치원",
   "초등", "중학생", "고등학생", "성인", "시니어", "노인",
   // 크기
-  "소형", "중형", "대형", "미니", "초소형", "대형", "와이드",
+  "초소형", "소형", "중형", "대형", "미니", "와이드",
   // 특성
   "경량", "접이식", "휴대용", "가정용", "업소용", "캠핑용", "실내용", "야외용",
   "방수", "방풍", "방한", "무선", "유선", "충전식", "건전지식", "자동", "수동",
-  "전동", "수동",
-  // 수용량
+  "전동",
+  // 수용량 (긴 형태 우선)
   "1인용", "2인용", "3인용", "4인용", "6인용", "1인", "2인",
   // 색상
   "화이트", "블랙", "그레이", "베이지", "네이비", "핑크", "연두", "민트", "카키",
   // 재질
   "스테인리스", "알루미늄", "플라스틱", "가죽", "면", "폴리에스터", "나일론",
   // 브랜드 접두사 (브랜드명은 가산)
-  "국산", "수입", "일제", "독일제",
+  "국산", "수입", "독일제", "일제",
 ];
 
 export interface IntentResult {
@@ -70,15 +73,23 @@ export function classifyKeywordIntent(keyword: string): IntentResult {
   const tokenCount = tokens.length;
 
   // ─── 구매 의도 채점 ──────────────────────────────────────────────
-  let transactionalHits = 0;
-  let informationalHits = 0;
-
-  for (const s of TRANSACTIONAL_SIGNALS) {
-    if (lower.includes(s)) transactionalHits++;
-  }
-  for (const s of INFORMATIONAL_SIGNALS) {
-    if (lower.includes(s)) informationalHits++;
-  }
+  // FIX: 부분문자열 더블카운트 방지 (예: "최저가" → "최저가"+"최저" 두 번 카운트되던 문제)
+  //      긴 신호 우선, 매치 구간 마스킹 후 다음 신호 매칭.
+  const countHitsMasked = (text: string, signals: readonly string[]) => {
+    const sorted = [...new Set(signals)].sort((a, b) => b.length - a.length);
+    let masked = text;
+    let hits = 0;
+    for (const s of sorted) {
+      const idx = masked.indexOf(s);
+      if (idx >= 0) {
+        hits++;
+        masked = masked.slice(0, idx) + " ".repeat(s.length) + masked.slice(idx + s.length);
+      }
+    }
+    return hits;
+  };
+  const transactionalHits = countHitsMasked(lower, TRANSACTIONAL_SIGNALS);
+  const informationalHits = countHitsMasked(lower, INFORMATIONAL_SIGNALS);
 
   // 정보탐색 신호는 1.5배 패널티 (구매의도를 강하게 낮춤)
   const netScore = transactionalHits - informationalHits * 1.5;
@@ -105,9 +116,18 @@ export function classifyKeywordIntent(keyword: string): IntentResult {
   // 토큰 수: 1→15점, 2→40점, 3→62점, 4+→78점 (log scale)
   const tokenScore = Math.round((Math.log(tokenCount + 1) / Math.log(5)) * 78);
 
+  // FIX: includes() 더블카운트 방지 — 긴 패턴 우선, 매치된 구간은 마스킹하여 재매치 차단
+  //       (예: "1인용" → "1인용"만 1회 hit, "1인" 추가 카운트 X)
   let modifierHits = 0;
-  for (const m of SPECIFICITY_MODIFIERS) {
-    if (lower.includes(m)) modifierHits++;
+  const sortedModifiers = [...new Set(SPECIFICITY_MODIFIERS)].sort((a, b) => b.length - a.length);
+  let masked = lower;
+  for (const m of sortedModifiers) {
+    const idx = masked.indexOf(m);
+    if (idx >= 0) {
+      modifierHits++;
+      // 동일 위치 재매치/부분문자열 재카운트 방지
+      masked = masked.slice(0, idx) + " ".repeat(m.length) + masked.slice(idx + m.length);
+    }
   }
 
   const specificityScore = Math.min(100, tokenScore + modifierHits * 8);

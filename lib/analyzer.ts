@@ -291,9 +291,10 @@ export function analyze(
 
   // 네이버 플랫폼 점수: 별도 호출 결과 사용 (항상 네이버 totalCount 기반)
   let naverPlatformScore: PlatformScore | null = null;
-  const naverBase = naverScoreData ?? (source === "naver" ? { totalCount, coupangRatio, priceStats } : null);
+  const naverBase: NaverScoreData | null = naverScoreData ?? (source === "naver" ? { totalCount, coupangRatio, priceStats } : null);
   if (naverBase) {
-    const { score, breakdown } = calcNaverScore(naverBase.totalCount, naverBase.coupangRatio, naverBase.priceStats);
+    // FIX: compIdx를 누락하면 광고 경쟁도가 점수에 반영되지 않음
+    const { score, breakdown } = calcNaverScore(naverBase.totalCount, naverBase.coupangRatio, naverBase.priceStats, naverBase.compIdx);
     naverPlatformScore = {
       score,
       level: getLevel(score),
