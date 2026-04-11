@@ -12,7 +12,7 @@ import { sendTelegram } from "./telegram";
 const API_LIMITS: Record<string, number> = {
   naver_shop:    25_000,   // Naver Shopping Search
   naver_ad:      40_000,   // Naver Ad Keyword Tool
-  naver_datalab: 10_000,   // Naver DataLab Search
+  naver_datalab:    900,   // Naver DataLab Search — 네이버 공식 무료 한도 1000/일, 안전 마진 10%
   naver_insight: 10_000,   // Naver Shopping Insight (별도 한도)
   openai:         1_000,   // OpenAI GPT (안전 한도)
 };
