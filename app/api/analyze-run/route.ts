@@ -237,30 +237,26 @@ export async function GET(req: NextRequest) {
               : "AI 분석 실패",
           });
 
-          // ── Step 7: STEP 3 크리에이티브 + 시즌 기회 (병렬, v2 캐시 활용) ──
+          // ── Step 7: STEP 3 크리에이티브 + 시즌 기회 (병렬) ──
+          // - 크리에이티브: V2 캐시 활용 (Ad API 0콜)
+          // - 시즌 기회(SOS): keyword_seasonal_trend DB 조회 (DataLab 0콜, 사전 배치 기반)
+          // - 레거시 keywords-historical 호출 제거 — UI에서 사용 안 하므로 순수 낭비였음
+          //   (분석당 DataLab 5~10콜 절감)
           send({ step: 7, total: TOTAL, label: "💡 STEP 3 · 크리에이티브 + 시즌 기회 탐색 중...", progress: 68 });
-          const [creative, historical] = await Promise.allSettled([
+          const [creative, seasonOpp] = await Promise.allSettled([
             fetch(`${BASE_URL}/api/keywords-creative?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
-            fetch(`${BASE_URL}/api/keywords-historical?keyword=${kw}`, fetchOpt).then(r => r.json()),
+            fetch(`${BASE_URL}/api/keywords-season-opportunity?keyword=${kw}&platform=${platform === "coupang" ? "coupang" : "smartstore"}`, fetchOpt).then(r => r.json()),
           ]);
           const creativeData = creative.status === "fulfilled" ? creative.value : null;
-          const historicalData = historical.status === "fulfilled" ? historical.value : null;
+          const seasonOppData: { keywords?: unknown[] } | null =
+            seasonOpp.status === "fulfilled" ? seasonOpp.value : null;
           const hasCreative = !!creativeData?.keywords?.length;
-          const hasHistorical = !!historicalData?.keywords?.length;
-
-          // 시즌 기회(SOS) — Historical + V2 캐시 기반, 추가 API 0회
-          let seasonOppData: { keywords?: unknown[] } | null = null;
-          if (hasHistorical) {
-            try {
-              const sosRes = await fetch(`${BASE_URL}/api/keywords-season-opportunity?keyword=${kw}`, fetchOpt);
-              seasonOppData = await sosRes.json();
-            } catch { /* non-critical */ }
-          }
+          const hasSeasonOpp = !!seasonOppData?.keywords?.length;
 
           send({
             step: 7, total: TOTAL, progress: 74,
-            label: hasCreative && hasHistorical ? "💡 STEP 3 · 크리에이티브 + 시즌 완료"
-              : hasCreative || hasHistorical ? "💡 STEP 3 · 일부 완료"
+            label: hasCreative && hasSeasonOpp ? "💡 STEP 3 · 크리에이티브 + 시즌 완료"
+              : hasCreative || hasSeasonOpp ? "💡 STEP 3 · 일부 완료"
               : "💡 STEP 3 · 탐색 실패",
           });
 
@@ -337,7 +333,7 @@ export async function GET(req: NextRequest) {
             keywordsVariant: variantData ?? null,
             keywordsV2: kosV2Data?.keywords ?? null,
             keywordsCreative: creativeData?.keywords ?? null,
-            keywordsHistorical: historicalData?.keywords ?? null,
+            keywordsHistorical: null, // legacy field — 더 이상 수집하지 않음
             keywordsSeasonOpp: seasonOppData?.keywords ?? null,
             keywordsGraph: graphRaw?.keywords ?? null,
             factorScore: factorData ?? null,

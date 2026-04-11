@@ -265,45 +265,54 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
 }
 
 /**
- * 12개월 막대 차트 (SVG) — 현재 월 하이라이트 + 피크 월 표시
+ * 12개월 막대 차트 — API에서 받은 monthlyRatios 실데이터 사용
+ * 현재 월은 emerald, 피크 월은 orange, 나머지는 gray
  */
 function MonthlyBarChart({ kw }: { kw: SeasonOpportunityResult }) {
-  // SeasonOpportunityResult에 monthly_ratios가 없으므로 peak/current만으로 추정
-  // 추후 API에 monthly_ratios 필드를 포함시키면 전체 곡선 표시 가능
   const peakMonth = kw.peakMonth;
   const currentMonth = new Date().getMonth() + 1;
+  const ratios = kw.monthlyRatios ?? [];
+
+  // 월별 맵 (없으면 0)
+  const byMonth = new Map(ratios.map((r) => [r.month, r.ratio]));
 
   return (
     <div>
-      <p className="text-[10px] text-gray-500 mb-2 font-medium">연중 곡선 요약</p>
-      <div className="flex items-end justify-between gap-0.5 h-14 px-1">
+      <p className="text-[10px] text-gray-500 mb-2 font-medium">
+        작년 월별 검색량 (100 = 연중 피크)
+      </p>
+      <div className="flex items-end justify-between gap-0.5 h-16 px-1">
         {Array.from({ length: 12 }).map((_, i) => {
           const m = i + 1;
           const isPeak = m === peakMonth;
           const isCurrent = m === currentMonth;
-          // 근사: 피크월 100, 현재월 currentPercentOfPeak, 나머지는 부드러운 보간
-          let h: number;
-          if (isPeak) h = 100;
-          else if (isCurrent) h = kw.currentPercentOfPeak;
-          else {
-            // 피크와의 거리 기반 부드러운 감쇠
-            const dist = Math.min(Math.abs(m - peakMonth), 12 - Math.abs(m - peakMonth));
-            h = Math.max(5, 100 - dist * 18);
-          }
+          const h = byMonth.get(m) ?? 0;
+
           return (
             <div key={m} className="flex-1 flex flex-col items-center gap-0.5">
-              <div
-                className={`w-full rounded-t ${isCurrent ? "ring-1 ring-emerald-500" : ""}`}
-                style={{
-                  height: `${Math.max(4, h)}%`,
-                  background: isPeak
-                    ? "#f59e0b"
-                    : isCurrent
-                    ? "#10b981"
-                    : "#d1d5db",
-                }}
-              />
-              <span className={`text-[8px] ${isCurrent ? "text-emerald-600 font-bold" : isPeak ? "text-orange-600 font-bold" : "text-gray-400"}`}>
+              <div className="relative w-full flex-1 flex items-end">
+                <div
+                  className={`w-full rounded-t transition-all ${isCurrent ? "ring-1 ring-emerald-500" : ""}`}
+                  style={{
+                    height: `${Math.max(3, h)}%`,
+                    background: isPeak
+                      ? "#f59e0b"
+                      : isCurrent
+                      ? "#10b981"
+                      : "#d1d5db",
+                  }}
+                  title={`${m}월: ${h.toFixed(1)}`}
+                />
+              </div>
+              <span
+                className={`text-[8px] ${
+                  isCurrent
+                    ? "text-emerald-600 font-bold"
+                    : isPeak
+                    ? "text-orange-600 font-bold"
+                    : "text-gray-400"
+                }`}
+              >
                 {m}
               </span>
             </div>
@@ -313,7 +322,7 @@ function MonthlyBarChart({ kw }: { kw: SeasonOpportunityResult }) {
       <div className="flex items-center justify-between text-[9px] text-gray-400 mt-1 px-1">
         <span>
           <span className="inline-block w-2 h-2 bg-emerald-500 rounded-sm mr-1" />
-          현재 {currentMonth}월
+          현재 {currentMonth}월 ({kw.currentPercentOfPeak}%)
         </span>
         <span>
           <span className="inline-block w-2 h-2 bg-orange-500 rounded-sm mr-1" />

@@ -61,6 +61,8 @@ export interface PhaseAnalysis {
   isSeasonal: boolean;
   seasonType: SeasonType;
   advice: string;
+  /** 작년 12개월 월별 곡선 전체 — 차트 렌더링용 */
+  monthlyRatios: MonthlyRatio[];
 }
 
 // ─────────────────────────────────────────────
@@ -179,6 +181,7 @@ export function analyzePhase(row: SeasonalTrendRow, currentMonth?: number): Phas
     isSeasonal,
     seasonType: row.season_type,
     advice,
+    monthlyRatios: ratios,
   };
 }
 

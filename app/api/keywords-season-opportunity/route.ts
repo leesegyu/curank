@@ -42,6 +42,8 @@ export interface SeasonOpportunityResult {
   seasonType: string;
   seasonality: number;
   phase: string;
+  /** 작년 12개월 월별 상대 검색량 (0~100) — 정확한 차트 렌더링용 */
+  monthlyRatios: Array<{ month: number; ratio: number }>;
   // 레거시 호환
   pastPopularity: number;
   currentPopularity: number;
@@ -168,6 +170,7 @@ export async function GET(req: NextRequest) {
         seasonType: analysis.seasonType,
         seasonality: analysis.seasonality,
         phase: analysis.phase,
+        monthlyRatios: analysis.monthlyRatios,
         // legacy fields
         pastPopularity: analysis.peakRatio,
         currentPopularity: analysis.currentRatio,

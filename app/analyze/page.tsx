@@ -126,7 +126,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let snapKeywordsV2: unknown[] | null = null;
   let snapKeywordsCreative: unknown[] | null = null;
   let snapKeywordsGraph: unknown[] | null = null;
-  let snapKeywordsHistorical: unknown[] | null = null;
+  // keywordsHistorical 제거됨 — SOS 카드에 통합, analyze-run에서 더 이상 수집 안 함
   let snapKeywordsSeasonOpp: unknown[] | null = null;
   let snapFactorScore: unknown | null = null;
   let snapBrandDistribution: BrandDistributionData | null = null;
@@ -148,7 +148,6 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       snapKeywordsV2 = (snap.snapshot.keywordsV2 as unknown[] | undefined) ?? null;
       snapKeywordsCreative = (snap.snapshot.keywordsCreative as unknown[] | undefined) ?? null;
       snapKeywordsGraph = (snap.snapshot.keywordsGraph as unknown[] | undefined) ?? null;
-      snapKeywordsHistorical = (snap.snapshot.keywordsHistorical as unknown[] | undefined) ?? null;
       snapKeywordsSeasonOpp = (snap.snapshot.keywordsSeasonOpp as unknown[] | undefined) ?? null;
       snapFactorScore = snap.snapshot.factorScore ?? null;
       snapBrandDistribution = (snap.snapshot.brandDistribution as BrandDistributionData | undefined) ?? null;
