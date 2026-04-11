@@ -1,93 +1,58 @@
 /**
- * 시즌 기회 키워드 추천 API
- * GET /api/keywords-season-opportunity?keyword=수박
+ * 시즌 기회 키워드 추천 API — DB 기반 재작성 (2026-04-11)
  *
- * 3개 소스 통합 후보 + 출신 가중치:
- *   1) Historical 캐시 — 작년 인기 키워드 (가중치 +15, 검증된 과거 수요)
- *   2) V2 캐시 — 현재 시장 데이터 (기본 점수)
- *   3) 온톨로지 롱테일 — 형제/자식 노드 확장
- *   → 양쪽 모두 존재하면 가중치 +20 (과거+현재 검증)
+ * 핵심 변경:
+ *   - DataLab 런타임 호출 제거 (0콜)
+ *   - keyword_seasonal_trend 사전 배치 DB 조회
+ *   - "rising" 구간(현재가 피크의 10~30%이고 상승 중)만 노출
+ *   - 시즌성 약한 키워드(seasonality < 0.6)는 자동 제외
  *
- * SOS 전용 DataLab: 정확히 1년전 ~ 1년전+2개월 말일
- * Season Opportunity Score (SOS) 5F 모델로 채점
+ * 후보 소스:
+ *   1) category_keyword_pool 시드 카테고리 풀 (이미 수집된 키워드)
+ *   2) V2 캐시
+ *   3) 온톨로지 롱테일
+ *
+ * → 세 소스 결합 → keyword_seasonal_trend 일괄 조회 → rising 필터 → 정렬
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import NodeCache from "node-cache";
 import { getL2Cache, setL2Cache } from "@/lib/cache-db";
 import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/route";
-import type { HistoricalKeyword } from "@/app/api/keywords-historical/route";
-import { calcSeasonOpportunityScore, type SeasonOpportunityResult } from "@/lib/season-opportunity";
 import { calcOntologyRelevance } from "@/lib/ontology-relevance";
-import { generateOntologyLongtails } from "@/lib/ontology";
-import { trackApiCall } from "@/lib/api-monitor";
+import { generateOntologyLongtails, classifyKeywordV2 } from "@/lib/ontology";
 import { validateKeyword } from "@/lib/keyword-validator";
+import { getCategoryPool } from "@/lib/category-pool";
+import { pickRisingCandidates, type PhaseAnalysis } from "@/lib/seasonal-trend";
+import type { Platform as OntoPlatform } from "@/lib/ontology/types";
 
-const CACHE_TYPE = "keywords_season_opp_4"; // v4: V2+Historical+온톨로지 통합 + 가중치
-const cache = new NodeCache({ stdTTL: 3600 });
-const historicalCache = new NodeCache({ stdTTL: 3600 });
-
-const DATALAB_BASE = "https://openapi.naver.com/v1/datalab";
-function getHeaders() {
-  return {
-    "X-Naver-Client-Id": process.env.NAVER_CLIENT_ID!,
-    "X-Naver-Client-Secret": process.env.NAVER_CLIENT_SECRET!,
-    "Content-Type": "application/json",
-  };
+// 응답 형태 — 기존 카드와 호환되는 필드명 유지
+// sosScore를 score로, advice/tier/topFactor 모두 변환
+export interface SeasonOpportunityResult {
+  keyword: string;
+  score: number;                  // currentPercentOfPeak 역전치 (잠재력 점수)
+  tier: "최고" | "좋음" | "보통" | "관망";
+  topFactor: string;              // "상승 초입" 등
+  advice: string;
+  // 시즌 전용 메타 (UI 확장)
+  currentPercentOfPeak: number;
+  peakMonth: number;
+  monthsToPeak: number;
+  upsidePercent: number;
+  seasonType: string;
+  seasonality: number;
+  phase: string;
+  // 레거시 호환
+  pastPopularity: number;
+  currentPopularity: number;
+  gap: number;
+  monthlyVolume: number;
+  competitionLevel: string;
+  seasonHint: string;
 }
 
-/** SOS 전용 DataLab 조회: 정확히 1년전 ~ 1년전+2개월 말일 */
-async function fetchSOSTrend(keywords: string[]): Promise<Map<string, { past: number; current: number }>> {
-  const result = new Map<string, { past: number; current: number }>();
-  if (keywords.length === 0) return result;
-
-  const now = new Date();
-  const pastStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-  const pastEnd = new Date(now.getFullYear() - 1, now.getMonth() + 3, 0);
-  const currentStart = new Date(now);
-  currentStart.setMonth(currentStart.getMonth() - 3);
-
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-
-  for (let i = 0; i < keywords.length; i += 5) {
-    const batch = keywords.slice(i, i + 5);
-    const keywordGroups = batch.map((kw) => ({ groupName: kw, keywords: [kw] }));
-
-    if (!trackApiCall("naver_datalab")) continue;
-
-    const [pastRes, currentRes] = await Promise.allSettled([
-      fetch(`${DATALAB_BASE}/search`, {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({ startDate: fmt(pastStart), endDate: fmt(pastEnd), timeUnit: "month", keywordGroups }),
-        cache: "no-store",
-      }).then((r) => r.json()),
-      fetch(`${DATALAB_BASE}/search`, {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({ startDate: fmt(currentStart), endDate: fmt(now), timeUnit: "month", keywordGroups }),
-        cache: "no-store",
-      }).then((r) => r.json()),
-    ]);
-
-    const pastResults = pastRes.status === "fulfilled" ? pastRes.value?.results ?? [] : [];
-    const currentResults = currentRes.status === "fulfilled" ? currentRes.value?.results ?? [] : [];
-
-    for (let j = 0; j < batch.length; j++) {
-      const kw = batch[j];
-      const pastPts = pastResults[j]?.data ?? [];
-      const currentPts = currentResults[j]?.data ?? [];
-      const pastAvg = pastPts.length > 0
-        ? pastPts.reduce((s: number, d: { ratio: number }) => s + d.ratio, 0) / pastPts.length : 0;
-      const currentAvg = currentPts.length > 0
-        ? currentPts.reduce((s: number, d: { ratio: number }) => s + d.ratio, 0) / currentPts.length : 0;
-      result.set(kw, { past: Math.round(pastAvg * 10) / 10, current: Math.round(currentAvg * 10) / 10 });
-    }
-  }
-  return result;
-}
-
-export type { SeasonOpportunityResult };
+const CACHE_TYPE = "keywords_season_opp_5"; // v5: DB 기반
+const cache = new NodeCache({ stdTTL: 3600, maxKeys: 500 });
 
 export async function GET(req: NextRequest) {
   const rawKeyword = req.nextUrl.searchParams.get("keyword")?.trim();
@@ -96,9 +61,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
   const keyword = rawKeyword as string;
+  const platformRaw = req.nextUrl.searchParams.get("platform") ?? "smartstore";
+  const ontoPlatform: OntoPlatform = platformRaw === "coupang" ? "coupang" : "smartstore";
 
-  const cached = cache.get<SeasonOpportunityResult[]>(keyword);
-  if (cached) return NextResponse.json({ keywords: cached, cached: true });
+  // L1/L2 캐시
+  const l1 = cache.get<SeasonOpportunityResult[]>(keyword);
+  if (l1) return NextResponse.json({ keywords: l1, cached: true });
 
   const l2 = await getL2Cache<SeasonOpportunityResult[]>(keyword, CACHE_TYPE);
   if (l2) {
@@ -108,149 +76,112 @@ export async function GET(req: NextRequest) {
 
   try {
     // ══════════════════════════════════════════════════════════
-    // 1단계: 3개 소스에서 후보 통합
+    // 1) 후보 수집
+    //    - 카테고리 풀 top 300
+    //    - V2 캐시 (현재 분석 대상 키워드의 V2 결과)
+    //    - 온톨로지 롱테일
+    //    - 시드 자체
     // ══════════════════════════════════════════════════════════
+    const candidateSet = new Set<string>();
+    candidateSet.add(keyword);
 
-    // 소스 A: Historical 캐시
-    let historicalKeywords: HistoricalKeyword[] | null =
-      historicalCache.get<HistoricalKeyword[]>(keyword) ?? null;
-    if (!historicalKeywords) {
-      historicalKeywords = await getL2Cache<HistoricalKeyword[]>(keyword, "keywords_historical_3");
-    }
-    if (!historicalKeywords) {
-      try {
-        const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
-        const res = await fetch(
-          `${baseUrl}/api/keywords-historical?keyword=${encodeURIComponent(keyword)}`,
-          { cache: "no-store" },
-        );
-        if (res.ok) {
-          const json = await res.json();
-          historicalKeywords = json.keywords ?? [];
-        }
-      } catch { /* 폴백 실패 */ }
+    // 1-a) 카테고리 풀
+    const classified = classifyKeywordV2(keyword, ontoPlatform);
+    if (classified?.path) {
+      const pool = await getCategoryPool(classified.path, ontoPlatform);
+      if (pool) {
+        for (const k of pool.keywords) candidateSet.add(k.keyword);
+      }
     }
 
-    // 소스 B: V2 캐시
+    // 1-b) V2 캐시 (L1 우선, 없으면 L2)
     let v2Keywords: KeywordV2[] | null = v2Cache.get<KeywordV2[]>(keyword) ?? null;
     if (!v2Keywords) {
       v2Keywords = await getL2Cache<KeywordV2[]>(keyword, V2_CACHE_TYPE);
     }
-
-    // 소스 C: 온톨로지 롱테일
-    const ontologyKws = generateOntologyLongtails(keyword, "smartstore", 20);
-
-    // ══════════════════════════════════════════════════════════
-    // 2단계: 후보 통합 + 출신 태깅
-    // ══════════════════════════════════════════════════════════
-
-    const historicalSet = new Set<string>();
-    const v2Set = new Set<string>();
-    const candidateSet = new Set<string>();
-
-    // V2 맵 (경쟁/검색량 데이터)
     const v2Map = new Map<string, KeywordV2>();
     if (v2Keywords) {
       for (const k of v2Keywords) {
-        if (k.keyword === keyword) continue;
-        v2Map.set(k.keyword, k);
-        v2Set.add(k.keyword);
         candidateSet.add(k.keyword);
+        v2Map.set(k.keyword, k);
       }
     }
 
-    // Historical 맵 (과거 인기 데이터)
-    const historicalMap = new Map<string, HistoricalKeyword>();
-    if (historicalKeywords) {
-      for (const hk of historicalKeywords) {
-        if (hk.keyword === keyword) continue;
-        historicalMap.set(hk.keyword, hk);
-        historicalSet.add(hk.keyword);
-        candidateSet.add(hk.keyword);
-      }
-    }
-
-    // 온톨로지 롱테일
-    for (const kw of ontologyKws) {
-      if (kw !== keyword) candidateSet.add(kw);
+    // 1-c) 온톨로지 롱테일
+    for (const k of generateOntologyLongtails(keyword, "smartstore", 20)) {
+      candidateSet.add(k);
     }
 
     // ══════════════════════════════════════════════════════════
-    // 3단계: 연관도 필터
+    // 2) 시드 관련도 필터 — 카테고리 풀에는 brand/noise가 섞여있음
     // ══════════════════════════════════════════════════════════
-
     const seedTokens = keyword.split(/\s+/);
-    const filtered = [...candidateSet].filter((kw) => {
-      const containsSeedToken = seedTokens.some((t) => kw.includes(t));
-      if (containsSeedToken) return true;
+    const relevantCandidates = [...candidateSet].filter((kw) => {
+      if (kw === keyword) return true;
+      const containsSeed = seedTokens.some((t) => kw.includes(t));
+      if (containsSeed) return true;
       const rel = calcOntologyRelevance(keyword, kw);
-      return rel.score >= 15;
+      return rel.score >= 20;
     });
 
-    if (filtered.length === 0) {
+    if (relevantCandidates.length === 0) {
       cache.set(keyword, []);
       return NextResponse.json({ keywords: [] });
     }
 
     // ══════════════════════════════════════════════════════════
-    // 4단계: SOS DataLab 조회 (1년전 ~ +2개월)
+    // 3) keyword_seasonal_trend 조회 + "rising" 필터
     // ══════════════════════════════════════════════════════════
-
-    const sosTrendMap = await fetchSOSTrend(filtered);
+    const rising = await pickRisingCandidates(relevantCandidates, {
+      limit: 40,
+      includeRisingFast: true,
+    });
 
     // ══════════════════════════════════════════════════════════
-    // 5단계: SOS 5F 채점 + 출신 가중치
+    // 4) 응답 포맷 변환 (기존 카드 필드와 호환)
     // ══════════════════════════════════════════════════════════
+    const results: SeasonOpportunityResult[] = rising.map(({ keyword: kw, analysis }) => {
+      // score = "잠재력" 점수: rising이면 기본 80점 + upside 보너스
+      // rising_fast면 기본 60점 + upside 보너스
+      const base = analysis.phase === "rising" ? 80 : 60;
+      const upsideBonus = Math.min(20, Math.floor(analysis.upsidePercent / 20));
+      const score = Math.min(100, base + upsideBonus);
 
-    const results: SeasonOpportunityResult[] = [];
+      const tier: SeasonOpportunityResult["tier"] =
+        score >= 90 ? "최고" : score >= 75 ? "좋음" : score >= 60 ? "보통" : "관망";
 
-    for (const kw of filtered) {
-      const sosTrend = sosTrendMap.get(kw);
-      const v2Data = v2Map.get(kw);
-      const hkData = historicalMap.get(kw);
+      const topFactor =
+        analysis.phase === "rising" ? "상승 초입" : "급상승 구간";
 
-      const pastPop = sosTrend?.past ?? hkData?.pastPopularity ?? 0;
-      const currentPop = sosTrend?.current ?? hkData?.currentPopularity ?? 0;
+      const v2 = v2Map.get(kw);
 
-      // DataLab에 데이터 없으면 스킵
-      if (pastPop < 3 && !v2Data) continue;
-
-      const gap = Math.round((pastPop - currentPop) * 10) / 10;
-      const competitionLevel = v2Data?.competitionLevel ?? "보통";
-      const monthlyVolume = v2Data?.monthlyVolume ?? hkData?.monthlyVolume ?? 0;
-
-      const sosResult = calcSeasonOpportunityScore({
+      return {
         keyword: kw,
-        pastPopularity: pastPop,
-        currentPopularity: currentPop,
-        gap,
-        monthlyVolume,
-        competitionLevel,
-        seasonHint: gap > 15 ? "시즌 전 선점 기회" : gap > 0 ? "곧 수요 회복 예상" : "꾸준한 수요",
-      });
+        score,
+        tier,
+        topFactor,
+        advice: analysis.advice,
+        currentPercentOfPeak: analysis.currentPercentOfPeak,
+        peakMonth: analysis.peakMonth,
+        monthsToPeak: analysis.monthsToPeak,
+        upsidePercent: analysis.upsidePercent,
+        seasonType: analysis.seasonType,
+        seasonality: analysis.seasonality,
+        phase: analysis.phase,
+        // legacy fields
+        pastPopularity: analysis.peakRatio,
+        currentPopularity: analysis.currentRatio,
+        gap: Math.round(analysis.peakRatio - analysis.currentRatio),
+        monthlyVolume: v2?.monthlyVolume ?? 0,
+        competitionLevel: v2?.competitionLevel ?? "보통",
+        seasonHint: `${analysis.peakMonth}월 피크 · +${analysis.upsidePercent}% 잠재`,
+      };
+    });
 
-      // ── 출신 가중치 ──
-      const fromHistorical = historicalSet.has(kw);
-      const fromV2 = v2Set.has(kw);
+    cache.set(keyword, results);
+    setL2Cache(keyword, CACHE_TYPE, results);
 
-      let bonus = 0;
-      if (fromHistorical && fromV2) bonus = 20;      // 양쪽 검증
-      else if (fromHistorical)      bonus = 15;      // 과거 수요 검증
-      // V2 only, 온톨로지 only → bonus 0
-
-      const boostedScore = Math.min(100, sosResult.score + bonus);
-
-      results.push({ ...sosResult, score: boostedScore });
-    }
-
-    const sorted = results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 40);
-
-    cache.set(keyword, sorted);
-    setL2Cache(keyword, CACHE_TYPE, sorted);
-
-    return NextResponse.json({ keywords: sorted });
+    return NextResponse.json({ keywords: results });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "시즌 기회 분석 실패" },

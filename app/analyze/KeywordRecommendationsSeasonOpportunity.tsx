@@ -1,9 +1,11 @@
 "use client";
 
 /**
- * 시즌 기회 키워드 추천 카드
- * Historical(작년 인기) + V2(시장 데이터) 융합 SOS 점수 기반
- * "작년에 검증된 수요 + 현재 진입 가능한" 키워드 추천
+ * 시즌 기회 키워드 추천 카드 — 2026-04-11 재설계
+ *
+ * 핵심 가치: 작년 12개월 곡선을 기반으로 "상승 초입(피크의 10~30%)" 키워드 추천.
+ * 사용자가 시즌 피크가 오기 전에 미리 상품을 준비할 수 있도록 "남은 잠재력"과
+ * "피크까지 몇 개월"을 시각적으로 표시.
  */
 
 import { useEffect, useState } from "react";
@@ -12,38 +14,34 @@ import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
 import { excludePureGenericModifiers } from "@/lib/keyword-shape";
 
-function tierBadge(tier: string) {
-  switch (tier) {
-    case "최고":
-      return { color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: "★" };
-    case "좋음":
-      return { color: "text-blue-700 bg-blue-50 border-blue-200", icon: "●" };
-    case "보통":
-      return { color: "text-amber-700 bg-amber-50 border-amber-200", icon: "○" };
-    default:
-      return { color: "text-gray-500 bg-gray-50 border-gray-200", icon: "△" };
-  }
-}
-
-function scoreColor(score: number): string {
-  if (score >= 70) return "text-emerald-600 bg-emerald-50 border-emerald-200";
-  if (score >= 50) return "text-blue-600 bg-blue-50 border-blue-200";
-  if (score >= 35) return "text-amber-600 bg-amber-50 border-amber-200";
-  return "text-gray-500 bg-gray-50 border-gray-200";
-}
-
-const FACTOR_LABEL: Record<string, string> = {
-  "시즌 검증도": "작년에 인기 검증됨",
-  "선점 갭": "지금이 선점 타이밍",
-  "진입 용이성": "경쟁이 아직 낮음",
-  "구매 전환력": "구매로 이어지는 키워드",
-  "시장 규모": "충분한 시장 크기",
-};
-
 interface Props {
   keyword: string;
   platform: string;
   preloadedData?: unknown[] | null;
+}
+
+function phaseBadge(phase: string) {
+  if (phase === "rising") {
+    return { text: "상승 초입", color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
+  }
+  if (phase === "rising_fast") {
+    return { text: "급상승", color: "text-orange-700 bg-orange-50 border-orange-200" };
+  }
+  return { text: phase, color: "text-gray-500 bg-gray-50 border-gray-200" };
+}
+
+function seasonLabel(type: string): string {
+  switch (type) {
+    case "summer": return "🌞 여름";
+    case "winter": return "❄️ 겨울";
+    case "spring": return "🌸 봄";
+    case "autumn": return "🍂 가을";
+    default: return "연중";
+  }
+}
+
+function monthName(m: number): string {
+  return `${m}월`;
 }
 
 export default function KeywordRecommendationsSeasonOpportunity({ keyword, platform, preloadedData }: Props) {
@@ -61,12 +59,12 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
     }
     setLoading(true);
     setError("");
-    fetch(`/api/keywords-season-opportunity?keyword=${encodeURIComponent(keyword)}`)
+    fetch(`/api/keywords-season-opportunity?keyword=${encodeURIComponent(keyword)}&platform=${platform === "coupang" ? "coupang" : "smartstore"}`)
       .then((r) => r.json())
       .then((json) => setData(json.keywords ?? []))
       .catch(() => setError("시즌 기회 데이터를 불러오지 못했습니다"))
       .finally(() => setLoading(false));
-  }, [keyword, preloadedData]);
+  }, [keyword, preloadedData, platform]);
 
   const filtered = excludePureGenericModifiers(data, keyword);
   const display = expanded ? filtered : filtered.slice(0, 5);
@@ -81,7 +79,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
               className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white"
               style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}
             >
-              1년전 인기
+              상승 초입
             </span>
           </div>
         </div>
@@ -96,8 +94,28 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
 
   if (error || filtered.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center text-gray-400 text-sm">
-        {error || "시즌 기회 데이터가 없습니다"}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-gray-700">시즌 기회 키워드</span>
+            <span
+              className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white"
+              style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}
+            >
+              상승 초입
+            </span>
+          </div>
+        </div>
+        <div className="bg-amber-50/40 border border-amber-100 rounded-xl p-4 text-center">
+          <p className="text-sm text-gray-600 font-medium mb-1">
+            지금은 상승 초입 키워드가 없어요
+          </p>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            작년 데이터 기준 현재 시점에 피크의 10~30% 구간에서 상승 중인<br />
+            시즌성 키워드가 없습니다. 시즌성이 약한 카테고리이거나,<br />
+            이미 피크가 지나갔을 수 있어요.
+          </p>
+        </div>
       </div>
     );
   }
@@ -108,24 +126,25 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
     <div className="bg-white rounded-2xl border border-gray-100 p-5">
       {/* 헤더 */}
       <div className="mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-bold text-gray-700">시즌 기회 키워드</span>
           <span
             className="text-[10px] px-2 py-0.5 rounded-full font-bold text-white"
             style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}
           >
-            1년전 인기
+            상승 초입
           </span>
         </div>
         <p className="text-[11px] text-gray-400 mt-1">
-          작년에 검증된 수요 + 현재 진입 가능성을 동시에 평가한 키워드예요. 시즌이 오기 전에 미리 상품을 준비하세요
+          작년 패턴 기준 지금 상승 초입(피크의 10~30%)에 있는 시즌성 키워드예요.
+          지금 준비하면 피크까지 최대 몇 %까지 기회가 남아있는지 확인할 수 있어요
         </p>
       </div>
 
       {/* 키워드 리스트 */}
       <div className="space-y-1.5">
         {display.map((kw, idx) => {
-          const badge = tierBadge(kw.tier);
+          const pBadge = phaseBadge(kw.phase);
           const isSelected = selectedIdx === idx;
 
           return (
@@ -138,70 +157,65 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
                 }`}
                 onClick={() => setSelectedIdx(isSelected ? null : idx)}
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <span className="text-xs font-bold text-orange-500 w-5 shrink-0">{idx + 1}</span>
-                  <div className="min-w-0">
-                    <AnalyzeKeywordLink keyword={kw.keyword} platform={platform}>
-                      <p className="text-sm font-bold text-gray-800 truncate group-hover:text-orange-700 transition-colors">
-                        {kw.keyword}
-                      </p>
-                    </AnalyzeKeywordLink>
-                    <p className="text-[11px] text-gray-400 truncate">
-                      {FACTOR_LABEL[kw.topFactor] ?? kw.topFactor}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <AnalyzeKeywordLink keyword={kw.keyword} platform={platform}>
+                        <p className="text-sm font-bold text-gray-800 truncate group-hover:text-orange-700 transition-colors">
+                          {kw.keyword}
+                        </p>
+                      </AnalyzeKeywordLink>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${pBadge.color}`}>
+                        {pBadge.text}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      {seasonLabel(kw.seasonType)} · {monthName(kw.peakMonth)} 피크까지{" "}
+                      <span className="font-bold text-orange-600">{kw.monthsToPeak}개월</span>
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* 과거 vs 현재 */}
-                  <div className="text-right hidden sm:block">
-                    <div className="flex items-center gap-1 text-[10px]">
-                      <span className="text-gray-400">작년</span>
-                      <span className="font-bold text-amber-600">{kw.pastPopularity}</span>
-                      <span className="text-gray-300">/</span>
-                      <span className="text-gray-400">지금</span>
-                      <span className="font-bold text-gray-600">{kw.currentPopularity}</span>
+                  {/* 현재 위치 게이지 */}
+                  <div className="w-16 hidden sm:block">
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${kw.currentPercentOfPeak}%`,
+                          background: "linear-gradient(90deg, #10b981, #f59e0b)",
+                        }}
+                      />
                     </div>
+                    <p className="text-[9px] text-gray-400 text-center mt-0.5">
+                      현재 {kw.currentPercentOfPeak}%
+                    </p>
                   </div>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${badge.color}`}>
-                    {badge.icon} {kw.tier}
-                  </span>
-                  <span className={`text-xs font-black px-2 py-1 rounded-lg border ${scoreColor(kw.score)}`}>
-                    {kw.score}
-                  </span>
+                  {/* 잠재력 */}
+                  <div className="text-right px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <p className="text-[9px] text-emerald-600 font-bold">잠재</p>
+                    <p className="text-sm font-black text-emerald-700 tabular-nums">+{kw.upsidePercent}%</p>
+                  </div>
                 </div>
               </div>
 
-              {/* 확장: 상세 subfactor + 조언 */}
-              {isSelected && (
-                <div className="mx-4 mt-1 mb-2 p-3 bg-orange-50/50 rounded-lg border border-orange-100">
-                  {/* 5 Factor 바 */}
-                  <div className="grid grid-cols-5 gap-2 mb-3">
-                    {kw.subfactors.map((sf) => (
-                      <div key={sf.key} className="text-center">
-                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${sf.score}%`,
-                              background: sf.score >= 60 ? "#f59e0b" : sf.score >= 40 ? "#fbbf24" : "#d1d5db",
-                            }}
-                          />
-                        </div>
-                        <span className="text-[9px] text-gray-500 leading-tight block">{sf.label}</span>
-                        <span className="text-[10px] font-bold text-gray-700">{sf.score}</span>
-                      </div>
-                    ))}
-                  </div>
+              {/* 확장: 12개월 곡선 + 조언 */}
+              {isSelected && selected && (
+                <div className="mx-4 mt-1 mb-2 p-4 bg-orange-50/50 rounded-lg border border-orange-100">
+                  {/* 월별 막대 차트 (12개월) */}
+                  <MonthlyBarChart kw={selected} />
                   {/* 조언 */}
-                  <p className="text-[11px] text-gray-600 leading-relaxed">
+                  <p className="text-[11px] text-gray-700 leading-relaxed mt-3">
                     {kw.advice}
                   </p>
-                  {/* 경쟁도 */}
-                  <div className="mt-2 flex items-center gap-3 text-[10px] text-gray-400">
-                    <span>경쟁: <span className="font-bold text-gray-600">{kw.competitionLevel}</span></span>
+                  {/* 추가 정보 */}
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-gray-500">
+                    <span>시즌성 지수: <span className="font-bold text-gray-700">{kw.seasonality.toFixed(2)}</span></span>
                     {kw.monthlyVolume > 0 && (
-                      <span>월검색량: <span className="font-bold text-gray-600">{kw.monthlyVolume.toLocaleString()}</span></span>
+                      <span>월검색량: <span className="font-bold text-gray-700">{kw.monthlyVolume.toLocaleString()}</span></span>
                     )}
+                    <span>경쟁도: <span className="font-bold text-gray-700">{kw.competitionLevel}</span></span>
                   </div>
                 </div>
               )}
@@ -214,7 +228,7 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
       {filtered.length > 3 && (
         <div className="mt-3 flex items-center justify-between px-1">
           <p className="text-xs text-gray-400">
-            <span className="font-bold text-orange-600">SOS</span> = 시즌 검증 + 진입 가능성 융합 점수
+            작년 월별 데이터 · 현재 피크의 {filtered[0]?.currentPercentOfPeak ?? 0}% 구간
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -222,14 +236,13 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
                 downloadCSV(
                   filtered.map((kw) => ({
                     키워드: kw.keyword,
-                    SOS점수: kw.score,
-                    등급: kw.tier,
-                    작년인기: kw.pastPopularity,
-                    현재: kw.currentPopularity,
-                    갭: kw.gap,
-                    경쟁도: kw.competitionLevel,
-                    월검색량: kw.monthlyVolume,
-                    강점: kw.topFactor,
+                    Phase: kw.phase,
+                    "현재%_피크대비": kw.currentPercentOfPeak,
+                    "피크월": kw.peakMonth,
+                    "피크까지(월)": kw.monthsToPeak,
+                    "잠재력(%)": kw.upsidePercent,
+                    시즌타입: kw.seasonType,
+                    시즌성: kw.seasonality,
                   })),
                   `${keyword}_시즌기회`,
                 )
@@ -247,6 +260,66 @@ export default function KeywordRecommendationsSeasonOpportunity({ keyword, platf
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * 12개월 막대 차트 (SVG) — 현재 월 하이라이트 + 피크 월 표시
+ */
+function MonthlyBarChart({ kw }: { kw: SeasonOpportunityResult }) {
+  // SeasonOpportunityResult에 monthly_ratios가 없으므로 peak/current만으로 추정
+  // 추후 API에 monthly_ratios 필드를 포함시키면 전체 곡선 표시 가능
+  const peakMonth = kw.peakMonth;
+  const currentMonth = new Date().getMonth() + 1;
+
+  return (
+    <div>
+      <p className="text-[10px] text-gray-500 mb-2 font-medium">연중 곡선 요약</p>
+      <div className="flex items-end justify-between gap-0.5 h-14 px-1">
+        {Array.from({ length: 12 }).map((_, i) => {
+          const m = i + 1;
+          const isPeak = m === peakMonth;
+          const isCurrent = m === currentMonth;
+          // 근사: 피크월 100, 현재월 currentPercentOfPeak, 나머지는 부드러운 보간
+          let h: number;
+          if (isPeak) h = 100;
+          else if (isCurrent) h = kw.currentPercentOfPeak;
+          else {
+            // 피크와의 거리 기반 부드러운 감쇠
+            const dist = Math.min(Math.abs(m - peakMonth), 12 - Math.abs(m - peakMonth));
+            h = Math.max(5, 100 - dist * 18);
+          }
+          return (
+            <div key={m} className="flex-1 flex flex-col items-center gap-0.5">
+              <div
+                className={`w-full rounded-t ${isCurrent ? "ring-1 ring-emerald-500" : ""}`}
+                style={{
+                  height: `${Math.max(4, h)}%`,
+                  background: isPeak
+                    ? "#f59e0b"
+                    : isCurrent
+                    ? "#10b981"
+                    : "#d1d5db",
+                }}
+              />
+              <span className={`text-[8px] ${isCurrent ? "text-emerald-600 font-bold" : isPeak ? "text-orange-600 font-bold" : "text-gray-400"}`}>
+                {m}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-between text-[9px] text-gray-400 mt-1 px-1">
+        <span>
+          <span className="inline-block w-2 h-2 bg-emerald-500 rounded-sm mr-1" />
+          현재 {currentMonth}월
+        </span>
+        <span>
+          <span className="inline-block w-2 h-2 bg-orange-500 rounded-sm mr-1" />
+          피크 {peakMonth}월
+        </span>
+      </div>
     </div>
   );
 }
