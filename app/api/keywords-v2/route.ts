@@ -33,11 +33,16 @@ import { validateKeyword } from "@/lib/keyword-validator";
 import { getAdKeywordsWithPool } from "@/lib/category-pool";
 import type { Platform as OntoPlatform } from "@/lib/ontology/types";
 
-export const V2_CACHE_TYPE = "keywords_v2_18"; // 카테고리 기반 수식어 필터링 (v17→v18)
+export const V2_CACHE_TYPE = "keywords_v2_19"; // v19: 카테고리 풀 메타(poolSource/poolFetchedAt) 캐싱
 const CACHE_TYPE = V2_CACHE_TYPE; // 기존 코드 호환용 alias
 /** L1 인메모리 캐시 — keywords-creative에서도 읽기 전용으로 참조 */
 export const v2Cache = new NodeCache({ stdTTL: 3600 });
 const cache = v2Cache; // 기존 코드 호환용 alias
+
+/** 풀 메타 캐시 (poolSource/poolFetchedAt) — v2Cache와 동기 갱신 */
+interface V2Meta { poolSource: "pool" | "api" | null; poolFetchedAt: string | null }
+const v2MetaCache = new NodeCache({ stdTTL: 3600, maxKeys: 500 });
+const META_L2_TYPE = "keywords_v2_meta_19";
 
 export interface KeywordV2 {
   keyword: string;
@@ -191,12 +196,28 @@ export async function GET(req: NextRequest) {
   const ontoPlatform: OntoPlatform = platformRaw === "coupang" ? "coupang" : "smartstore";
 
   const cached = cache.get<KeywordV2[]>(keyword);
-  if (cached) return NextResponse.json({ keywords: cached, cached: true });
+  if (cached) {
+    const meta = v2MetaCache.get<V2Meta>(keyword) ?? { poolSource: null, poolFetchedAt: null };
+    return NextResponse.json({
+      keywords: cached,
+      cached: true,
+      poolSource: meta.poolSource,
+      poolFetchedAt: meta.poolFetchedAt,
+    });
+  }
 
   const l2 = await getL2Cache<KeywordV2[]>(keyword, CACHE_TYPE);
   if (l2) {
     cache.set(keyword, l2);
-    return NextResponse.json({ keywords: l2, cached: true });
+    const l2Meta = await getL2Cache<V2Meta>(keyword, META_L2_TYPE);
+    const meta = l2Meta ?? { poolSource: null, poolFetchedAt: null };
+    if (l2Meta) v2MetaCache.set(keyword, l2Meta);
+    return NextResponse.json({
+      keywords: l2,
+      cached: true,
+      poolSource: meta.poolSource,
+      poolFetchedAt: meta.poolFetchedAt,
+    });
   }
 
   try {
@@ -518,10 +539,16 @@ export async function GET(req: NextRequest) {
 
     cache.set(keyword, top);
     setL2Cache(keyword, CACHE_TYPE, top);
+    const meta: V2Meta = {
+      poolSource: adsRes.source,
+      poolFetchedAt: adsRes.fetchedAt ?? null,
+    };
+    v2MetaCache.set(keyword, meta);
+    setL2Cache(keyword, META_L2_TYPE, meta);
     return NextResponse.json({
       keywords: top,
-      poolSource: adsRes.source,      // "pool" | "api"
-      poolFetchedAt: adsRes.fetchedAt ?? null,
+      poolSource: meta.poolSource,
+      poolFetchedAt: meta.poolFetchedAt,
     });
 
   } catch (err) {
