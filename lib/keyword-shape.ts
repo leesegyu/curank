@@ -169,6 +169,40 @@ export function excludePureGenericModifiers<T extends { keyword: string }>(
  *
  * @returns 정제된 키워드 또는 null(거부됨)
  */
+/** 의미없는 순수 단위/숫자 토큰만으로 구성된 "단위 노이즈" 패턴 */
+const UNIT_ONLY_TOKENS = new Set([
+  "kg", "g", "mg", "l", "ml", "cc", "oz",
+  "cm", "mm", "m", "inch",
+  "%", "개", "팩", "세트", "입", "봉", "통", "박스",
+]);
+
+function isUnitNoise(s: string): boolean {
+  // 공백 분리한 모든 토큰이 숫자 또는 단위어뿐이면 셀러에게 무의미
+  // 예: "kg kg", "10 kg", "3 팩", "1kg 1kg"
+  const tokens = s.toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return true;
+  return tokens.every((t) => {
+    // 순수 숫자
+    if (/^\d+(\.\d+)?$/.test(t)) return true;
+    // 숫자+단위 (예: "10kg", "500g")
+    const m = t.match(/^(\d+(\.\d+)?)([a-z가-힣%]+)$/);
+    if (m && UNIT_ONLY_TOKENS.has(m[3])) return true;
+    // 순수 단위어
+    if (UNIT_ONLY_TOKENS.has(t)) return true;
+    return false;
+  });
+}
+
+/** 동일 토큰이 2회 이상 반복되는 "반복 노이즈" (예: "kg kg", "세트 세트") */
+function isRepeatedTokenNoise(s: string): boolean {
+  const tokens = s.toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return false;
+  const unique = new Set(tokens);
+  // 모든 토큰이 동일하거나 50% 이상이 동일 토큰
+  if (unique.size === 1) return true;
+  return false;
+}
+
 export function sanitizeCandidateKeyword(raw: string): string | null {
   if (!raw) return null;
   // 앞뒤 공백 + 앞쪽 비-의미 문자 트리밍
@@ -181,6 +215,10 @@ export function sanitizeCandidateKeyword(raw: string): string | null {
   if (!/[\uAC00-\uD7A3a-zA-Z0-9\u3131-\u318E\u4E00-\u9FFF]/.test(s)) return null;
   // 길이
   if (s.length < 2 || s.length > 50) return null;
+  // 단위어만으로 구성 ("kg kg", "10kg 500g") — 셀러에게 무의미
+  if (isUnitNoise(s)) return null;
+  // 같은 토큰 반복 ("세트 세트")
+  if (isRepeatedTokenNoise(s)) return null;
   return s;
 }
 

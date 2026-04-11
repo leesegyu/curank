@@ -203,6 +203,7 @@ export default function FactorScoreAggregated(props: Props) {
 
   const [results, setResults] = useState<Map<string, FactorScoreSet>>(initialMap);
   const [loading, setLoading] = useState(initialMap.size === 0);
+  const [loadProgress, setLoadProgress] = useState(0); // 0~100
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [csvLoading, setCsvLoading] = useState(false);
@@ -226,12 +227,38 @@ export default function FactorScoreAggregated(props: Props) {
     }
     setLoading(true);
     setError(false);
+    setLoadProgress(0);
+
+    // 체감 진행바: 실제 API 완료 시점을 정확히 알 수 없으므로
+    // 예상 소요(18초) 기준으로 0→92%까지 점진 증가, 완료 시 100%
+    // (서버가 빨리 돌아오면 즉시 100%로 점프)
+    const EXPECTED_MS = 18_000;
+    const TICK_MS = 200;
+    const MAX_BEFORE_DONE = 92;
+    const startedAt = Date.now();
+    const tick = setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      // log curve: 초반 빠르게, 후반 느리게 (사용자 체감 개선)
+      const ratio = Math.min(elapsed / EXPECTED_MS, 1);
+      const eased = 1 - Math.pow(1 - ratio, 2); // ease-out quad
+      const next = Math.min(MAX_BEFORE_DONE, Math.round(eased * MAX_BEFORE_DONE));
+      setLoadProgress(next);
+    }, TICK_MS);
 
     const initialBatch = candidates.slice(0, INITIAL_FETCH).map((c) => c.keyword);
     fetchFactorBatch(initialBatch, platform)
-      .then((map) => setResults(map))
+      .then((map) => {
+        setResults(map);
+        setLoadProgress(100);
+      })
       .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        clearInterval(tick);
+        // 100%에서 잠깐 보여주고 로딩 종료 (UX 매끄럽게)
+        setTimeout(() => setLoading(false), 300);
+      });
+
+    return () => clearInterval(tick);
   }, [candidates, platform, initialMap]);
 
   // 정렬된 결과
@@ -306,16 +333,49 @@ export default function FactorScoreAggregated(props: Props) {
   };
 
   if (loading) {
+    const count = Math.min(candidates.length, INITIAL_FETCH);
     return (
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
-        <div className="h-5 bg-gray-100 rounded w-48 mb-4 animate-pulse" />
-        <div className="space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-10 bg-gray-100 rounded-xl animate-pulse" />
-          ))}
-          <p className="text-xs text-center text-gray-400 mt-2">
-            추천 키워드 {Math.min(candidates.length, INITIAL_FETCH)}개 종합 비교 중... (약 10~15초)
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm font-bold text-gray-700">최종 후보 비교</span>
+          <span
+            className="text-xs px-2 py-0.5 rounded-full font-bold text-white"
+            style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
+          >
+            AI
+          </span>
+        </div>
+
+        {/* 진행바 */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs text-gray-600 font-medium">
+              추천 키워드 {count}개 종합 비교 중...
+            </p>
+            <span className="text-xs font-bold text-purple-600 tabular-nums">{loadProgress}%</span>
+          </div>
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-200 ease-out"
+              style={{
+                width: `${loadProgress}%`,
+                background: "linear-gradient(90deg, #a855f7, #6366f1)",
+              }}
+            />
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1.5">
+            {loadProgress < 30 && "6개 Factor 지표 계산을 시작했어요 · 네이버 API 조회 중"}
+            {loadProgress >= 30 && loadProgress < 70 && "트렌드·경쟁도·구체성 분석 중이에요"}
+            {loadProgress >= 70 && loadProgress < 100 && "결과 정리 중이에요 · 곧 완료됩니다"}
+            {loadProgress === 100 && "완료! 결과 표시 중..."}
           </p>
+        </div>
+
+        {/* 스켈레톤 테이블 (진행 중에도 형태 인지) */}
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-10 bg-gray-50 rounded-xl animate-pulse" />
+          ))}
         </div>
       </div>
     );

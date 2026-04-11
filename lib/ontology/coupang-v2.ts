@@ -112,8 +112,9 @@ export const COUPANG_NODES_V2: OntologyNode[] = [
   { id: "cp.food.drink", name: "음료", level: 2, parent: "cp.food",
     matchKeywords: ["커피", "음료", "차", "주스", "생수"],
     seedKeywords: [] },
+  // cp.food.drink.coffee — 아메리카노/라떼 포함 확장
   { id: "cp.food.drink.coffee", name: "커피", level: 3, parent: "cp.food.drink",
-    matchKeywords: ["커피", "원두", "콜드브루", "캡슐커피", "인스턴트커피", "디카페인", "더치커피"],
+    matchKeywords: ["커피", "원두", "콜드브루", "캡슐커피", "인스턴트커피", "디카페인", "더치커피", "아메리카노", "라떼", "카페라떼"],
     seedKeywords: [
       "로켓배송 원두커피 1kg", "콜드브루 커피 1L 대용량",
       "호환 캡슐커피 100개입", "스틱커피 아메리카노 100T",
@@ -2467,7 +2468,15 @@ export const COUPANG_NODES_V2: OntologyNode[] = [
     seedKeywords: [],
     variantKeywords: ["아이폰15", "아이폰15프로", "아이폰15프로맥스", "아이폰14", "아이폰SE", "아이폰자급제", "갤럭시S24", "갤럭시S24울트라", "갤럭시Z폴드5", "갤럭시Z플립5", "공기계", "자급제폰", "리퍼폰"] },
 
-  // 건강식품 — 홍삼/인삼
+  // 건강식품 — 엽산/밀크씨슬/홍삼
+  { id: "cp.wellness.supplement.folate", name: "엽산/철분/임산부", level: 3, parent: "cp.wellness.supplement",
+    matchKeywords: ["엽산", "철분", "임산부영양제", "산모영양제", "임산부비타민", "철분제"],
+    seedKeywords: [],
+    variantKeywords: ["엽산제", "활성형엽산", "임산부엽산", "철분제", "흡수율좋은철분", "임산부비타민", "산모영양제", "임산부DHA", "산전영양제"] },
+  { id: "cp.wellness.supplement.milkthistle", name: "밀크씨슬/간영양제", level: 3, parent: "cp.wellness.supplement",
+    matchKeywords: ["밀크씨슬", "밀크시슬", "간영양제", "간건강", "실리마린", "간보호", "UDCA", "쿠르쿠민", "강황"],
+    seedKeywords: [],
+    variantKeywords: ["밀크씨슬", "실리마린", "간영양제", "UDCA", "강황쿠르쿠민", "글루타치온", "비타민B간영양제", "헛개간영양제", "고함량밀크씨슬"] },
   { id: "cp.wellness.supplement.hongsam", name: "홍삼/인삼", level: 3, parent: "cp.wellness.supplement",
     matchKeywords: ["홍삼", "인삼", "정관장", "홍삼정", "홍삼스틱", "수삼", "산양삼"],
     seedKeywords: [],
