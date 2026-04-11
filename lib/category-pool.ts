@@ -96,33 +96,51 @@ export async function getCategoryPool(
 }
 
 /**
- * 키워드로부터 자동 분류 → 풀 조회
+ * 키워드로부터 자동 분류 → 풀 조회 (다층 폴백)
  *
- * 분류 결과가 L4 노드인데 해당 풀이 비어 있으면 L3 부모 풀로 폴백한다.
- * (L4는 배치 수집 대상이지만, Ad API가 공백 포함 키워드를 거부해 일부 L4는 수집 실패)
+ * 폴백 순서:
+ *   1) 지정 플랫폼 직접 조회 (≥ MIN_USEFUL_POOL)
+ *   2) 지정 플랫폼 부모 노드 단계적 조회 (L4 → L3 → L2)
+ *   3) 반대 플랫폼 분류 재시도 + 부모 폴백 (cross-platform)
+ *      - 쿠팡 온톨로지가 smartstore보다 부실한 카테고리에서 효과
+ *   4) 최후: 지정 플랫폼의 빈약한 direct (있으면)
  */
 export async function getCategoryPoolForKeyword(
   keyword: string,
   platform: Platform,
 ): Promise<CategoryPoolResult | null> {
-  const classified = classifyKeywordV2(keyword, platform);
-  if (!classified?.path) return null;
-
   const MIN_USEFUL_POOL = 30;
 
-  const direct = await getCategoryPool(classified.path, platform);
-  if (direct && direct.keywords.length >= MIN_USEFUL_POOL) return direct;
+  // 특정 플랫폼에서 분류 + 단계적 부모 폴백
+  async function tryPlatform(p: Platform): Promise<CategoryPoolResult | null> {
+    const classified = classifyKeywordV2(keyword, p);
+    if (!classified?.path) return null;
 
-  // 빈약하면 부모 노드로 단계적 폴백 (L4 → L3 → L2)
-  const parts = classified.path.split(".");
-  for (let depth = parts.length - 1; depth >= 2; depth--) {
-    const parentPath = parts.slice(0, depth).join(".");
-    const parent = await getCategoryPool(parentPath, platform);
-    if (parent && parent.keywords.length >= MIN_USEFUL_POOL) return parent;
+    const direct = await getCategoryPool(classified.path, p);
+    if (direct && direct.keywords.length >= MIN_USEFUL_POOL) return direct;
+
+    // 부모 노드로 단계적 폴백 (L4 → L3 → L2)
+    const parts = classified.path.split(".");
+    for (let depth = parts.length - 1; depth >= 2; depth--) {
+      const parentPath = parts.slice(0, depth).join(".");
+      const parent = await getCategoryPool(parentPath, p);
+      if (parent && parent.keywords.length >= MIN_USEFUL_POOL) return parent;
+    }
+
+    return direct ?? null; // 빈약해도 있으면 일단 반환 후보
   }
 
-  // 어떤 부모도 충분하지 않음 — direct가 있다면 빈약하더라도 반환 (없는 것보단 낫게)
-  return direct ?? null;
+  // 1+2) 지정 플랫폼
+  const primary = await tryPlatform(platform);
+  if (primary && primary.keywords.length >= MIN_USEFUL_POOL) return primary;
+
+  // 3) 반대 플랫폼 cross-fallback (쿠팡 온톨로지 커버리지 부족 대응)
+  const opposite: Platform = platform === "coupang" ? "smartstore" : "coupang";
+  const cross = await tryPlatform(opposite);
+  if (cross && cross.keywords.length >= MIN_USEFUL_POOL) return cross;
+
+  // 4) 지정 플랫폼의 빈약한 direct라도 반환 (없는 것보단 나음)
+  return primary ?? cross ?? null;
 }
 
 /**
