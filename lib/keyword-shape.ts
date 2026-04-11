@@ -160,6 +160,31 @@ export function excludePureGenericModifiers<T extends { keyword: string }>(
 }
 
 /**
+ * 키워드 후보 정제 (추천 카드용)
+ *
+ * - 앞뒤 공백/특수문자 제거
+ * - 내부에 "/" 포함 시 거부 (네이버 자동완성 카테고리 토큰, 온톨로지 슬래시 그룹 등)
+ * - 첫 글자가 의미 있는 문자(한글/영문/숫자)가 아니면 거부
+ * - 길이 1자 또는 51자 이상 거부
+ *
+ * @returns 정제된 키워드 또는 null(거부됨)
+ */
+export function sanitizeCandidateKeyword(raw: string): string | null {
+  if (!raw) return null;
+  // 앞뒤 공백 + 앞쪽 비-의미 문자 트리밍
+  let s = raw.trim().replace(/^[^\uAC00-\uD7A3a-zA-Z0-9\u3131-\u318E\u4E00-\u9FFF]+/, "");
+  s = s.replace(/\s+/g, " ").trim();
+  if (!s) return null;
+  // 슬래시 포함 거부 (예: "탄산/사이다", "음료수/주스")
+  if (s.includes("/")) return null;
+  // 의미 있는 문자 전무 거부
+  if (!/[\uAC00-\uD7A3a-zA-Z0-9\u3131-\u318E\u4E00-\u9FFF]/.test(s)) return null;
+  // 길이
+  if (s.length < 2 || s.length > 50) return null;
+  return s;
+}
+
+/**
  * 어순 무관 토큰 정규화 키 생성 (중복 제거용)
  * "수박 추천" === "추천 수박"
  */

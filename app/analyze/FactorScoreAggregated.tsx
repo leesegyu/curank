@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AnalyzeKeywordLink from "./AnalyzeKeywordLink";
 import { downloadCSV } from "@/lib/csv-export";
+import { sanitizeCandidateKeyword } from "@/lib/keyword-shape";
 
 /**
  * STEP 3 추천 카드들의 top 키워드를 6개 Factor로 종합 비교하는 카드
@@ -62,8 +63,14 @@ const DISPLAY_EXPANDED = 40;
 function collectCandidates(props: Props): CandidateWithSource[] {
   const { keyword, sources } = props;
   const candidates: CandidateWithSource[] = [];
+  const push = (kw: string | undefined, source: string) => {
+    if (!kw) return;
+    const s = sanitizeCandidateKeyword(kw);
+    if (!s) return;
+    candidates.push({ keyword: s, source });
+  };
 
-  // 1) 시드 (baseline)
+  // 1) 시드 (baseline) — 원문 유지
   candidates.push({ keyword, source: "seed" });
 
   // 2) V2 상위 25개
@@ -73,7 +80,7 @@ function collectCandidates(props: Props): CandidateWithSource[] {
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, 25);
-    for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "기회분석" });
+    for (const kw of top) push(kw.keyword, "기회분석");
   }
 
   // 3) Creative 상위 20개
@@ -83,7 +90,7 @@ function collectCandidates(props: Props): CandidateWithSource[] {
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, 20);
-    for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "크리에이티브" });
+    for (const kw of top) push(kw.keyword, "크리에이티브");
   }
 
   // 4) Graph 상위 15개
@@ -93,7 +100,7 @@ function collectCandidates(props: Props): CandidateWithSource[] {
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
       .slice(0, 15);
-    for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "연관" });
+    for (const kw of top) push(kw.keyword, "연관");
   }
 
   // 5) SOS 상위 15개
@@ -103,22 +110,22 @@ function collectCandidates(props: Props): CandidateWithSource[] {
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.sosScore ?? 0) - (a.sosScore ?? 0))
       .slice(0, 15);
-    for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "시즌" });
+    for (const kw of top) push(kw.keyword, "시즌");
   }
 
-  // 6) Variant 상위 10개
+  // 6) Variant 상위 20개 — 광범위 시드는 variant에만 풍부할 수 있음
   if (sources.variant && typeof sources.variant === "object") {
     const v = sources.variant as { keywords?: Array<{ keyword: string }> };
     if (Array.isArray(v.keywords)) {
-      const top = v.keywords.slice(0, 10);
-      for (const kw of top) candidates.push({ keyword: kw.keyword, source: "세부유형" });
+      const top = v.keywords.slice(0, 20);
+      for (const kw of top) push(kw.keyword, "세부유형");
     }
   }
 
   // 7) Modifiers 상위 15개
   if (Array.isArray(sources.modifiers)) {
     const top = sources.modifiers.slice(0, 15);
-    for (const kw of top) candidates.push({ keyword: kw.keyword, source: "수식어" });
+    for (const kw of top) push(kw.keyword, "수식어");
   }
 
   // 중복 제거 (어순 무관) — 시드 우선 유지
@@ -126,7 +133,7 @@ function collectCandidates(props: Props): CandidateWithSource[] {
   const deduped: CandidateWithSource[] = [];
   for (const c of candidates) {
     const key = c.keyword.trim().toLowerCase().split(/\s+/).sort().join(" ");
-    if (!seenKeys.has(key)) {
+    if (key && !seenKeys.has(key)) {
       seenKeys.add(key);
       deduped.push(c);
     }
@@ -320,6 +327,37 @@ export default function FactorScoreAggregated(props: Props) {
         <p className="text-sm text-gray-400 text-center py-4">
           종합 비교 데이터를 불러오지 못했습니다
         </p>
+      </div>
+    );
+  }
+
+  // 시드 외 후보가 없는 경우(너무 광범위한 카테고리 시드) — 안내
+  if (sorted.length === 1) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-bold text-gray-700">최종 후보 비교</span>
+          <span
+            className="text-xs px-2 py-0.5 rounded-full font-bold text-white"
+            style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
+          >
+            AI
+          </span>
+        </div>
+        <p className="text-xs text-gray-400 mb-4">
+          STEP 3에서 추천된 키워드들을 6개 판매 성공 지표로 종합 비교했어요
+        </p>
+        <div className="bg-purple-50/40 border border-purple-100 rounded-xl p-4 text-center">
+          <p className="text-sm text-gray-600 font-medium mb-1">
+            비교할 후보 키워드가 부족해요
+          </p>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            &quot;{keyword}&quot;은(는) 범주가 너무 넓어서 STEP 3의 추천 키워드가 충분히 수집되지
+            않았어요.<br />
+            STEP 3의 <strong>세부 유형</strong>·<strong>연관 키워드</strong> 카드에서 구체적인
+            키워드를 선택해 다시 분석해 보세요.
+          </p>
+        </div>
       </div>
     );
   }

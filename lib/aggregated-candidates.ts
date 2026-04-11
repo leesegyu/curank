@@ -5,6 +5,8 @@
  * 같은 로직으로 후보를 뽑아야 스냅샷 프리컴퓨트와 즉시 렌더가 일치한다.
  */
 
+import { sanitizeCandidateKeyword } from "./keyword-shape";
+
 export interface CandidateWithSource {
   keyword: string;
   source: string;
@@ -30,8 +32,14 @@ export function collectAggregatedCandidates(
   sources: CandidateSources,
 ): CandidateWithSource[] {
   const candidates: CandidateWithSource[] = [];
+  const push = (keyword: string | undefined, source: string) => {
+    if (!keyword) return;
+    const sanitized = sanitizeCandidateKeyword(keyword);
+    if (!sanitized) return;
+    candidates.push({ keyword: sanitized, source });
+  };
 
-  // 1) 시드
+  // 1) 시드 (원문 그대로 — 분석 대상 자체이므로 sanitize 우회)
   candidates.push({ keyword: seedKeyword, source: "seed" });
 
   // 2) V2 상위 25개
@@ -41,7 +49,7 @@ export function collectAggregatedCandidates(
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, 25);
-    for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "기회분석" });
+    for (const kw of top) push(kw.keyword, "기회분석");
   }
 
   // 3) Creative 상위 20개
@@ -51,7 +59,7 @@ export function collectAggregatedCandidates(
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
       .slice(0, 20);
-    for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "크리에이티브" });
+    for (const kw of top) push(kw.keyword, "크리에이티브");
   }
 
   // 4) Graph 상위 15개
@@ -61,7 +69,7 @@ export function collectAggregatedCandidates(
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0))
       .slice(0, 15);
-    for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "연관" });
+    for (const kw of top) push(kw.keyword, "연관");
   }
 
   // 5) SOS 상위 15개
@@ -71,22 +79,22 @@ export function collectAggregatedCandidates(
       .filter((kw) => kw?.keyword)
       .sort((a, b) => (b.sosScore ?? 0) - (a.sosScore ?? 0))
       .slice(0, 15);
-    for (const kw of top) candidates.push({ keyword: kw.keyword!, source: "시즌" });
+    for (const kw of top) push(kw.keyword, "시즌");
   }
 
-  // 6) Variant 상위 10개
+  // 6) Variant — 음료수·과일 같은 광범위 시드는 variant에만 풍부할 수 있음 (상위 20개)
   if (sources.variant && typeof sources.variant === "object") {
     const v = sources.variant as { keywords?: Array<{ keyword: string }> };
     if (Array.isArray(v.keywords)) {
-      const top = v.keywords.slice(0, 10);
-      for (const kw of top) candidates.push({ keyword: kw.keyword, source: "세부유형" });
+      const top = v.keywords.slice(0, 20);
+      for (const kw of top) push(kw.keyword, "세부유형");
     }
   }
 
   // 7) Modifiers 상위 15개
   if (Array.isArray(sources.modifiers)) {
     const top = sources.modifiers.slice(0, 15);
-    for (const kw of top) candidates.push({ keyword: kw.keyword, source: "수식어" });
+    for (const kw of top) push(kw.keyword, "수식어");
   }
 
   // 중복 제거 (어순 무관)

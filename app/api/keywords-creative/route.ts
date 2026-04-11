@@ -27,6 +27,7 @@ import { searchNaver } from "@/lib/naver";
 import { getL2Cache } from "@/lib/cache-db";
 import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/route";
 import { validateKeyword } from "@/lib/keyword-validator";
+import { sanitizeCandidateKeyword } from "@/lib/keyword-shape";
 
 type Platform = "naver" | "coupang";
 
@@ -63,21 +64,20 @@ export async function GET(req: NextRequest) {
 
   // 시드 포함 필수인 후보 추가 (수식어 조합용)
   function addTemplateCandidate(candidate: string, source: string) {
-    const trimmed = candidate.trim();
-    if (trimmed === kw || candidates.has(trimmed)) return;
-    if (trimmed.length < 4) return;
-    if (!coreTokens.every((t) => trimmed.includes(t))) return;
-    candidates.add(trimmed);
-    candidateSources.set(trimmed, source);
+    const sanitized = sanitizeCandidateKeyword(candidate);
+    if (!sanitized || sanitized === kw || candidates.has(sanitized)) return;
+    if (sanitized.length < 4) return;
+    if (!coreTokens.every((t) => sanitized.includes(t))) return;
+    candidates.add(sanitized);
+    candidateSources.set(sanitized, source);
   }
 
   // 실제 검색 데이터 후보 추가 (시드 미포함 허용 — 자동완성에서 온 실제 키워드)
   function addRealCandidate(candidate: string, source: string) {
-    const trimmed = candidate.trim();
-    if (trimmed === kw || candidates.has(trimmed)) return;
-    if (trimmed.length < 2) return;
-    candidates.add(trimmed);
-    candidateSources.set(trimmed, source);
+    const sanitized = sanitizeCandidateKeyword(candidate);
+    if (!sanitized || sanitized === kw || candidates.has(sanitized)) return;
+    candidates.add(sanitized);
+    candidateSources.set(sanitized, source);
   }
 
   // ══════════════════════════════════════════════════════════
