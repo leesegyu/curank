@@ -33,7 +33,7 @@ import { validateKeyword } from "@/lib/keyword-validator";
 import { getAdKeywordsWithPool } from "@/lib/category-pool";
 import type { Platform as OntoPlatform } from "@/lib/ontology/types";
 
-export const V2_CACHE_TYPE = "keywords_v2_19"; // v19: 카테고리 풀 메타(poolSource/poolFetchedAt) 캐싱
+export const V2_CACHE_TYPE = "keywords_v2_20"; // v20: substring 가점 + 분류 실패 시 substring 강제 필터
 const CACHE_TYPE = V2_CACHE_TYPE; // 기존 코드 호환용 alias
 /** L1 인메모리 캐시 — keywords-creative에서도 읽기 전용으로 참조 */
 export const v2Cache = new NodeCache({ stdTTL: 3600 });
@@ -42,7 +42,7 @@ const cache = v2Cache; // 기존 코드 호환용 alias
 /** 풀 메타 캐시 (poolSource/poolFetchedAt) — v2Cache와 동기 갱신 */
 interface V2Meta { poolSource: "pool" | "api" | null; poolFetchedAt: string | null }
 const v2MetaCache = new NodeCache({ stdTTL: 3600, maxKeys: 500 });
-const META_L2_TYPE = "keywords_v2_meta_19";
+const META_L2_TYPE = "keywords_v2_meta_20";
 
 export interface KeywordV2 {
   keyword: string;
@@ -360,6 +360,11 @@ export async function GET(req: NextRequest) {
     // ─── 5단계: 전체 채점 ─────────────────────────────────────────
     const results: KeywordV2[] = [];
     const seedTokensForFilter = keyword.split(/\s+/);
+    // 시드 정규화 (대소문자/공백 무시) — substring 매칭용
+    const seedNorm = keyword.trim().toLowerCase().replace(/\s+/g, "");
+    // 시드의 온톨로지 분류 성공 여부 — 실패 시 substring 의존도 강화
+    const seedClassified = classifyKeyword(keyword, "smartstore") ?? classifyKeyword(keyword, "coupang");
+    const seedUnclassified = !seedClassified;
 
     for (const [kw, info] of candidateMap) {
       // 데이터 없는 후보 필터: 다중어 + 구체성 높으면 NLP 점수만으로 포함
@@ -387,7 +392,12 @@ export async function GET(req: NextRequest) {
       const scoreIntent        = info.inAds && info.volume > 0
         ? Math.round(scoreIntentApi * 0.6 + scoreIntentNlp * 0.4)
         : scoreIntentNlp;
-      const scoreSpecificity   = intent.specificityScore;
+      // 시드 substring 포함하면서 시드보다 길면 명확한 "변형" → specificity 최소 50 보장
+      // ("납작복숭아"·"신비복숭아" 같은 단일토큰 변형이 점수 낮게 처리되던 문제 보정)
+      const isSeedVariant = kw.trim().toLowerCase().replace(/\s+/g, "").includes(seedNorm) && kw.length > keyword.length;
+      const scoreSpecificity   = isSeedVariant
+        ? Math.max(intent.specificityScore, 50)
+        : intent.specificityScore;
       const scoreGrowth        = calcGrowthScore(trendSlope);
       const scorePenetrability = PENETRABILITY[info.compIdx] ?? 55;
       // 온톨로지 기반 연관도 (Wu-Palmer + 분류깊이 + 그래프 + 학습매핑 + 토큰겹침)
@@ -395,11 +405,19 @@ export async function GET(req: NextRequest) {
       const scoreRelation      = relevance.score;
 
       // ─── 연관도 필터: 시드와 완전 무관한 키워드 차단 ────────────
-      // 시드 토큰을 하나도 포함하지 않으면서 온톨로지 연관도도 낮은 키워드 제거
-      // 예: "게이밍 의자" → "왕새우", "오징어" 등 차단
+      // - containsSeedToken: 공백 분리 토큰 단위 매칭
+      // - containsSeedSubstr: 정규화된 시드 substring 매칭 (단일어 변형 ex. "납작복숭아")
       const containsSeedToken = seedTokensForFilter.some((t) => kw.includes(t));
-      if (!containsSeedToken && scoreRelation < 15) {
-        continue; // 시드 토큰 미포함 + 온톨로지 무관 → 완전히 다른 카테고리 키워드
+      const kwNorm = kw.trim().toLowerCase().replace(/\s+/g, "");
+      const containsSeedSubstr = kwNorm.includes(seedNorm);
+
+      // 시드 분류 실패(온톨로지 미정의) → seed substring 미포함 후보는 무조건 차단
+      // 분류가 있을 때보다 엄격: 그래프 BFS로 묶인 무관 키워드("미국젤리" 등) 제거
+      if (seedUnclassified && !containsSeedSubstr) {
+        continue;
+      }
+      if (!containsSeedToken && !containsSeedSubstr && scoreRelation < 15) {
+        continue;
       }
 
       // ─── KOS 최종 점수 ─────────────────────────────────────────
@@ -407,11 +425,18 @@ export async function GET(req: NextRequest) {
       const trendMult = Math.max(1 + trendSlope / 150, 0.5);
       const iMult     = intentMultiplier(scoreIntent);
       const sMult     = specificityMultiplier(scoreSpecificity);
-      // 연관도 배율: 0점→0.3배, 50점→1.0배, 100점→1.2배
-      // 시드 토큰 포함 키워드는 최소 0.7배 보장 (수식어 조합이므로)
-      const relMult   = containsSeedToken
-        ? Math.max(0.7, 0.3 + (scoreRelation / 100) * 0.9)
-        : 0.3 + (scoreRelation / 100) * 0.9;
+      // 연관도 배율
+      // - 시드 substring 포함(예: "납작복숭아"): 최소 1.0배 (강한 변형 확신)
+      // - 시드 토큰 포함: 최소 0.7배
+      // - 그 외: 온톨로지 점수 기반
+      let relMult: number;
+      if (containsSeedSubstr) {
+        relMult = Math.max(1.0, 0.3 + (scoreRelation / 100) * 0.9);
+      } else if (containsSeedToken) {
+        relMult = Math.max(0.7, 0.3 + (scoreRelation / 100) * 0.9);
+      } else {
+        relMult = 0.3 + (scoreRelation / 100) * 0.9;
+      }
 
       // volumeConfirmed: Ad API 실데이터 여부 (true = 신뢰 높음)
       const volumeConfirmed = info.inAds && info.volume > 0;
