@@ -220,7 +220,7 @@ export async function GET(req: NextRequest) {
           // v2를 먼저 실행 → 캐시 생성 → Step 7에서 creative가 캐시 재사용
           send({ step: 6, total: TOTAL, label: "🔍 STEP 2 · 💡 STEP 3 · 판매 지표 + 기회 분석 중...", progress: 52 });
           const [kosV2, variant, factor] = await Promise.allSettled([
-            fetch(`${BASE_URL}/api/keywords-v2?keyword=${kw}`, fetchOpt).then(r => r.json()),
+            fetch(`${BASE_URL}/api/keywords-v2?keyword=${kw}&platform=${platform === "coupang" ? "coupang" : "smartstore"}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/keywords-variant?keyword=${kw}`, fetchOpt).then(r => r.json()),
             fetch(`${BASE_URL}/api/factor-score?keyword=${kw}&platform=${platform}`, fetchOpt).then(r => r.json()),
           ]);
@@ -343,6 +343,8 @@ export async function GET(req: NextRequest) {
             factorScore: factorData ?? null,
             brandDistribution: { brands: brandDistribution, noBrandRatio, totalProducts },
             factorAggregated: factorAggregatedData,
+            poolSource: (kosV2Data?.poolSource ?? null) as "pool" | "api" | null,
+            poolFetchedAt: (kosV2Data?.poolFetchedAt ?? null) as string | null,
           }).catch(() => {});
 
           send({

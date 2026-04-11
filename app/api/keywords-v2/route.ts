@@ -17,7 +17,6 @@
 import { NextRequest, NextResponse }    from "next/server";
 import NodeCache                         from "node-cache";
 import {
-  getNaverAdKeywords,
   getNaverAdKeywordsForHints,
   getNaverShoppingAutocomplete,
   totalMonthlyVolume,
@@ -31,6 +30,8 @@ import { calcOntologyRelevance } from "@/lib/ontology-relevance";
 import { searchNaver } from "@/lib/naver";
 import { calcCreativityScore, calcCreativityChanceScore } from "@/lib/creativity-score";
 import { validateKeyword } from "@/lib/keyword-validator";
+import { getAdKeywordsWithPool } from "@/lib/category-pool";
+import type { Platform as OntoPlatform } from "@/lib/ontology/types";
 
 export const V2_CACHE_TYPE = "keywords_v2_18"; // 카테고리 기반 수식어 필터링 (v17→v18)
 const CACHE_TYPE = V2_CACHE_TYPE; // 기존 코드 호환용 alias
@@ -185,6 +186,10 @@ export async function GET(req: NextRequest) {
   }
   const keyword = rawKeyword as string;
 
+  // platform 파라미터 (카테고리 풀 조회용, 기본 smartstore)
+  const platformRaw = req.nextUrl.searchParams.get("platform") ?? "smartstore";
+  const ontoPlatform: OntoPlatform = platformRaw === "coupang" ? "coupang" : "smartstore";
+
   const cached = cache.get<KeywordV2[]>(keyword);
   if (cached) return NextResponse.json({ keywords: cached, cached: true });
 
@@ -195,16 +200,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // ─── 1단계: Ad API + BFS 그래프 + 쇼핑 자동완성 병렬 호출 ──────
+    // ─── 1단계: Ad API(풀 우선) + BFS 그래프 + 쇼핑 자동완성 병렬 호출 ──────
     const longtailCandidates = generateLongtailCandidates(keyword);
 
     const [adsResult, graphResult, autoResult] = await Promise.allSettled([
-      getNaverAdKeywords(keyword),
+      getAdKeywordsWithPool(keyword, ontoPlatform),
       bfsKeywords(keyword, 2, 15),
       getNaverShoppingAutocomplete(keyword),
     ]);
 
-    const adsKeywords     = adsResult.status   === "fulfilled" ? adsResult.value   : [];
+    const adsRes         = adsResult.status   === "fulfilled" ? adsResult.value   : { keywords: [], source: "api" as const };
+    const adsKeywords    = adsRes.keywords;
     const graphKeywords   = graphResult.status  === "fulfilled" ? graphResult.value  : [];
     const autoSuggestions = autoResult.status   === "fulfilled" ? autoResult.value   : [];
 
@@ -512,7 +518,11 @@ export async function GET(req: NextRequest) {
 
     cache.set(keyword, top);
     setL2Cache(keyword, CACHE_TYPE, top);
-    return NextResponse.json({ keywords: top });
+    return NextResponse.json({
+      keywords: top,
+      poolSource: adsRes.source,      // "pool" | "api"
+      poolFetchedAt: adsRes.fetchedAt ?? null,
+    });
 
   } catch (err) {
     return NextResponse.json(
