@@ -415,7 +415,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
 
           {/* Blue Ocean 주석 처리 → 변형/품종 키워드로 교체 */}
           {/* <KeywordRecommendations keyword={kw} platform={platform} preloadedData={snapKeywordsV1} /> */}
-          <KeywordRecommendationsVariant keyword={kw} platform={platform} preloadedData={snapKeywordsVariant as { keywords?: { keyword: string; monthlyVolume: number; competitionLevel: string; score: number }[]; category?: string } | null} />
+          <KeywordRecommendationsVariant keyword={kw} platform={platform} preloadedData={snapKeywordsVariant as { keywords?: { keyword: string; volume?: number }[]; category?: string; source?: "ontology" | "api-fallback" } | null} />
 
           {/* 수식어 추천 키워드 (여러 소스 통합) */}
           <KeywordRecommendationsModifiers
