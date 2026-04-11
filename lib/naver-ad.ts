@@ -17,13 +17,28 @@ const AD_API_BASE = "https://api.naver.com";
 const adCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
 const acCache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
 
-function getAdHeaders(method: string, path: string) {
+/**
+ * Naver 검색광고 API HMAC 서명 헤더 생성
+ *
+ * ⚠️ 규격 주의:
+ *   - 메시지 구분자는 "." (period), \n 아님
+ *   - 서명 path는 **쿼리스트링 제외** (/keywordstool 까지만)
+ *   - 서명 path에 쿼리를 포함하거나 \n 구분자를 쓰면 403 invalid-signature
+ *
+ * 2026-04-11 수정: 기존 코드가 \n + 쿼리포함으로 서명해 프로덕션 Ad API
+ * 호출이 전부 403으로 실패하던 버그를 수정. 기존 코드는 catch에서 빈 배열을
+ * 조용히 반환해 증상이 감춰져 있었음.
+ *
+ * @param method HTTP 메서드 (GET/POST)
+ * @param pathOnly 쿼리스트링을 제외한 경로 (예: "/keywordstool")
+ */
+function getAdHeaders(method: string, pathOnly: string) {
   const timestamp = Date.now().toString();
   const customerId = process.env.NAVER_AD_CUSTOMER_ID!;
   const accessLicense = process.env.NAVER_AD_ACCESS_LICENSE!;
   const secretKey = process.env.NAVER_AD_SECRET_KEY!;
 
-  const message = `${timestamp}\n${method}\n${path}`;
+  const message = `${timestamp}.${method}.${pathOnly}`;
   const signature = createHmac("sha256", secretKey)
     .update(message)
     .digest("base64");
@@ -69,10 +84,13 @@ export async function getNaverAdKeywords(keyword: string): Promise<NaverAdKeywor
 
   try {
     const res = await fetch(`${AD_API_BASE}${fullPath}`, {
-      headers: getAdHeaders("GET", fullPath),
+      headers: getAdHeaders("GET", path), // ⚠️ 서명은 path만 (쿼리 제외)
       cache: "no-store",
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`[naver-ad] getNaverAdKeywords(${keyword}) ${res.status}: ${await res.text().then(t => t.slice(0, 200))}`);
+      return [];
+    }
 
     const json = await res.json();
     const list: NaverAdKeyword[] = (json?.keywordList ?? [])
@@ -86,7 +104,8 @@ export async function getNaverAdKeywords(keyword: string): Promise<NaverAdKeywor
     adCache.set(cacheKey, list);
     setL2Cache(keyword, "naver_ad", list);
     return list;
-  } catch {
+  } catch (err) {
+    console.warn(`[naver-ad] getNaverAdKeywords(${keyword}) 예외:`, err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -136,10 +155,13 @@ export async function getNaverAdKeywordsForHints(keywords: string[]): Promise<Na
 
   try {
     const res = await fetch(`${AD_API_BASE}${fullPath}`, {
-      headers: getAdHeaders("GET", fullPath),
+      headers: getAdHeaders("GET", path), // ⚠️ 서명은 path만 (쿼리 제외)
       cache: "no-store",
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`[naver-ad] getNaverAdKeywordsForHints(${keywords.join(",")}) ${res.status}`);
+      return [];
+    }
     const json = await res.json();
     const list: NaverAdKeyword[] = (json?.keywordList ?? [])
       .map((item: NaverAdKeyword) => ({

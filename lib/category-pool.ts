@@ -97,6 +97,9 @@ export async function getCategoryPool(
 
 /**
  * 키워드로부터 자동 분류 → 풀 조회
+ *
+ * 분류 결과가 L4 노드인데 해당 풀이 비어 있으면 L3 부모 풀로 폴백한다.
+ * (L4는 배치 수집 대상이지만, Ad API가 공백 포함 키워드를 거부해 일부 L4는 수집 실패)
  */
 export async function getCategoryPoolForKeyword(
   keyword: string,
@@ -104,7 +107,19 @@ export async function getCategoryPoolForKeyword(
 ): Promise<CategoryPoolResult | null> {
   const classified = classifyKeywordV2(keyword, platform);
   if (!classified?.path) return null;
-  return getCategoryPool(classified.path, platform);
+
+  const direct = await getCategoryPool(classified.path, platform);
+  if (direct && direct.keywords.length > 0) return direct;
+
+  // L4 → L3 fallback (한 단계 위로)
+  const parts = classified.path.split(".");
+  if (parts.length > 1) {
+    const parentPath = parts.slice(0, -1).join(".");
+    const parent = await getCategoryPool(parentPath, platform);
+    if (parent && parent.keywords.length > 0) return parent;
+  }
+
+  return null;
 }
 
 /**

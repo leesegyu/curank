@@ -63,17 +63,48 @@ interface NodeJob {
   seedKeyword: string;
 }
 
+/**
+ * 노드에서 Ad API에 넘길 유효한 시드 선택
+ *
+ * Ad API hintKeywords 제약: 공백·슬래시·특수문자 포함 키워드 거부 (400 BAD_REQUEST).
+ * 우선순위:
+ *   1) variantKeywords 중 공백·슬래시 없는 첫 항목 ("한돈삼겹살")
+ *   2) seedKeywords 중 공백·슬래시 없는 첫 항목
+ *   3) 노드명에서 공백·슬래시 제거 후 (길이 ≥ 2)
+ *   4) null (skip)
+ */
+function pickCleanSeed(node: {
+  name: string;
+  variantKeywords?: string[];
+  seedKeywords?: string[];
+}): string | null {
+  const isClean = (s: string) => !!s && !/[\s/]/.test(s) && s.length >= 2;
+
+  if (node.variantKeywords) {
+    const hit = node.variantKeywords.find(isClean);
+    if (hit) return hit;
+  }
+  if (node.seedKeywords) {
+    const hit = node.seedKeywords.find(isClean);
+    if (hit) return hit;
+  }
+  const stripped = node.name.replace(/[\s/]/g, "");
+  if (stripped.length >= 2) return stripped;
+  return null;
+}
+
 function collectJobs(platforms: Platform[]): NodeJob[] {
   const jobs: NodeJob[] = [];
   for (const platform of platforms) {
     const nodes = getNodesV2(platform);
     for (const node of nodes) {
       if (node.level < 3) continue; // L1/L2 skip (너무 광범위)
-      if (!node.name) continue;
+      const seed = pickCleanSeed(node);
+      if (!seed) continue;
       jobs.push({
         nodeId: node.id,
         platform,
-        seedKeyword: node.name,
+        seedKeyword: seed,
       });
     }
   }
