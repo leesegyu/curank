@@ -108,18 +108,21 @@ export async function getCategoryPoolForKeyword(
   const classified = classifyKeywordV2(keyword, platform);
   if (!classified?.path) return null;
 
-  const direct = await getCategoryPool(classified.path, platform);
-  if (direct && direct.keywords.length > 0) return direct;
+  const MIN_USEFUL_POOL = 30;
 
-  // L4 → L3 fallback (한 단계 위로)
+  const direct = await getCategoryPool(classified.path, platform);
+  if (direct && direct.keywords.length >= MIN_USEFUL_POOL) return direct;
+
+  // 빈약하면 부모 노드로 단계적 폴백 (L4 → L3 → L2)
   const parts = classified.path.split(".");
-  if (parts.length > 1) {
-    const parentPath = parts.slice(0, -1).join(".");
+  for (let depth = parts.length - 1; depth >= 2; depth--) {
+    const parentPath = parts.slice(0, depth).join(".");
     const parent = await getCategoryPool(parentPath, platform);
-    if (parent && parent.keywords.length > 0) return parent;
+    if (parent && parent.keywords.length >= MIN_USEFUL_POOL) return parent;
   }
 
-  return null;
+  // 어떤 부모도 충분하지 않음 — direct가 있다면 빈약하더라도 반환 (없는 것보단 낫게)
+  return direct ?? null;
 }
 
 /**
