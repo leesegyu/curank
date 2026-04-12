@@ -312,3 +312,66 @@ export async function pickRisingCandidates(
 
   return scored.slice(0, limit);
 }
+
+// ─────────────────────────────────────────────
+// 5. 전체 rising 키워드 조회 (상품발굴용)
+// ─────────────────────────────────────────────
+
+const allRisingCache = new NodeCache({ stdTTL: 60 * 60 * 6, maxKeys: 20 });
+
+/**
+ * keyword_seasonal_trend 테이블에서 시즌성 키워드 전체를 조회하고
+ * 현재 월 기준 rising / rising_fast phase만 필터링해 반환.
+ * 상품발굴 페이지에서 시드 없이 전체 카테고리 브라우징용.
+ */
+export async function getAllRisingKeywords(opts?: {
+  seasonType?: SeasonType;
+  limit?: number;
+  includeRisingFast?: boolean;
+}): Promise<SeasonalCandidate[]> {
+  const seasonFilter = opts?.seasonType ?? "all";
+  const limit = opts?.limit ?? 200;
+  const includeFast = opts?.includeRisingFast ?? true;
+
+  const cacheKey = `all_rising:${seasonFilter}:${includeFast}`;
+  const cached = allRisingCache.get<SeasonalCandidate[]>(cacheKey);
+  if (cached) return cached.slice(0, limit);
+
+  const sb = getSupabase();
+  if (!sb) return [];
+
+  try {
+    let query = sb
+      .from("keyword_seasonal_trend")
+      .select("*")
+      .gte("seasonality", 0.6);
+
+    if (seasonFilter !== "all") {
+      query = query.eq("season_type", seasonFilter);
+    }
+
+    const { data } = await query;
+    if (!data || data.length === 0) return [];
+
+    const scored: SeasonalCandidate[] = [];
+    for (const row of data as SeasonalTrendRow[]) {
+      const analysis = analyzePhase(row);
+      if (!analysis.isSeasonal) continue;
+      if (analysis.phase === "rising" || (includeFast && analysis.phase === "rising_fast")) {
+        scored.push({ keyword: row.keyword, analysis });
+      }
+    }
+
+    scored.sort((a, b) => {
+      if (a.analysis.phase !== b.analysis.phase) {
+        return a.analysis.phase === "rising" ? -1 : 1;
+      }
+      return b.analysis.upsidePercent - a.analysis.upsidePercent;
+    });
+
+    allRisingCache.set(cacheKey, scored);
+    return scored.slice(0, limit);
+  } catch {
+    return [];
+  }
+}

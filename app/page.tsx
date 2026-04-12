@@ -8,6 +8,7 @@ import FeedGrid from "@/components/feed/FeedGrid";
 import SearchFormClient from "@/components/SearchFormClient";
 import UsageBadge from "@/components/UsageBadge";
 import AnalysisBlocksSection from "@/components/AnalysisBlocksSection";
+import TabNav from "@/components/TabNav";
 
 export default async function Home() {
   const session = await auth();
@@ -88,6 +89,9 @@ export default async function Home() {
 
         <SearchFormClient variant="home" action={search} clientMode={isLoggedIn} />
       </div>
+
+      {/* ── 탭 네비게이션 ── */}
+      <TabNav />
 
       {/* ── 로그인 + 온보딩 완료: 분석 블록 + 개인화 피드 ── */}
       {isLoggedIn && onboardingComplete && (

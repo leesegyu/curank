@@ -46,6 +46,15 @@ export function getAllNodes(): OntologyNode[] {
   return [...SMARTSTORE_NODES, ...COUPANG_NODES];
 }
 
+/**
+ * V2 온톨로지 L1 카테고리 목록 반환 (상품발굴 필터용)
+ */
+export function getL1Categories(platform: Platform = "smartstore"): { id: string; name: string }[] {
+  return PLATFORM_NODES_V2[platform]
+    .filter((n) => n.level === 1)
+    .map((n) => ({ id: n.id, name: n.name }));
+}
+
 // ── 키워드 → 온톨로지 경로 매핑 ─────────────────────────────────
 /**
  * 키워드를 온톨로지 경로로 분류 (3단계 폴백)
