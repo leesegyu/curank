@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createClient } from "@supabase/supabase-js";
-import { fetchNaverScoreData } from "@/lib/search";
-import { getKeywordTrend } from "@/lib/datalab";
 import { classifyKeywordIntent } from "@/lib/intent-classifier";
 import { calcFactorScores, type FactorInput, type Platform } from "@/lib/factor-model";
-import { generateConclusion } from "@/lib/conclusion-generator";
 import { buildTitlesRuleBased } from "@/lib/title-builder";
 import { mineKeywordsFromTitles } from "@/lib/title-miner";
 import { classifyKeywordV2 } from "@/lib/ontology";
@@ -216,181 +213,96 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 1. 6 Factor 데이터 수집
-    const [naverScore, trend] = await Promise.allSettled([
-      fetchNaverScoreData(keyword),
-      getKeywordTrend(keyword),
-    ]);
+    // ── 스냅샷에서 모든 데이터 읽기 (외부 API 호출 0) ──
+    const { getSnapshot } = await import("@/lib/snapshot");
+    const snap = await getSnapshot(userId, keyword, platform);
 
-    const ns = naverScore.status === "fulfilled" ? naverScore.value : null;
-    const tr = trend.status === "fulfilled" ? trend.value : null;
-
-    const intent = classifyKeywordIntent(keyword);
-
-    let recentSlope = 0;
-    let longSlope = 0;
-    if (tr?.weeklyData && tr.weeklyData.length >= 8) {
-      const wd = tr.weeklyData;
-      const recent4 = wd.slice(-4).reduce((a, b) => a + b.ratio, 0) / 4;
-      const prev4 = wd.slice(-8, -4).reduce((a, b) => a + b.ratio, 0) / 4;
-      recentSlope = recent4 - prev4;
-      if (wd.length >= 16) {
-        const recent8 = wd.slice(-8).reduce((a, b) => a + b.ratio, 0) / 8;
-        const prev8 = wd.slice(-16, -8).reduce((a, b) => a + b.ratio, 0) / 8;
-        longSlope = recent8 - prev8;
-      }
-    } else if (tr?.data && tr.data.length >= 4) {
-      const md = tr.data;
-      const recent2 = md.slice(-2).reduce((a, b) => a + b.ratio, 0) / 2;
-      const prev2 = md.slice(-4, -2).reduce((a, b) => a + b.ratio, 0) / 2;
-      recentSlope = recent2 - prev2;
-      if (md.length >= 6) {
-        const recent3 = md.slice(-3).reduce((a, b) => a + b.ratio, 0) / 3;
-        const prev3 = md.slice(-6, -3).reduce((a, b) => a + b.ratio, 0) / 3;
-        longSlope = recent3 - prev3;
-      }
+    // 1. factorScores — 스냅샷 우선, 없으면 로컬 계산
+    let factorScores: import("@/lib/factor-model").FactorScoreSet;
+    if (snap?.snapshot.factorScore) {
+      factorScores = snap.snapshot.factorScore as import("@/lib/factor-model").FactorScoreSet;
+    } else {
+      // 스냅샷에 factor가 없는 경우 (레거시) — 최소한의 로컬 계산
+      const intent = classifyKeywordIntent(keyword);
+      const factorInput: FactorInput = {
+        keyword, totalCount: 0, coupangRatio: 0,
+        priceStats: { min: 0, max: 0, avg: 0 }, compIdx: undefined,
+        intentScore: intent.intentScore, specificityScore: intent.specificityScore,
+        trendDirection: "안정", trendSlope: 0, longSlope: 0,
+        monthlyVolume: 0, trendPeak: 0, trendCurrent: 0,
+        products: [], entryBarrier: null, reviewBarrier: null,
+        rocketBarrier: null, dominanceScore: null, rocketRatio: null,
+      };
+      factorScores = calcFactorScores(factorInput, platform);
     }
 
-    const factorInput: FactorInput = {
-      keyword,
-      totalCount: ns?.totalCount ?? 0,
-      coupangRatio: ns?.coupangRatio ?? 0,
-      priceStats: ns?.priceStats ?? { min: 0, max: 0, avg: 0 },
-      compIdx: ns?.compIdx,
-      intentScore: intent.intentScore,
-      specificityScore: intent.specificityScore,
-      trendDirection: tr?.direction ?? "안정",
-      trendSlope: recentSlope,
-      longSlope,
-      monthlyVolume: (tr?.current ?? 0) * 1000,
-      trendPeak: tr?.peak ?? 0,
-      trendCurrent: tr?.current ?? 0,
-      products: [],
-      entryBarrier: null,
-      reviewBarrier: null,
-      rocketBarrier: null,
-      dominanceScore: null,
-      rocketRatio: null,
-    };
-
-    const factorScores = calcFactorScores(factorInput, platform);
-
-    // 2. 추천 키워드 수집 — 캐시 우선 (L1 → L2 → 최후 fetch)
+    // 2. 추천 키워드 — 스냅샷 → L1 → L2 (self-fetch 제거)
     let v2Keywords: KeywordV2[] = [];
-    const l1 = v2Cache.get<KeywordV2[]>(keyword);
-    if (l1) {
-      v2Keywords = l1;
+    if (snap?.snapshot.keywordsV2) {
+      v2Keywords = snap.snapshot.keywordsV2 as KeywordV2[];
     } else {
-      const l2 = await getL2Cache<KeywordV2[]>(keyword, V2_CACHE_TYPE);
-      if (l2) {
-        v2Cache.set(keyword, l2);
-        v2Keywords = l2;
-      } else {
-        // 최후 수단: 내부 fetch (analyze-run SSE 이후엔 거의 발생 안 함)
-        const kwUrl = new URL("/api/keywords-v2", req.nextUrl.origin);
-        kwUrl.searchParams.set("keyword", keyword);
-        const kwRes = await fetch(kwUrl.toString(), {
-          headers: { cookie: req.headers.get("cookie") ?? "" },
-        });
-        const kwData = kwRes.ok ? await kwRes.json() : { keywords: [] };
-        v2Keywords = (kwData.keywords ?? []) as KeywordV2[];
+      const l1 = v2Cache.get<KeywordV2[]>(keyword);
+      if (l1) { v2Keywords = l1; }
+      else {
+        const l2 = await getL2Cache<KeywordV2[]>(keyword, V2_CACHE_TYPE);
+        if (l2) { v2Cache.set(keyword, l2); v2Keywords = l2; }
       }
     }
     const recommendedKeywords = v2Keywords
       .slice(0, 15)
-      .map((k: { keyword: string; score: number }) => ({
-        keyword: k.keyword,
-        score: k.score,
-      }));
-
-    // 기회분석 키워드 (scoreChance 기준 상위 10개)
+      .map((k: { keyword: string; score: number }) => ({ keyword: k.keyword, score: k.score }));
     const opportunityKeywords = [...v2Keywords]
       .sort((a: { scoreChance: number }, b: { scoreChance: number }) => b.scoreChance - a.scoreChance)
       .slice(0, 10)
-      .map((k: { keyword: string; scoreChance: number }) => ({
-        keyword: k.keyword,
-        scoreChance: k.scoreChance,
-      }));
+      .map((k: { keyword: string; scoreChance: number }) => ({ keyword: k.keyword, scoreChance: k.scoreChance }));
 
-    // 3. 크리에이티브 키워드 top1 수집
+    // 3. 크리에이티브 — 스냅샷에서 읽기 (self-fetch 제거)
     let creativeKeyword: string | undefined;
-    try {
-      const crUrl = new URL("/api/keywords-creative", req.nextUrl.origin);
-      crUrl.searchParams.set("keyword", keyword);
-      crUrl.searchParams.set("platform", platform);
-      const crRes = await fetch(crUrl.toString());
-      if (crRes.ok) {
-        const crData = await crRes.json();
-        const top5 = (crData.keywords ?? []).slice(0, 5);
-        if (top5.length > 0) {
-          creativeKeyword = top5[0].keyword;
-        }
-      }
-    } catch {
-      // 크리에이티브 실패해도 결론 생성은 계속
+    if (snap?.snapshot.keywordsCreative) {
+      const crArr = snap.snapshot.keywordsCreative as { keyword: string }[];
+      if (crArr.length > 0) creativeKeyword = crArr[0].keyword;
     }
 
-    // 5. 최종 후보 비교 Top (factor-score-batch 재사용, L1 캐시 HIT 시 추가 비용 0)
+    // 4. 최종 후보 Top — 스냅샷에서 읽기 (factor-score-batch self-fetch 제거)
     let topAggregatedKeyword:
       | { keyword: string; overallScore: number; topFactorKey: string; topFactorScore: number }
       | undefined;
-    try {
-      const candidates = [
-        keyword,
-        ...v2Keywords.slice(0, 5).map((k: { keyword: string }) => k.keyword),
-      ];
-      const batchUrl = new URL("/api/factor-score-batch", req.nextUrl.origin);
-      batchUrl.searchParams.set("keywords", candidates.join(","));
-      batchUrl.searchParams.set("platform", platform);
-      const batchRes = await fetch(batchUrl.toString());
-      if (batchRes.ok) {
-        const batchData = await batchRes.json();
-        const results: Array<{ keyword: string; factors: Array<{ key: string; score: number }> }> =
-          batchData.results ?? [];
-        const scored = results
-          .map((r) => {
-            const avg = r.factors.reduce((sum, f) => sum + f.score, 0) / r.factors.length;
-            const topFactor = [...r.factors].sort((a, b) => b.score - a.score)[0];
-            return {
-              keyword: r.keyword,
-              overallScore: Math.round(avg),
-              topFactorKey: topFactor?.key ?? "ranking",
-              topFactorScore: topFactor?.score ?? 0,
-            };
-          })
-          .sort((a, b) => b.overallScore - a.overallScore);
-        if (scored.length > 0) topAggregatedKeyword = scored[0];
+    if (snap?.snapshot.factorAggregated) {
+      const aggArr = snap.snapshot.factorAggregated as { keyword: string; factors: { key: string; score: number }[] }[];
+      if (aggArr.length > 0) {
+        const top = aggArr[0];
+        const avg = top.factors?.reduce((s, f) => s + f.score, 0) / (top.factors?.length || 1);
+        const topF = top.factors ? [...top.factors].sort((a, b) => b.score - a.score)[0] : null;
+        topAggregatedKeyword = {
+          keyword: top.keyword,
+          overallScore: Math.round(avg),
+          topFactorKey: topF?.key ?? "ranking",
+          topFactorScore: topF?.score ?? 0,
+        };
       }
-    } catch {
-      // 실패해도 결론 생성은 계속
     }
 
-    // 6. 세부 유형(합성어) Top1 수집
+    // 5. 변형 키워드 — 스냅샷에서 읽기 (self-fetch 제거)
     let topVariantKeyword: string | undefined;
-    try {
-      const varUrl = new URL("/api/keywords-variant", req.nextUrl.origin);
-      varUrl.searchParams.set("keyword", keyword);
-      const varRes = await fetch(varUrl.toString());
-      if (varRes.ok) {
-        const varData = await varRes.json();
-        if (Array.isArray(varData.keywords) && varData.keywords.length > 0) {
-          topVariantKeyword = varData.keywords[0].keyword;
-        }
-      }
-    } catch {
-      // 실패해도 결론 생성은 계속
+    if (snap?.snapshot.keywordsVariant) {
+      const varArr = snap.snapshot.keywordsVariant as { keyword: string }[];
+      if (varArr.length > 0) topVariantKeyword = varArr[0].keyword;
     }
 
-    // 7. 규칙 기반 제목+태그 생성 (LLM 미사용)
-    //    title-miner로 실제 상위 상품 제목에서 키워드 추출 → 조립
+    // 6. 브랜드 — 스냅샷에서 읽기 (searchNaver 중복 호출 제거)
+    let topBrands: string[] = [];
+    if (snap?.snapshot.brandDistribution) {
+      const brands = snap.snapshot.brandDistribution as { name: string; count: number }[];
+      topBrands = brands.slice(0, 5).map((b) => b.name);
+    }
+
+    // 7. title-miner + 온톨로지 (로컬 연산 + 무료 API)
     let titleMinedKeywords = titleMineCache.get<import("@/lib/title-miner").TitleMinedKeyword[]>(keyword);
     if (!titleMinedKeywords) {
       try {
         titleMinedKeywords = await mineKeywordsFromTitles(keyword);
         titleMineCache.set(keyword, titleMinedKeywords);
-      } catch {
-        titleMinedKeywords = [];
-      }
+      } catch { titleMinedKeywords = []; }
     }
 
     const ontologyResult = classifyKeywordV2(keyword, platform === "naver" ? "smartstore" : "coupang");
@@ -398,50 +310,21 @@ export async function GET(req: NextRequest) {
     let categoryPoolKeywords: import("@/lib/category-pool").CategoryPoolKeyword[] | undefined;
     if (ontologyResult) {
       const { getNodesV2 } = await import("@/lib/ontology");
-      const nodes = getNodesV2(ontologyResult.platform);
-      ontologyNode = nodes.find((n) => n.id === ontologyResult.path) ?? null;
+      ontologyNode = getNodesV2(ontologyResult.platform).find((n) => n.id === ontologyResult.path) ?? null;
       try {
         const pool = await getCategoryPool(ontologyResult.path, ontologyResult.platform);
         categoryPoolKeywords = pool?.keywords.slice(0, 50);
-      } catch { /* pool 실패해도 계속 */ }
+      } catch {}
     }
 
-    // 상위 상품에서 브랜드 top 5 추출
-    let topBrands: string[] = [];
-    try {
-      const { searchNaver } = await import("@/lib/naver");
-      const shopRes = await searchNaver(keyword, 20);
-      const brandCount = new Map<string, number>();
-      for (const item of shopRes.items) {
-        const b = (item as { brand?: string; maker?: string }).brand || (item as { brand?: string; maker?: string }).maker;
-        if (b && b.length >= 2) brandCount.set(b, (brandCount.get(b) ?? 0) + 1);
-      }
-      topBrands = [...brandCount.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([name]) => name);
-    } catch { /* 브랜드 추출 실패해도 계속 */ }
-
-    let result;
-    if (titleMinedKeywords.length > 0 || ontologyNode) {
-      // 규칙 기반 생성 (OpenAI 비용 0)
-      result = buildTitlesRuleBased({
-        keyword, platform, factorScores, recommendedKeywords,
-        opportunityKeywords, creativeKeyword,
-        topAggregatedKeyword, topVariantKeyword,
-        titleMinedKeywords: titleMinedKeywords ?? [],
-        ontologyNode,
-        categoryPoolKeywords,
-        topBrands,
-      });
-    } else {
-      // 폴백: 데이터 부족 시 기존 LLM 사용
-      result = await generateConclusion({
-        keyword, platform, factorScores, recommendedKeywords,
-        opportunityKeywords, creativeKeyword,
-        topAggregatedKeyword, topVariantKeyword,
-      });
-    }
+    // 8. 규칙 기반 제목+태그 생성 (외부 API 0, LLM 0)
+    const result = buildTitlesRuleBased({
+      keyword, platform, factorScores, recommendedKeywords,
+      opportunityKeywords, creativeKeyword,
+      topAggregatedKeyword, topVariantKeyword,
+      titleMinedKeywords: titleMinedKeywords ?? [],
+      ontologyNode, categoryPoolKeywords, topBrands,
+    });
 
     // 4. DB에 저장 (upsert) + 재생성 카운트 증가
     const now = new Date().toISOString();
