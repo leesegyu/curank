@@ -101,26 +101,15 @@ export default function DiscoverClient() {
 
   return (
     <>
-      {/* 필터 바 — 무료는 비활성 + 업그레이드 안내 */}
-      <div className="relative">
-        <DiscoverFilterBar
-          season={season}
-          category={category}
-          sort={sort}
-          categories={categories}
-          onFilterChange={handleFilterChange}
-        />
-        {isFree && (
-          <div className="absolute inset-0 bg-slate-50/80 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
-            <Link
-              href="/pricing"
-              className="text-xs font-bold text-indigo-600 bg-white px-4 py-2 rounded-full border border-indigo-200 shadow-sm hover:bg-indigo-50 transition-colors"
-            >
-              유료 플랜에서 시즌/카테고리/정렬 필터 사용 가능
-            </Link>
-          </div>
-        )}
-      </div>
+      {/* 필터 바 */}
+      <DiscoverFilterBar
+        season={season}
+        category={category}
+        sort={sort}
+        categories={categories}
+        onFilterChange={handleFilterChange}
+        isFree={isFree}
+      />
 
       {/* 결과 카운트 */}
       {!loading && (
