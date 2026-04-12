@@ -6,6 +6,8 @@ import type { TitleTagCombo } from "@/lib/conclusion-generator";
 interface Props {
   keyword: string;
   platform: string;
+  /** STEP 1~5 렌더링 완료 여부 — false면 생성 버튼 비활성 */
+  ready?: boolean;
 }
 
 const FACTOR_STYLE: Record<string, { bg: string; text: string; label: string }> = {
@@ -60,7 +62,7 @@ interface RegenInfo {
   plan: string;
 }
 
-export default function ConclusionCard({ keyword, platform }: Props) {
+export default function ConclusionCard({ keyword, platform, ready = true }: Props) {
   const [combinations, setCombinations] = useState<TitleTagCombo[] | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -161,11 +163,15 @@ export default function ConclusionCard({ keyword, platform }: Props) {
         </p>
         <button
           onClick={generate}
-          className="px-6 py-3 rounded-xl text-white font-bold text-sm transition-opacity hover:opacity-90"
+          disabled={!ready}
+          className="px-6 py-3 rounded-xl text-white font-bold text-sm transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ background: "linear-gradient(135deg, #ef4444, #f97316)" }}
         >
-          결론 생성하기
+          {ready ? "결론 생성하기" : "분석 결과 로딩 중..."}
         </button>
+        {!ready && (
+          <p className="text-xs text-gray-400 mt-2">STEP 1~5 분석이 완료되면 활성화됩니다</p>
+        )}
       </div>
     );
   }

@@ -503,7 +503,11 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
             <span className="text-xs text-gray-400">그래서, 이렇게 하세요</span>
           </div>
 
-          <ConclusionCard keyword={kw} platform={platform} />
+          <ConclusionCard
+            keyword={kw}
+            platform={platform}
+            ready={!!(result && snapFactorScore && snapKeywordsV2)}
+          />
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
           {/* 📋 STEP 7: 참고사항                              */}
