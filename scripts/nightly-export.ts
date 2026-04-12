@@ -157,9 +157,18 @@ async function main() {
         (await supabase.from("users").select("id").eq("plan", rule.plan).limit(10000))
           .data?.map((u) => u.id) ?? []
       );
-    snapshotsCleaned += (snapCount ?? 0) + (concCount ?? 0);
+    // 해당 플랜 유저의 만료 분석 이력 삭제
+    const { count: histCount } = await supabase
+      .from("analysis_history")
+      .delete({ count: "exact" })
+      .lt("analyzed_at", snapshotCutoff)
+      .in("user_id",
+        (await supabase.from("users").select("id").eq("plan", rule.plan).limit(10000))
+          .data?.map((u) => u.id) ?? []
+      );
+    snapshotsCleaned += (snapCount ?? 0) + (concCount ?? 0) + (histCount ?? 0);
   }
-  console.log(`  → 만료 스냅샷/결론 ${snapshotsCleaned}개 삭제`);
+  console.log(`  → 만료 스냅샷/결론/이력 ${snapshotsCleaned}개 삭제`);
 
   // 만료된 analysis_cache 정리
   const { count: cacheCount } = await supabase
