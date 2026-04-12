@@ -157,7 +157,7 @@ export default function DiscoverClient() {
                 유료 플랜에서 최대 전체 키워드 열람 + 12개월 차트 + 검색량/경쟁도 확인
               </p>
               <Link
-                href="/pricing"
+                href="/pricing" target="_blank"
                 className="inline-block px-6 py-2.5 rounded-full text-white font-bold text-sm transition-opacity hover:opacity-90"
                 style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
               >

@@ -95,7 +95,7 @@ export default function DiscoverFilterBar({ season, category, sort, categories, 
       {toast && (
         <div className="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-lg text-center animate-fade-in">
           {toast}
-          <a href="/pricing" className="ml-2 underline">플랜 보기</a>
+          <a href="/pricing" target="_blank" className="ml-2 underline">플랜 보기</a>
         </div>
       )}
       {/* 시즌 */}

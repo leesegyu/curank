@@ -25,7 +25,7 @@ export default async function DiscoverPage() {
             <span className="text-xs text-gray-400">
               {session.user?.name || session.user?.email}님
             </span>
-            <Link href="/pricing" className="text-xs text-indigo-500 font-bold hover:text-indigo-700 transition-colors">
+            <Link href="/pricing" target="_blank" className="text-xs text-indigo-500 font-bold hover:text-indigo-700 transition-colors">
               요금제
             </Link>
             <Link href="/mypage" className="text-xs text-blue-600 font-bold hover:text-blue-700 transition-colors">
@@ -42,7 +42,7 @@ export default async function DiscoverPage() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <Link href="/pricing" className="text-xs text-indigo-500 font-bold hover:text-indigo-700 transition-colors">
+            <Link href="/pricing" target="_blank" className="text-xs text-indigo-500 font-bold hover:text-indigo-700 transition-colors">
               요금제
             </Link>
             <Link href="/login" className="text-xs text-gray-500 hover:text-blue-600 transition-colors font-medium">
