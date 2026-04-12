@@ -71,64 +71,82 @@ export async function GET(req: NextRequest) {
 
   // ── 개별 제안안 재생성 모드 ──
   if (regenComboIdx >= 0) {
-    // 기존 결론 로드
-    const { data: existing } = await supabaseAdmin
-      .from("analysis_conclusions")
-      .select("result, generated_at")
-      .eq("user_id", userId).eq("keyword", keyword).eq("platform", platform)
-      .single();
+    try {
+      // 기존 결론 로드
+      const { data: existing } = await supabaseAdmin
+        .from("analysis_conclusions")
+        .select("result, generated_at")
+        .eq("user_id", userId).eq("keyword", keyword).eq("platform", platform)
+        .single();
 
-    if (!existing?.result) {
-      return NextResponse.json({ error: "기존 결론이 없습니다" }, { status: 400 });
+      if (!existing?.result) {
+        return NextResponse.json({ error: "기존 결론이 없습니다. 먼저 결론을 생성해주세요." }, { status: 400 });
+      }
+
+      const prevCombos = (existing.result as { combinations: import("@/lib/conclusion-generator").TitleTagCombo[] }).combinations;
+      if (!prevCombos || regenComboIdx >= prevCombos.length) {
+        return NextResponse.json({ error: "잘못된 제안안 인덱스" }, { status: 400 });
+      }
+
+      // title-miner + ontology 데이터 수집
+      let minedKw = titleMineCache.get<import("@/lib/title-miner").TitleMinedKeyword[]>(keyword);
+      if (!minedKw) {
+        try { minedKw = await mineKeywordsFromTitles(keyword); titleMineCache.set(keyword, minedKw); } catch { minedKw = []; }
+      }
+      const cls = classifyKeywordV2(keyword, platform === "naver" ? "smartstore" : "coupang");
+      let oNode: import("@/lib/ontology/types").OntologyNode | null = null;
+      let poolKw: import("@/lib/category-pool").CategoryPoolKeyword[] | undefined;
+      if (cls) {
+        const { getNodesV2 } = await import("@/lib/ontology");
+        oNode = getNodesV2(cls.platform).find((n) => n.id === cls.path) ?? null;
+        try { const p = await getCategoryPool(cls.path, cls.platform); poolKw = p?.keywords.slice(0, 50); } catch {}
+      }
+
+      // 더미 factorScores (개별 재생성은 제목 조립만 하므로 OK)
+      const dummyFactors = {
+        overall: 50,
+        factors: [
+          { key: "ranking", label: "상위노출", score: 50, description: "" },
+          { key: "conversion", label: "전환율", score: 50, description: "" },
+          { key: "growth", label: "성장성", score: 50, description: "" },
+          { key: "profitability", label: "수익성", score: 50, description: "" },
+          { key: "entryBarrier", label: "진입장벽", score: 50, description: "" },
+          { key: "crossPlatform", label: "크로스", score: 50, description: "" },
+        ],
+      } as unknown as import("@/lib/factor-model").FactorScoreSet;
+
+      const fullResult = buildTitlesRuleBased({
+        keyword, platform, factorScores: dummyFactors,
+        recommendedKeywords: [], titleMinedKeywords: minedKw ?? [], ontologyNode: oNode, categoryPoolKeywords: poolKw,
+      });
+
+      // 해당 인덱스에 새 combo 삽입 (전략명/highlightFactor 유지, 제목/태그/reasoning만 교체)
+      const srcIdx = regenComboIdx % fullResult.combinations.length;
+      const newCombo = fullResult.combinations[srcIdx];
+      if (newCombo) {
+        newCombo.strategy = prevCombos[regenComboIdx].strategy;
+        newCombo.highlightFactor = prevCombos[regenComboIdx].highlightFactor;
+      }
+      prevCombos[regenComboIdx] = newCombo ?? prevCombos[regenComboIdx];
+
+      const updatedResult = { combinations: prevCombos };
+      const now = new Date().toISOString();
+      await supabaseAdmin
+        .from("analysis_conclusions")
+        .update({ result: updatedResult, last_regenerated_at: now })
+        .eq("user_id", userId).eq("keyword", keyword).eq("platform", platform);
+
+      const regen = await getRegenInfo();
+      return NextResponse.json({
+        ...updatedResult,
+        generatedAt: now,
+        cached: true,
+        regeneration: { used: regen.used, limit: regen.limit, plan: regen.plan },
+      });
+    } catch (err) {
+      console.error("[conclusion] regenerateCombo error:", err);
+      return NextResponse.json({ error: "재생성 중 오류가 발생했습니다. 다시 시도해주세요." }, { status: 500 });
     }
-
-    const prevCombos = (existing.result as { combinations: import("@/lib/conclusion-generator").TitleTagCombo[] }).combinations;
-    if (regenComboIdx >= prevCombos.length) {
-      return NextResponse.json({ error: "잘못된 제안안 인덱스" }, { status: 400 });
-    }
-
-    // title-miner + ontology 데이터 수집 (기존 로직 재사용)
-    let minedKw = titleMineCache.get<import("@/lib/title-miner").TitleMinedKeyword[]>(keyword);
-    if (!minedKw) {
-      try { minedKw = await mineKeywordsFromTitles(keyword); titleMineCache.set(keyword, minedKw); } catch { minedKw = []; }
-    }
-    const cls = classifyKeywordV2(keyword, platform === "naver" ? "smartstore" : "coupang");
-    let oNode: import("@/lib/ontology/types").OntologyNode | null = null;
-    let poolKw: import("@/lib/category-pool").CategoryPoolKeyword[] | undefined;
-    if (cls) {
-      const { getNodesV2 } = await import("@/lib/ontology");
-      oNode = getNodesV2(cls.platform).find((n) => n.id === cls.path) ?? null;
-      try { const p = await getCategoryPool(cls.path, cls.platform); poolKw = p?.keywords.slice(0, 50); } catch {}
-    }
-
-    // 전체 재생성 후 해당 인덱스 combo만 교체
-    const fullResult = buildTitlesRuleBased({
-      keyword, platform, factorScores: { overall: 0, factors: [] } as unknown as import("@/lib/factor-model").FactorScoreSet,
-      recommendedKeywords: [], titleMinedKeywords: minedKw ?? [], ontologyNode: oNode, categoryPoolKeywords: poolKw,
-    });
-
-    // 해당 인덱스에 새 combo 삽입 (전략명은 유지, 내용만 교체)
-    const newCombo = fullResult.combinations[regenComboIdx % fullResult.combinations.length];
-    if (newCombo) {
-      newCombo.strategy = prevCombos[regenComboIdx].strategy;
-      newCombo.highlightFactor = prevCombos[regenComboIdx].highlightFactor;
-    }
-    prevCombos[regenComboIdx] = newCombo ?? prevCombos[regenComboIdx];
-
-    const updatedResult = { combinations: prevCombos };
-    const now = new Date().toISOString();
-    await supabaseAdmin
-      .from("analysis_conclusions")
-      .update({ result: updatedResult, last_regenerated_at: now })
-      .eq("user_id", userId).eq("keyword", keyword).eq("platform", platform);
-
-    const regen = await getRegenInfo();
-    return NextResponse.json({
-      ...updatedResult,
-      generatedAt: now,
-      cached: true,
-      regeneration: { used: regen.used, limit: regen.limit, plan: regen.plan },
-    });
   }
 
   // ── 조회 모드: 저장된 결론 반환 ──

@@ -118,11 +118,14 @@ export default function ConclusionCard({ keyword, platform }: Props) {
 
   async function regenerateCombo(comboIdx: number) {
     setRegenComboIdx(comboIdx);
+    setError("");
     try {
       const res = await fetch(
         `/api/conclusion?keyword=${encodeURIComponent(keyword)}&platform=${platform}&regenerateCombo=${comboIdx}`
       );
-      const data = await res.json();
+      const text = await res.text();
+      if (!text) throw new Error("서버 응답이 비어있습니다. 잠시 후 다시 시도해주세요.");
+      const data = JSON.parse(text);
       if (!res.ok) throw new Error(data.error || "개별 재생성 실패");
       if (data.combinations) setCombinations(data.combinations);
       if (data.generatedAt) setGeneratedAt(data.generatedAt);
