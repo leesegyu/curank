@@ -141,16 +141,33 @@ async function fetchMonthlyRatios(keywords: string[]): Promise<Map<string, Month
 async function collectTargetKeywords(): Promise<string[]> {
   const set = new Set<string>();
 
-  // 1) 온톨로지 L3+ 노드명
+  // 1) 온톨로지 L3+ 노드명 + matchKeywords 대표 + variantKeywords 상위
   for (const platform of ["smartstore", "coupang"] as Platform[]) {
     const nodes = getNodesV2(platform);
     for (const n of nodes) {
       if (n.level < 3) continue;
-      if (!n.name) continue;
-      // 깨끗한 것만 (공백/슬래시 없음)
-      if (/[\s/]/.test(n.name)) continue;
-      if (n.name.length < 2) continue;
-      set.add(n.name);
+      // 노드명
+      if (n.name && n.name.length >= 2 && !/[\s/]/.test(n.name)) {
+        set.add(n.name);
+      }
+      // matchKeywords 중 깨끗한 것 (상위 3개)
+      let mkCount = 0;
+      for (const mk of n.matchKeywords) {
+        if (mk.length >= 2 && !/[\s/]/.test(mk) && mkCount < 3) {
+          set.add(mk);
+          mkCount++;
+        }
+      }
+      // variantKeywords 상위 3개 (시즌 커버리지 확대)
+      if (n.variantKeywords) {
+        let vkCount = 0;
+        for (const vk of n.variantKeywords) {
+          if (vk.length >= 2 && !/[\s/]/.test(vk) && vkCount < 3) {
+            set.add(vk);
+            vkCount++;
+          }
+        }
+      }
     }
   }
 
