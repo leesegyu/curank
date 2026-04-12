@@ -6,6 +6,21 @@ import { downloadCSV } from "@/lib/csv-export";
 import { isPureGenericModifier, dedupeByTokens } from "@/lib/keyword-shape";
 
 /**
+ * 클라이언트 폴백용 — 인구통계 수식어 차단
+ * 서버 LLM 필터가 없을 때 "매실 남성용" 같은 명백한 엉뚱 조합 제거
+ */
+const DEMOGRAPHIC_TOKENS = new Set([
+  "가정용", "사무용", "남성용", "여성용", "아동용", "아이용",
+  "남성", "여성", "남자", "여자", "아동", "키즈", "유아",
+]);
+
+function hasDemographicToken(keyword: string, seed: string): boolean {
+  const seedTokens = new Set(seed.trim().toLowerCase().split(/\s+/));
+  const extras = keyword.trim().toLowerCase().split(/\s+/).filter((t) => !seedTokens.has(t));
+  return extras.some((e) => DEMOGRAPHIC_TOKENS.has(e));
+}
+
+/**
  * 수식어 추천 키워드 카드
  *
  * 여러 소스(V2, Creative, Graph, SeasonOpportunity)에서 "시드+수식어" 구조 키워드만
@@ -51,7 +66,7 @@ function extractModifiers(props: Props): ModifierItem[] {
     for (const raw of sources.v2) {
       const kw = raw as { keyword?: string; score?: number; monthlyVolume?: number; competitionLevel?: string };
       if (!kw?.keyword) continue;
-      if (!isPureGenericModifier(kw.keyword, keyword)) continue;
+      if (!isPureGenericModifier(kw.keyword, keyword) || hasDemographicToken(kw.keyword, keyword)) continue;
       out.push({
         keyword: kw.keyword,
         score: normalizeScore(kw.score ?? 0, 1000),
@@ -67,7 +82,7 @@ function extractModifiers(props: Props): ModifierItem[] {
     for (const raw of sources.creative) {
       const kw = raw as { keyword?: string; score?: number };
       if (!kw?.keyword) continue;
-      if (!isPureGenericModifier(kw.keyword, keyword)) continue;
+      if (!isPureGenericModifier(kw.keyword, keyword) || hasDemographicToken(kw.keyword, keyword)) continue;
       out.push({
         keyword: kw.keyword,
         score: Math.round(kw.score ?? 0),
@@ -81,7 +96,7 @@ function extractModifiers(props: Props): ModifierItem[] {
     for (const raw of sources.graph) {
       const kw = raw as { keyword?: string; similarity?: number; type?: string };
       if (!kw?.keyword) continue;
-      if (!isPureGenericModifier(kw.keyword, keyword)) continue;
+      if (!isPureGenericModifier(kw.keyword, keyword) || hasDemographicToken(kw.keyword, keyword)) continue;
       out.push({
         keyword: kw.keyword,
         score: Math.round((kw.similarity ?? 0) * 100),
@@ -95,7 +110,7 @@ function extractModifiers(props: Props): ModifierItem[] {
     for (const raw of sources.sos) {
       const kw = raw as { keyword?: string; sosScore?: number };
       if (!kw?.keyword) continue;
-      if (!isPureGenericModifier(kw.keyword, keyword)) continue;
+      if (!isPureGenericModifier(kw.keyword, keyword) || hasDemographicToken(kw.keyword, keyword)) continue;
       out.push({
         keyword: kw.keyword,
         score: Math.round(kw.sosScore ?? 0),
