@@ -417,6 +417,9 @@ export default function ReportDownloadButton({ keyword, platform, conclusionRead
       // AI 추천 키워드 TOP 10
       renderKeywordList("AI 추천 키워드", data.keywordsV2 ?? [], true);
 
+      // 기회 분석 키워드 TOP 5
+      renderKeywordList("기회 분석 키워드", data.keywordsOpportunity ?? [], true);
+
       // 세부 유형 키워드 TOP 10
       renderKeywordList("세부 유형 키워드", data.keywordsVariant ?? []);
 

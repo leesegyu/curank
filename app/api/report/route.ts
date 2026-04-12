@@ -84,6 +84,9 @@ export async function GET(req: NextRequest) {
       competitorThreat,
       brandDistribution,
       keywordsV2: keywordsV2?.slice(0, 10) ?? [],
+      keywordsOpportunity: keywordsV2
+        ? [...keywordsV2].sort((a: any, b: any) => (b.scoreChance ?? 0) - (a.scoreChance ?? 0)).slice(0, 5)
+        : [],
       keywordsVariant: keywordsVariant?.slice(0, 10) ?? [],
       keywordsSeasonOpp: keywordsSeasonOpp?.slice(0, 10) ?? [],
       keywordsGraph: Array.isArray(snap.snapshot.keywordsGraph) ? (snap.snapshot.keywordsGraph as unknown[]).slice(0, 3) : [],
