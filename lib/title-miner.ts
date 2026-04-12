@@ -40,19 +40,27 @@ function isRedundant(token: string, seed: string): boolean {
   return false;
 }
 
+// 숫자+단위 조합 패턴 (500g, 10kg, 50ml, 24cm 등은 보존)
+const QTY_UNIT_RE = /^\d+(?:\.\d+)?(?:g|kg|ml|L|cm|mm|인치|매|개입|팩|봉|캡슐|포|T)$/i;
+
 // ─── 타이틀 토큰화 ──────────────────────────────────────────────
 function tokenize(title: string): string[] {
   return title
     .replace(/[()[\]{}<>'"「」【】\/\\|+,]/g, " ")
-    .replace(/[0-9]+/g, " ")           // 숫자 제거 (모델번호 등)
+    // 숫자+단위 조합은 보존, 순수 숫자만 제거
+    .replace(/(?<![a-zA-Z가-힣])\d+(?![a-zA-Z가-힣%])/g, " ")
     .split(/\s+/)
     .map((t) => t.trim())
     .filter((t) =>
       t.length >= 2 &&
       !STOPWORDS.has(t) &&
-      !MODEL_CODE_RE.test(t)            // 대문자 모델코드 제거
+      !MODEL_CODE_RE.test(t) &&
+      // 순수 숫자 잔여물 제거 (but 숫자+단위는 통과)
+      (QTY_UNIT_RE.test(t) || !/^\d+$/.test(t))
     );
 }
+
+export { tokenize as _tokenizeForTest, QTY_UNIT_RE };
 
 const HAS_KOREAN = /[가-힣]/;
 const HAS_LATIN  = /[a-zA-Z]/;

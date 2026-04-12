@@ -324,6 +324,22 @@ export async function GET(req: NextRequest) {
       } catch { /* pool 실패해도 계속 */ }
     }
 
+    // 상위 상품에서 브랜드 top 5 추출
+    let topBrands: string[] = [];
+    try {
+      const { searchNaver } = await import("@/lib/naver");
+      const shopRes = await searchNaver(keyword, 20);
+      const brandCount = new Map<string, number>();
+      for (const item of shopRes.items) {
+        const b = (item as { brand?: string; maker?: string }).brand || (item as { brand?: string; maker?: string }).maker;
+        if (b && b.length >= 2) brandCount.set(b, (brandCount.get(b) ?? 0) + 1);
+      }
+      topBrands = [...brandCount.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name]) => name);
+    } catch { /* 브랜드 추출 실패해도 계속 */ }
+
     let result;
     if (titleMinedKeywords.length > 0 || ontologyNode) {
       // 규칙 기반 생성 (OpenAI 비용 0)
@@ -334,6 +350,7 @@ export async function GET(req: NextRequest) {
         titleMinedKeywords: titleMinedKeywords ?? [],
         ontologyNode,
         categoryPoolKeywords,
+        topBrands,
       });
     } else {
       // 폴백: 데이터 부족 시 기존 LLM 사용
