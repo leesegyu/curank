@@ -18,9 +18,9 @@ const PLANS: Array<{
     color: "border-gray-200",
     badge: null,
     features: [
-      { label: "월 키워드 분석", value: "10회" },
+      { label: "월 키워드 분석", value: "8회" },
       { label: "추천 키워드 효과 비교", value: "5회" },
-      { label: "결론 재생성", value: "키워드당 1회" },
+      { label: "결론 재생성", value: "키워드당 10회" },
       { label: "분석 이력 보관", value: "최근 10개" },
       { label: "스냅샷 보관", value: "10일" },
       { label: "CSV 다운로드", value: "O", positive: true },
@@ -37,7 +37,7 @@ const PLANS: Array<{
     features: [
       { label: "월 키워드 분석", value: "30회" },
       { label: "추천 키워드 효과 비교", value: "10회" },
-      { label: "결론 재생성", value: "키워드당 10회" },
+      { label: "결론 재생성", value: "키워드당 20회" },
       { label: "분석 이력 보관", value: "최근 30개" },
       { label: "스냅샷 보관", value: "30일" },
       { label: "CSV 다운로드", value: "O", positive: true },
@@ -54,7 +54,7 @@ const PLANS: Array<{
     features: [
       { label: "월 키워드 분석", value: "80회" },
       { label: "추천 키워드 효과 비교", value: "20회" },
-      { label: "결론 재생성", value: "키워드당 20회" },
+      { label: "결론 재생성", value: "키워드당 30회" },
       { label: "분석 이력 보관", value: "50개" },
       { label: "스냅샷 보관", value: "무제한" },
       { label: "CSV 다운로드", value: "O", positive: true },
@@ -74,7 +74,7 @@ const PLANS: Array<{
     features: [
       { label: "월 키워드 분석", value: "200회" },
       { label: "추천 키워드 효과 비교", value: "30회" },
-      { label: "결론 재생성", value: "키워드당 30회" },
+      { label: "결론 재생성", value: "키워드당 40회" },
       { label: "분석 이력 보관", value: "50개" },
       { label: "스냅샷 보관", value: "무제한" },
       { label: "CSV 다운로드", value: "O", positive: true },

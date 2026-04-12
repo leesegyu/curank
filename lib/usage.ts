@@ -17,10 +17,10 @@ export interface PlanLimits {
 }
 
 const PLAN_CONFIG: Record<string, PlanLimits> = {
-  free:       { analysis: 10,  comparison: 5,  regeneration: 0,  historyMax: 10, snapshotDays: 10,       pdfDownload: false },
-  standard:   { analysis: 30,  comparison: 10, regeneration: 10, historyMax: 30, snapshotDays: 30,       pdfDownload: true },
-  business:   { analysis: 80,  comparison: 20, regeneration: 20, historyMax: 50, snapshotDays: Infinity, pdfDownload: true },
-  premium:    { analysis: 200, comparison: 30, regeneration: 30, historyMax: 50, snapshotDays: Infinity, pdfDownload: true },
+  free:       { analysis: 8,   comparison: 5,  regeneration: 10, historyMax: 10, snapshotDays: 10,       pdfDownload: false },
+  standard:   { analysis: 30,  comparison: 10, regeneration: 20, historyMax: 30, snapshotDays: 30,       pdfDownload: true },
+  business:   { analysis: 80,  comparison: 20, regeneration: 30, historyMax: 50, snapshotDays: Infinity, pdfDownload: true },
+  premium:    { analysis: 200, comparison: 30, regeneration: 40, historyMax: 50, snapshotDays: Infinity, pdfDownload: true },
   membership: { analysis: 500, comparison: 50, regeneration: 50, historyMax: 50, snapshotDays: Infinity, pdfDownload: true },
 };
 

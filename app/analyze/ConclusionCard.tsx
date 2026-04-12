@@ -241,15 +241,10 @@ export default function ConclusionCard({ keyword, platform }: Props) {
         <div className="flex items-center gap-2 shrink-0">
           {regen && (
             <span className="text-[11px] text-gray-400">
-              {isFree ? "" : regen.limit === Infinity ? "무제한" : `${regenRemaining}/${regen.limit}회 남음`}
+              {regen.limit === Infinity ? "무제한" : `${regenRemaining}/${regen.limit}회 남음`}
             </span>
           )}
-          {isFree ? (
-            <span className="text-[11px] text-gray-400 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50">
-              재생성은 유료 플랜부터
-            </span>
-          ) : (
-            <button
+          <button
               onClick={regenerate}
               disabled={regenerating || !canRegenerate}
               className="text-xs px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
@@ -263,7 +258,6 @@ export default function ConclusionCard({ keyword, platform }: Props) {
                 "재생성"
               )}
             </button>
-          )}
         </div>
       </div>
 
@@ -336,8 +330,7 @@ export default function ConclusionCard({ keyword, platform }: Props) {
                 {" — "}
                 {combo.reasoning}
               </p>
-              {!isFree && (
-                <button
+              <button
                   onClick={() => regenerateCombo(idx)}
                   disabled={regenComboIdx !== null || (comboRegenCounts[idx] ?? 0) >= COMBO_REGEN_LIMIT}
                   className="ml-2 text-[11px] px-2 py-1 rounded-md border border-gray-200 text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 flex items-center gap-1"
@@ -348,7 +341,6 @@ export default function ConclusionCard({ keyword, platform }: Props) {
                     <>↻ {COMBO_REGEN_LIMIT - (comboRegenCounts[idx] ?? 0)}회</>
                   )}
                 </button>
-              )}
             </div>
           </div>
         );
