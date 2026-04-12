@@ -2471,4 +2471,139 @@ export const SMARTSTORE_NODES_V2: OntologyNode[] = [
       "아이스박스 낚시용 보냉 25L",
     ],
     variantKeywords: ["루어세트", "태클박스", "낚시보조가방", "접이식낚시의자", "낚시아이스박스", "뜰채", "낚시바늘세트", "낚시줄", "낚시용기", "라인커터", "낚시모자", "플라이어", "지그헤드"] },
+
+  // ═══════════════════════════════════════════════════════════════
+  // 시즌 키워드 보강 노드 (2026-04-12)
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── 여름 냉방/쿨링 가전 ──
+  { id: "ss.digital.cooling", name: "냉방가전", level: 2, parent: "ss.digital",
+    matchKeywords: ["선풍기", "냉풍기", "서큘레이터", "에어컨", "냉방"],
+    seedKeywords: [] },
+  { id: "ss.digital.cooling.fan", name: "선풍기", level: 3, parent: "ss.digital.cooling",
+    matchKeywords: ["선풍기", "탁상선풍기", "스탠드선풍기", "USB선풍기", "타워팬", "목선풍기", "휴대용선풍기", "핸디선풍기"],
+    seedKeywords: ["스탠드 선풍기 리모컨 타이머", "탁상 미니 선풍기 USB", "타워팬 저소음 리모컨", "목걸이 선풍기 충전식"],
+    variantKeywords: ["스탠드선풍기", "탁상선풍기", "타워팬", "USB선풍기", "목선풍기", "휴대용선풍기", "핸디선풍기", "벽걸이선풍기", "캠핑선풍기", "충전식선풍기", "BLDC선풍기", "에어서큘레이터선풍기"] },
+  { id: "ss.digital.cooling.circulator", name: "서큘레이터", level: 3, parent: "ss.digital.cooling",
+    matchKeywords: ["서큘레이터", "에어서큘레이터", "보네이도"],
+    seedKeywords: ["에어 서큘레이터 저소음 BLDC", "보네이도 서큘레이터 공기순환"],
+    variantKeywords: ["에어서큘레이터", "보네이도", "BLDC서큘레이터", "저소음서큘레이터", "대형서큘레이터", "탁상서큘레이터", "벽걸이서큘레이터", "캠핑서큘레이터"] },
+  { id: "ss.digital.cooling.cooler", name: "냉풍기", level: 3, parent: "ss.digital.cooling",
+    matchKeywords: ["냉풍기", "이동식에어컨", "미니에어컨", "에어쿨러"],
+    seedKeywords: ["이동식 에어컨 냉풍기 원룸", "냉풍기 대용량 리모컨"],
+    variantKeywords: ["이동식에어컨", "미니에어컨", "에어쿨러", "냉풍기대형", "사무실냉풍기", "캠핑냉풍기", "냉풍기리모컨", "창문형에어컨"] },
+
+  // ── 겨울 난방 가전 ──
+  { id: "ss.digital.heating", name: "난방가전", level: 2, parent: "ss.digital",
+    matchKeywords: ["히터", "온풍기", "난방", "전기난로", "라디에이터"],
+    seedKeywords: [] },
+  { id: "ss.digital.heating.heater", name: "히터/온풍기", level: 3, parent: "ss.digital.heating",
+    matchKeywords: ["히터", "온풍기", "전기히터", "세라믹히터", "PTC히터", "전기난로", "라디에이터", "적외선히터"],
+    seedKeywords: ["세라믹 전기히터 저소음 타이머", "PTC 온풍기 사무실 미니", "오일 라디에이터 거실용"],
+    variantKeywords: ["세라믹히터", "PTC히터", "온풍기", "전기난로", "라디에이터", "적외선히터", "오일히터", "카본히터", "미니히터", "욕실히터", "벽걸이히터", "캠핑히터", "가스히터"] },
+  { id: "ss.digital.heating.pad", name: "전기장판/매트", level: 3, parent: "ss.digital.heating",
+    matchKeywords: ["전기장판", "전기매트", "온수매트", "전기요", "전기담요", "온열매트"],
+    seedKeywords: ["전기장판 1인용 타이머 세탁가능", "온수매트 퀸 무소음", "전기요 극세사 싱글"],
+    variantKeywords: ["전기장판", "온수매트", "전기요", "전기담요", "탄소매트", "그래핀매트", "온열매트", "싱글전기장판", "퀸전기장판", "캠핑전기장판", "무전자파전기장판"] },
+
+  // ── 여름 쿨링 용품 ──
+  { id: "ss.health.cooling", name: "쿨링/여름용품", level: 2, parent: "ss.health",
+    matchKeywords: ["쿨매트", "아이스팩", "쿨링", "냉감", "부채"],
+    seedKeywords: [] },
+  { id: "ss.health.cooling.mat", name: "쿨매트", level: 3, parent: "ss.health.cooling",
+    matchKeywords: ["쿨매트", "냉감매트", "냉감패드", "쿨링매트", "여름매트", "젤매트", "아���스매트"],
+    seedKeywords: ["여름 쿨매트 냉감 퀸사이즈", "젤 쿨링매트 싱글", "반려동물 쿨매트"],
+    variantKeywords: ["쿨매트퀸", "냉감매트", "��쿨매트", "아이스매트", "대리석매트", "냉감패드", "반려동물쿨매트", "유아쿨매트", "자동차쿨매트", "쿨베개패드", "라텍스쿨매트"] },
+  { id: "ss.health.cooling.icepack", name: "아이스팩/쿨링용품", level: 3, parent: "ss.health.cooling",
+    matchKeywords: ["아이스팩", "부채", "쿨타올", "냉각스카프", "쿨링스프레이", "냉각조끼"],
+    seedKeywords: ["아이스팩 대용량 보���", "쿨타올 냉감 스포츠", "냉각조끼 아웃도어 작업용"],
+    variantKeywords: ["아이스팩", "접이식부채", "대나무부채", "쿨타올", "냉각스카프", "냉각조끼", "쿨링스프레이", "얼음조끼", "쿨토시", "쿨링밴드", "휴대용미니선풍기"] },
+
+  // ── 여름 방충/모기 ──
+  { id: "ss.health.insect", name: "방충/모기퇴치", level: 2, parent: "ss.health",
+    matchKeywords: ["모기", "방충", "해충", "벌레", "모기퇴치"],
+    seedKeywords: [] },
+  { id: "ss.health.insect.repellent", name: "모기약/퇴치기", level: 3, parent: "ss.health.insect",
+    matchKeywords: ["모기약", "모기향", "모기퇴치기", "전자모기향", "모기기피제", "모기패치", "모기스프레이", "모기장"],
+    seedKeywords: ["전자 모기퇴치기 UV 흡입식", "모기향 야외 캠핑용", "모기기피제 천연 스프레이"],
+    variantKeywords: ["모기약", "모기향", "전자모기향", "모기퇴치기", "UV모기퇴치기", "모기기피제", "모기패치", "모기스프레이", "모기장", "원터치모기장", "유모차모기장", "캠핑모기장", "모기팔찌", "모기트랩", "해충퇴치기"] },
+
+  // ── 겨울 방한용품 ──
+  { id: "ss.fashion.winter", name: "방한용품", level: 2, parent: "ss.fashion",
+    matchKeywords: ["방한", "넥워머", "귀마개", "핫팩", "방한장갑"],
+    seedKeywords: [] },
+  { id: "ss.fashion.winter.warmers", name: "핫팩/손난로", level: 3, parent: "ss.fashion.winter",
+    matchKeywords: ["핫팩", "손난로", "충전식손난로", "붙이는핫팩", "발핫팩", "허리핫팩"],
+    seedKeywords: ["붙이는 핫팩 대용량 40매", "충전식 손난로 보조배터리", "발 핫팩 족열 겨울 등산"],
+    variantKeywords: ["붙이는핫팩", "손난로", "충전식손난로", "보조배터리손난로", "발핫팩", "허리핫팩", "포켓핫팩", "미니핫팩", "대용량핫팩", "등산핫팩", "군용핫팩"] },
+  { id: "ss.fashion.winter.neckwear", name: "넥워머/귀마개", level: 3, parent: "ss.fashion.winter",
+    matchKeywords: ["넥워머", "귀마개", "방한귀마개", "목토시", "바라클라바", "방한마스크", "방한장갑"],
+    seedKeywords: ["플리스 넥워머 방�� 겨울", "무선이어폰 귀마개 겨울용", "방한장갑 터치스크린"],
+    variantKeywords: ["넥워머", "플리스넥워머", "방한귀마개", "이어폰귀마개", "바라클라바", "방한마스크", "스키마스크", "방한장갑", "터치장갑", "스키장갑", "기모장갑", "목토시", "방풍넥워머"] },
+  { id: "ss.fashion.winter.innerwear", name: "내복/발열내의", level: 3, parent: "ss.fashion.winter",
+    matchKeywords: ["내복", "발열내의", "기모내복", "히트텍", "보온내의", "기모바지", "기모레깅스"],
+    seedKeywords: ["남성 기모 발열내의 세트", "여성 히트텍 기모레깅스", "아동 기모내복 세트"],
+    variantKeywords: ["발열내의", "기모내복", "히트텍", "보온내의", "기모바지", "기모레깅스", "남성내복세트", "여성내복세트", "아동내복", "극세사내복", "울내복", "발열조끼"] },
+
+  // ── 여��� 식품 ──
+  { id: "ss.food.seasonal_summer", name: "여름식품", level: 2, parent: "ss.food",
+    matchKeywords: ["냉면", "빙수", "냉국수", "콩국수", "팥빙수"],
+    seedKeywords: [] },
+  { id: "ss.food.seasonal_summer.noodle", name: "냉면/냉국수", level: 3, parent: "ss.food.seasonal_summer",
+    matchKeywords: ["냉면", "물냉면", "비빔냉면", "냉국수", "콩국수", "메밀국수", "쫄면", "밀면"],
+    seedKeywords: ["함흥 물냉면 4인분 세트", "콩국수 면 + 콩가루 세트", "평양 비빔냉면 선물"],
+    variantKeywords: ["물냉면", "비빔냉면", "함흥냉면", "평양냉면", "콩국수", "메밀국수", "밀면", "쫄면", "냉라면", "냉면육수", "냉면세트", "해물냉면"] },
+  { id: "ss.food.seasonal_summer.ice", name: "빙수/아이스", level: 3, parent: "ss.food.seasonal_summer",
+    matchKeywords: ["빙수", "빙수기", "팥빙수", "빙삭기", "아이스크림", "아이스크림메이커"],
+    seedKeywords: ["가정용 빙수기 눈꽃빙수", "팥빙수 팥앙금 1kg", "아이스크림메이커 가정용"],
+    variantKeywords: ["빙수기", "눈꽃빙수기", "팥앙금", "빙수팥", "빙수떡", "아이스크림메이커", "빙삭기", "연유", "아이스크림", "젤���또", "아이스바"] },
+
+  // ── 봄 야외/피크닉 ──
+  { id: "ss.leisure.outdoor", name: "피크닉/야외", level: 2, parent: "ss.leisure",
+    matchKeywords: ["피크닉", "나들이", "돗자리", "소풍"],
+    seedKeywords: [] },
+  { id: "ss.leisure.outdoor.picnic", name: "피크닉용품", level: 3, parent: "ss.leisure.outdoor",
+    matchKeywords: ["피크닉", "돗자리", "피크닉바구니", "피크닉매트", "소풍", "나들이", "비치타올", "비치매트"],
+    seedKeywords: ["방수 피크닉매트 대형 200x200", "라탄 피크닉바구니 보냉", "비치타올 대형 속건"],
+    variantKeywords: ["피크닉매트", "방수돗자리", "피크닉바구니", "보냉바구니", "비치타올", "비치매트", "야외매트", "캠핑매트", "라탄바구니", "피크닉세트", "소풍도시락", "피크닉담요", "방수매트"] },
+
+  // ── 봄 미세먼지 ──
+  { id: "ss.health.finedust", name: "미세먼지/위생", level: 2, parent: "ss.health",
+    matchKeywords: ["미세먼지", "마스크", "KF94"],
+    seedKeywords: [] },
+  { id: "ss.health.finedust.mask", name: "미세먼지마스크", level: 3, parent: "ss.health.finedust",
+    matchKeywords: ["미세먼지마스크", "KF94", "KF80", "황사마스크", "방진마스크", "일회용마스크"],
+    seedKeywords: ["KF94 마스크 대형 50매", "미세먼지 마스크 아동용", "방진마스크 산업용"],
+    variantKeywords: ["KF94마스크", "KF80마스크", "황사마스크", "아동마스크", "방진마스크", "일회용마스크", "블랙마스크", "소형마스크", "대형마스크", "새부리형마스크", "산업용마스크"] },
+
+  // ── 가을 김장 ──
+  { id: "ss.food.kimjang", name: "김장/절임", level: 2, parent: "ss.food",
+    matchKeywords: ["김장", "김장용품", "김장매트", "절임배추"],
+    seedKeywords: [] },
+  { id: "ss.food.kimjang.supplies", name: "김장용품", level: 3, parent: "ss.food.kimjang",
+    matchKeywords: ["김장", "김장매트", "김장용품", "김장봉투", "김장대야", "김장김치", "절임배추", "김장고추가루", "김장세트"],
+    seedKeywords: ["김장매트 방수 대형", "절임배추 20kg 김장용", "김장봉투 대형 10매"],
+    variantKeywords: ["김장매트", "김장봉투", "김장대야", "절임배추", "김장고추가루", "김장세트", "김장김치", "김장젓갈", "김장소금", "김장무", "김장파", "다용도고무대야", "김치통대형"] },
+
+  // ── 명절 선물 ──
+  { id: "ss.food.gift", name: "명절선물세트", level: 2, parent: "ss.food",
+    matchKeywords: ["추석선물", "설날선물", "명절선물", "선물세트"],
+    seedKeywords: [] },
+  { id: "ss.food.gift.holiday", name: "명절선물세트", level: 3, parent: "ss.food.gift",
+    matchKeywords: ["추석선물세트", "설날선물세트", "명절선물", "한우선물세트", "과일선물세트", "갈비선물세트", "홍삼선물세트"],
+    seedKeywords: ["한우 갈비 선물세트 1++ 등급", "과일 혼합 선물세트 프리미엄", "홍삼정 선물세트 명절"],
+    variantKeywords: ["추석선물세트", "설날선물세트", "한우선물세트", "과일선물세트", "갈비선물세트", "홍삼선물세트", "굴비선물세트", "참치세트", "햄선물세트", "건강식품세트", "견과류선물세트", "꿀선물세트"] },
+
+  // ── 이벤트/시즌 데코 ──
+  { id: "ss.leisure.event", name: "이벤트/시즌데코", level: 2, parent: "ss.leisure",
+    matchKeywords: ["크리스마스", "어버이날", "발렌타인", "할로윈"],
+    seedKeywords: [] },
+  { id: "ss.leisure.event.christmas", name: "크리스마스", level: 3, parent: "ss.leisure.event",
+    matchKeywords: ["크리스마스트리", "크리스마스장식", "크리스마스조명", "크리스마스선물", "산타", "크리스마스리스"],
+    seedKeywords: ["크리스마스트리 120cm 풀세트", "LED 크리스마스 조명 전구", "크리스마스 리스 문걸이"],
+    variantKeywords: ["크리스마스트리", "미니트리", "크리스마스전구", "크리스마스장식", "크리스마스리스", "산타복", "트리장식세트", "LED트리", "크리스마스가랜드", "크리스마스선물포장", "어드벤트캘린더"] },
+  { id: "ss.leisure.event.familyday", name: "어버이날/가정의달", level: 3, parent: "ss.leisure.event",
+    matchKeywords: ["어버이날", "어버이날선물", "카네이션", "가정의달", "스승의날"],
+    seedKeywords: ["카네이션 조화 브로치", "어버이날 용돈봉투 카드", "안마기 어버이날 선물"],
+    variantKeywords: ["카네이션", "카네이션브로치", "조화카네이션", "어버이날카드", "용돈봉투", "감사카드", "어버이날안마기", "어버이날건강식품", "어버이날꽃다발"] },
 ];
