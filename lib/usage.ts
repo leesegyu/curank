@@ -14,14 +14,15 @@ export interface PlanLimits {
   historyMax: number;      // 분석 이력 보관 개수
   snapshotDays: number;    // 스냅샷 보관일
   pdfDownload: boolean;    // PDF 다운로드 가능 여부
+  discoverLimit: number;   // 상품발굴 열람 개수
 }
 
 const PLAN_CONFIG: Record<string, PlanLimits> = {
-  free:       { analysis: 8,   comparison: 5,  regeneration: 10, historyMax: 10, snapshotDays: 10,       pdfDownload: false },
-  standard:   { analysis: 30,  comparison: 10, regeneration: 20, historyMax: 30, snapshotDays: 30,       pdfDownload: true },
-  business:   { analysis: 80,  comparison: 20, regeneration: 30, historyMax: 50, snapshotDays: Infinity, pdfDownload: true },
-  premium:    { analysis: 200, comparison: 30, regeneration: 40, historyMax: 50, snapshotDays: Infinity, pdfDownload: true },
-  membership: { analysis: 500, comparison: 50, regeneration: 50, historyMax: 50, snapshotDays: Infinity, pdfDownload: true },
+  free:       { analysis: 8,   comparison: 5,  regeneration: 10, historyMax: 10, snapshotDays: 10,       pdfDownload: false, discoverLimit: 3 },
+  standard:   { analysis: 30,  comparison: 10, regeneration: 20, historyMax: 30, snapshotDays: 30,       pdfDownload: true,  discoverLimit: 15 },
+  business:   { analysis: 80,  comparison: 20, regeneration: 30, historyMax: 50, snapshotDays: Infinity, pdfDownload: true,  discoverLimit: 40 },
+  premium:    { analysis: 200, comparison: 30, regeneration: 40, historyMax: 50, snapshotDays: Infinity, pdfDownload: true,  discoverLimit: 9999 },
+  membership: { analysis: 500, comparison: 50, regeneration: 50, historyMax: 50, snapshotDays: Infinity, pdfDownload: true,  discoverLimit: 9999 },
 };
 
 /** 관리자 계정 — 무제한 */

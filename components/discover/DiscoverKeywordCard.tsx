@@ -55,7 +55,7 @@ function formatVolume(v: number): string {
   return String(v);
 }
 
-export default function DiscoverKeywordCard({ kw }: { kw: DiscoverKeyword }) {
+export default function DiscoverKeywordCard({ kw, isFree = false }: { kw: DiscoverKeyword; isFree?: boolean }) {
   const phaseBadge = kw.phase === "rising"
     ? { label: "상승 초입", cls: "bg-emerald-100 text-emerald-700" }
     : { label: "급상승", cls: "bg-orange-100 text-orange-700" };
@@ -78,16 +78,27 @@ export default function DiscoverKeywordCard({ kw }: { kw: DiscoverKeyword }) {
       {/* 키워드 + 분석 링크 */}
       <div className="flex items-center justify-between">
         <span className="text-base font-bold text-gray-800">{kw.keyword}</span>
-        <Link
-          href={`/analyze?keyword=${encodeURIComponent(kw.keyword)}&platform=naver`}
-          className="text-xs text-blue-500 font-bold hover:text-blue-700 shrink-0"
-        >
-          분석 →
-        </Link>
+        {isFree ? (
+          <span className="text-[11px] text-gray-300 shrink-0">유료 플랜에서 분석</span>
+        ) : (
+          <Link
+            href={`/analyze?keyword=${encodeURIComponent(kw.keyword)}&platform=naver`}
+            className="text-xs text-blue-500 font-bold hover:text-blue-700 shrink-0"
+          >
+            분석 →
+          </Link>
+        )}
       </div>
 
-      {/* 미니 차트 */}
-      <MiniSeasonChart monthlyRatios={kw.monthlyRatios} peakMonth={kw.peakMonth} />
+      {/* 미니 차트 — 무료는 숨김 */}
+      {!isFree && kw.monthlyRatios.length > 0 && (
+        <MiniSeasonChart monthlyRatios={kw.monthlyRatios} peakMonth={kw.peakMonth} />
+      )}
+      {isFree && (
+        <div className="h-10 bg-gray-50 rounded flex items-center justify-center">
+          <span className="text-[10px] text-gray-300">차트는 유료 플랜에서 확인</span>
+        </div>
+      )}
 
       {/* 메트릭 행 */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
@@ -102,17 +113,19 @@ export default function DiscoverKeywordCard({ kw }: { kw: DiscoverKeyword }) {
           <span className="font-bold text-emerald-600">+{kw.upsidePercent}%</span>
           <span className="text-gray-400"> 잠재</span>
         </div>
-        {kw.monthlyTotal != null && kw.monthlyTotal > 0 ? (
+        {!isFree && kw.monthlyTotal != null && kw.monthlyTotal > 0 ? (
           <div className="text-gray-500">
             검색량 <span className="font-bold text-gray-700">{formatVolume(kw.monthlyTotal)}</span>/월
           </div>
+        ) : isFree ? (
+          <div className="text-gray-300 text-[11px]">검색량 유료</div>
         ) : (
           <div />
         )}
       </div>
 
       {/* 경쟁도 */}
-      {kw.compIdx && (
+      {!isFree && kw.compIdx && (
         <div className="text-xs text-gray-400">
           경쟁도 <span className={`font-bold ${COMP_COLORS[kw.compIdx] ?? "text-gray-600"}`}>{kw.compIdx}</span>
         </div>

@@ -64,7 +64,6 @@ export default function ConclusionCard({ keyword, platform }: Props) {
   const [combinations, setCombinations] = useState<TitleTagCombo[] | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
   const [regenComboIdx, setRegenComboIdx] = useState<number | null>(null);
   const [comboRegenCounts, setComboRegenCounts] = useState<Record<number, number>>({});
   const [initialLoading, setInitialLoading] = useState(true);
@@ -117,28 +116,6 @@ export default function ConclusionCard({ keyword, platform }: Props) {
     }
   }
 
-  async function regenerate() {
-    setRegenerating(true);
-    setError("");
-    try {
-      const res = await fetch(
-        `/api/conclusion?keyword=${encodeURIComponent(keyword)}&platform=${platform}&regenerate=true`
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.regeneration) setRegen(data.regeneration);
-        throw new Error(data.error || "재생성 실패");
-      }
-      setCombinations(data.combinations);
-      setGeneratedAt(data.generatedAt);
-      if (data.regeneration) setRegen(data.regeneration);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "재생성 실패");
-    } finally {
-      setRegenerating(false);
-    }
-  }
-
   async function regenerateCombo(comboIdx: number) {
     setRegenComboIdx(comboIdx);
     try {
@@ -159,9 +136,6 @@ export default function ConclusionCard({ keyword, platform }: Props) {
   }
 
   const COMBO_REGEN_LIMIT = 10;
-  const regenRemaining = regen ? regen.limit - regen.used : null;
-  const canRegenerate = regen ? regen.limit > 0 && regen.used < regen.limit : false;
-  const isFree = regen?.plan === "free";
 
   // 초기 로딩 (저장된 결론 확인 중)
   if (initialLoading) {
@@ -238,27 +212,7 @@ export default function ConclusionCard({ keyword, platform }: Props) {
             </span>
           )}
         </p>
-        <div className="flex items-center gap-2 shrink-0">
-          {regen && (
-            <span className="text-[11px] text-gray-400">
-              {regen.limit === Infinity ? "무제한" : `${regenRemaining}/${regen.limit}회 남음`}
-            </span>
-          )}
-          <button
-              onClick={regenerate}
-              disabled={regenerating || !canRegenerate}
-              className="text-xs px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
-            >
-              {regenerating ? (
-                <>
-                  <span className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                  재생성 중...
-                </>
-              ) : (
-                "재생성"
-              )}
-            </button>
-        </div>
+        <div className="shrink-0" />
       </div>
 
       {combinations!.map((combo, idx) => {
@@ -267,9 +221,22 @@ export default function ConclusionCard({ keyword, platform }: Props) {
         const badgeColor = STRATEGY_BADGE_COLORS[idx % STRATEGY_BADGE_COLORS.length];
 
         return (
-          <div key={idx} className={`rounded-2xl border p-5 ${cardColor}`}>
+          <div key={idx} className={`rounded-2xl border p-5 relative ${cardColor}`}>
+            {/* 개별 재생성 버튼 — 우측 상단 */}
+            <button
+              onClick={() => regenerateCombo(idx)}
+              disabled={regenComboIdx !== null || (comboRegenCounts[idx] ?? 0) >= COMBO_REGEN_LIMIT}
+              className="absolute top-3 right-3 text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 text-gray-400 hover:text-indigo-600 hover:border-indigo-300 hover:bg-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              {regenComboIdx === idx ? (
+                <span className="w-2.5 h-2.5 border border-indigo-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>{COMBO_REGEN_LIMIT - (comboRegenCounts[idx] ?? 0)}/{COMBO_REGEN_LIMIT} 재생성</>
+              )}
+            </button>
+
             {/* 전략 헤더 */}
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-3 pr-24">
               <span className={`text-xs font-bold text-white px-2 py-0.5 rounded-md ${badgeColor}`}>
                 {String.fromCharCode(65 + idx)}안
               </span>
@@ -323,25 +290,12 @@ export default function ConclusionCard({ keyword, platform }: Props) {
               </div>
             </div>
 
-            {/* 한줄 해석 + 개별 재생성 */}
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500 leading-relaxed flex-1">
-                <span className={`font-bold ${factorStyle.text}`}>{factorStyle.label}</span>
-                {" — "}
-                {combo.reasoning}
-              </p>
-              <button
-                  onClick={() => regenerateCombo(idx)}
-                  disabled={regenComboIdx !== null || (comboRegenCounts[idx] ?? 0) >= COMBO_REGEN_LIMIT}
-                  className="ml-2 text-[11px] px-2 py-1 rounded-md border border-gray-200 text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 flex items-center gap-1"
-                >
-                  {regenComboIdx === idx ? (
-                    <span className="w-2.5 h-2.5 border border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>↻ {COMBO_REGEN_LIMIT - (comboRegenCounts[idx] ?? 0)}회</>
-                  )}
-                </button>
-            </div>
+            {/* 한줄 해석 */}
+            <p className="text-xs text-gray-500 leading-relaxed">
+              <span className={`font-bold ${factorStyle.text}`}>{factorStyle.label}</span>
+              {" — "}
+              {combo.reasoning}
+            </p>
           </div>
         );
       })}
