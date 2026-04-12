@@ -14,7 +14,9 @@ export default function ReportDownloadButton({ keyword, platform }: { keyword: s
     setLoading(true);
     try {
       const res = await fetch(`/api/report?keyword=${encodeURIComponent(keyword)}&platform=${platform}`);
-      const data = await res.json();
+      const text = await res.text();
+      if (!text) throw new Error("서버 응답이 비어있습니다. 잠시 후 다시 시도해주세요.");
+      const data = JSON.parse(text);
 
       if (data.upgrade) {
         alert("PDF 다운로드는 유료 플랜 오픈 후 이용 가능합니다.");
