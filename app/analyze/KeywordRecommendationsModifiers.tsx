@@ -32,6 +32,8 @@ interface Props {
     graph?: unknown[] | null;
     sos?: unknown[] | null;
   };
+  /** SSE 프리컴퓨트된 LLM 필터 결과 (있으면 isPureGenericModifier 대신 사용) */
+  preloadedData?: unknown[] | null;
 }
 
 /** 소스별 점수 정규화 (0~100 범위로 맞춤) */
@@ -120,16 +122,20 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 export default function KeywordRecommendationsModifiers(props: Props) {
-  const { keyword, platform = "naver" } = props;
+  const { keyword, platform = "naver", preloadedData } = props;
   const [expanded, setExpanded] = useState(false);
 
   const data = useMemo(() => {
+    // 프리컴퓨트된 LLM 필터 결과가 있으면 우선 사용
+    if (preloadedData && Array.isArray(preloadedData) && preloadedData.length > 0) {
+      return (preloadedData as ModifierItem[]).slice(0, 30);
+    }
+    // 폴백: 기존 규칙 기반 필터
     const extracted = extractModifiers(props);
-    // 어순 무관 중복 제거 (점수 높은 쪽 우선)
     extracted.sort((a, b) => b.score - a.score);
     const deduped = dedupeByTokens(extracted);
     return deduped.slice(0, 30);
-  }, [props]);
+  }, [props, preloadedData]);
 
   if (data.length === 0) return null;
 

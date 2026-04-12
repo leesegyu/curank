@@ -324,6 +324,31 @@ export async function GET(req: NextRequest) {
           // variant는 보조 데이터 (variantKeywords 미정의 카테고리에서 빈 결과 정상)
           const partial = !hasKosV2 || !hasGraph || !hasCreative;
 
+          // 수식어 LLM 자연스러움 필터 (프리컴퓨트)
+          let modifiersFiltered: unknown[] | null = null;
+          try {
+            const { filterModifiersForCategory } = await import("@/lib/modifier-filter");
+            const { isPureGenericModifier } = await import("@/lib/keyword-shape");
+            // 모든 소스에서 수식어 후보 수집
+            const allSources = [
+              ...(kosV2Data?.keywords ?? []),
+              ...(creativeData?.keywords ?? []),
+              ...(graphRaw?.keywords ?? []),
+              ...(seasonOppData?.keywords ?? []),
+            ] as { keyword: string; score?: number; monthlyVolume?: number; competitionLevel?: string }[];
+            const modCandidates = allSources
+              .filter((k) => k.keyword && isPureGenericModifier(k.keyword, keyword))
+              .map((k) => k.keyword);
+            const uniqueCands = [...new Set(modCandidates)];
+            if (uniqueCands.length > 0) {
+              const natural = await filterModifiersForCategory(keyword, uniqueCands, platform === "all" ? "naver" : platform);
+              modifiersFiltered = natural.map((kw) => {
+                const src = allSources.find((s) => s.keyword === kw);
+                return { keyword: kw, score: src?.score ?? 0, monthlyVolume: src?.monthlyVolume, competitionLevel: src?.competitionLevel };
+              });
+            }
+          } catch { /* 수식어 필터 실패해도 분석 계속 */ }
+
           // 스냅샷 저장 (결과 보기 시 즉시 로드 — 키워드 추천 + STEP 4 사전 계산)
           saveSnapshot(userId, keyword, platform, {
             result,
@@ -339,6 +364,7 @@ export async function GET(req: NextRequest) {
             factorScore: factorData ?? null,
             brandDistribution: { brands: brandDistribution, noBrandRatio, totalProducts },
             factorAggregated: factorAggregatedData,
+            modifiersFiltered: modifiersFiltered,
             poolSource: (kosV2Data?.poolSource ?? null) as "pool" | "api" | null,
             poolFetchedAt: (kosV2Data?.poolFetchedAt ?? null) as string | null,
           }).catch(() => {});

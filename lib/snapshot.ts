@@ -21,6 +21,7 @@ export interface AnalysisSnapshot {
   competitorThreat?: unknown; // 경쟁 위협도
   brandDistribution?: unknown; // 브랜드/상호명 분포
   factorAggregated?: unknown;  // STEP 4 최종 후보 비교 — 사전 계산된 FactorScoreSet[] + 후보 메타
+  modifiersFiltered?: unknown;  // 수식어 추천 — LLM 자연스러움 검증 완료된 목록
   poolSource?: "pool" | "api" | null;  // keywords-v2가 카테고리 풀을 썼는지
   poolFetchedAt?: string | null;       // 풀 수집 시각 (ISO) — UX 신선도 배지
 }

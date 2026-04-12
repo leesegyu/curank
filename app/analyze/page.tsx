@@ -131,6 +131,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let snapFactorScore: unknown | null = null;
   let snapBrandDistribution: BrandDistributionData | null = null;
   let snapFactorAggregated: { candidates: Array<{ keyword: string; source: string }>; results: unknown[] } | null = null;
+  let snapModifiersFiltered: unknown[] | null = null;
   let snapPoolSource: "pool" | "api" | null = null;
   let snapPoolFetchedAt: string | null = null;
   let poolFreshnessLabel: string | null = null;
@@ -152,6 +153,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       snapFactorScore = snap.snapshot.factorScore ?? null;
       snapBrandDistribution = (snap.snapshot.brandDistribution as BrandDistributionData | undefined) ?? null;
       snapFactorAggregated = (snap.snapshot.factorAggregated as typeof snapFactorAggregated) ?? null;
+      snapModifiersFiltered = (snap.snapshot.modifiersFiltered as unknown[] | undefined) ?? null;
       snapPoolSource = (snap.snapshot.poolSource as "pool" | "api" | null) ?? null;
       snapPoolFetchedAt = (snap.snapshot.poolFetchedAt as string | null) ?? null;
       if (snapPoolSource === "pool" && snapPoolFetchedAt) {
@@ -426,6 +428,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
               graph: snapKeywordsGraph,
               sos: (snapKeywordsSeasonOpp as unknown[] | null),
             }}
+            preloadedData={snapModifiersFiltered}
           />
 
           {/* 심화 키워드 추천 A/B/C */}
