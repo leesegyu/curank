@@ -522,10 +522,10 @@ export default function ReportDownloadButton({ keyword, platform }: { keyword: s
         };
 
         combos.forEach((combo, idx) => {
-          const titleLines = doc.splitTextToSize(combo.title, CW - 16);
-          const tagText = combo.tags.map(t => `#${t}`).join("  ");
-          const tagLines = doc.splitTextToSize(tagText, CW - 16);
-          const reasonLines = doc.splitTextToSize(combo.reasoning, CW - 16);
+          const titleLines = doc.splitTextToSize(combo.title || "", CW - 16);
+          const tagText = (combo.tags ?? []).map((t: string) => `#${t}`).join("  ");
+          const tagLines = doc.splitTextToSize(tagText || " ", CW - 16);
+          const reasonLines = doc.splitTextToSize(combo.reasoning || "", CW - 16);
           const ch = 14 + titleLines.length * 4.5 + 5 + tagLines.length * 4 + 4 + reasonLines.length * 3.5 + 6;
 
           checkPage(ch + 6);
@@ -596,7 +596,8 @@ export default function ReportDownloadButton({ keyword, platform }: { keyword: s
       doc.save(`쿠랭크_${keyword}_분석보고서.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
-      alert("PDF 생성 중 오류가 발생했습니다.");
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`PDF 생성 중 오류가 발생했습니다.\n${msg}`);
     } finally {
       setLoading(false);
     }

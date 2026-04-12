@@ -22,10 +22,23 @@ const GENERIC_MODIFIER_TOKENS = new Set<string>([
   "추천", "인기", "순위", "랭킹", "베스트", "top", "리뷰", "후기", "비교", "판매량", "평가",
   // 가격/할인 (범용)
   "가성비", "저렴한", "저렴", "최저가", "할인", "특가", "세일", "쿠폰", "싼곳", "가격",
-  // 인구통계 (너무 범용, 거의 의미 없음)
-  "가정용", "사무용", "남성용", "여성용", "아동용", "아이용",
   // 구매 행위 (범용)
   "구매", "주문", "쇼핑", "직구",
+]);
+
+/**
+ * 카테고리 맥락에서만 유효한 수식어 (패션/뷰티/스포츠/디지털에서만 범용)
+ * 식품/가구/육아 등에서는 "매실 남성용" 같은 엉뚱한 조합을 방지
+ */
+const DEMOGRAPHIC_MODIFIER_TOKENS = new Set<string>([
+  "가정용", "사무용", "남성용", "여성용", "아동용", "아이용",
+  "남성", "여성", "남자", "여자", "아동", "키즈", "유아",
+]);
+
+/** 인구통계 수식어가 유효한 L1 카테고리 */
+const DEMOGRAPHIC_VALID_L1 = new Set([
+  "ss.fashion", "ss.accessory", "ss.beauty", "ss.digital", "ss.sports", "ss.health",
+  "cp.fashion", "cp.accessory", "cp.beauty", "cp.digital", "cp.sports", "cp.health",
 ]);
 
 
@@ -129,7 +142,7 @@ export function excludeModifierCombinations<T extends { keyword: string }>(
  *   "흑수박"           → false (시드가 토큰으로 없음)
  *   "수박"             → false (추가 토큰 없음)
  */
-export function isPureGenericModifier(keyword: string, seed: string): boolean {
+export function isPureGenericModifier(keyword: string, seed: string, nodePath?: string): boolean {
   const kwTokens = tokenize(keyword);
   const seedTokens = tokenize(seed);
 
@@ -140,7 +153,16 @@ export function isPureGenericModifier(keyword: string, seed: string): boolean {
   const extras = kwTokens.filter((t) => !seedSet.has(t));
   if (extras.length === 0) return false;
 
-  return extras.every((e) => GENERIC_MODIFIER_TOKENS.has(e));
+  // 카테고리 맥락에 따라 인구통계 수식어 유효성 판단
+  const l1 = nodePath ? nodePath.split(".").slice(0, 2).join(".") : "";
+  const demoValid = !nodePath || DEMOGRAPHIC_VALID_L1.has(l1);
+
+  return extras.every((e) => {
+    if (GENERIC_MODIFIER_TOKENS.has(e)) return true;
+    // 인구통계 수식어는 해당 카테고리에서만 유효
+    if (DEMOGRAPHIC_MODIFIER_TOKENS.has(e) && demoValid) return true;
+    return false;
+  });
 }
 
 /** 순수 범용 수식어 조합만 추출 */
