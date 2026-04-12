@@ -292,8 +292,11 @@ export async function GET(req: NextRequest) {
     // 6. 브랜드 — 스냅샷에서 읽기 (searchNaver 중복 호출 제거)
     let topBrands: string[] = [];
     if (snap?.snapshot.brandDistribution) {
-      const brands = snap.snapshot.brandDistribution as { name: string; count: number }[];
-      topBrands = brands.slice(0, 5).map((b) => b.name);
+      const bd = snap.snapshot.brandDistribution as
+        | { name: string; count: number }[]
+        | { brands: { name: string; count: number }[]; noBrandRatio?: number };
+      const arr = Array.isArray(bd) ? bd : (bd.brands ?? []);
+      topBrands = arr.slice(0, 5).map((b) => b.name);
     }
 
     // 7. title-miner + 온톨로지 (로컬 연산 + 무료 API)
