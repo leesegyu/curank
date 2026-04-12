@@ -41,10 +41,14 @@ export async function GET(req: NextRequest) {
     const result = (snap.snapshot.result ?? {}) as Record<string, unknown>;
     const trend = snap.snapshot.trend as Record<string, unknown> | null;
     const factorScore = snap.snapshot.factorScore as Record<string, unknown> | null;
-    const keywordsV2 = snap.snapshot.keywordsV2 as unknown[] | null;
-    const keywordsVariant = snap.snapshot.keywordsVariant as unknown[] | null;
-    const keywordsSeasonOpp = snap.snapshot.keywordsSeasonOpp as unknown[] | null;
-    const factorAggregated = snap.snapshot.factorAggregated as unknown[] | null;
+    const kwV2Raw = snap.snapshot.keywordsV2;
+    const keywordsV2 = Array.isArray(kwV2Raw) ? kwV2Raw : null;
+    const kwVarRaw = snap.snapshot.keywordsVariant;
+    const keywordsVariant = Array.isArray(kwVarRaw) ? kwVarRaw : (kwVarRaw as { keywords?: unknown[] } | null)?.keywords ?? null;
+    const kwSosRaw = snap.snapshot.keywordsSeasonOpp;
+    const keywordsSeasonOpp = Array.isArray(kwSosRaw) ? kwSosRaw : null;
+    const kwAggRaw = snap.snapshot.factorAggregated;
+    const factorAggregated = Array.isArray(kwAggRaw) ? kwAggRaw : null;
     const competitorThreat = snap.snapshot.competitorThreat as Record<string, unknown> | null;
 
     // brandDistribution: 객체 { brands: [...] } 또는 배열 호환
@@ -87,7 +91,8 @@ export async function GET(req: NextRequest) {
       conclusion,
     });
   } catch (err) {
-    console.error("[report] error:", err);
-    return NextResponse.json({ error: "보고서 데이터 생성 중 오류가 발생했습니다." }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[report] error:", msg, err);
+    return NextResponse.json({ error: `보고서 오류: ${msg}` }, { status: 500 });
   }
 }
