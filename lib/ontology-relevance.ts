@@ -124,9 +124,10 @@ export function calcOntologyRelevance(
 
   // ── 크로스 카테고리 패널티 ──
   // 시드와 타겟이 모두 온톨로지 분류 가능하지만 L1이 완전히 다르면
-  // (Wu-Palmer = 0) 점수를 강하게 억제 → "게이밍 의자"에 "왕새우" 방지
-  if (seedClass && targetClass && wuPalmer === 0 && overlap === 0) {
-    // 온톨로지상 완전 무관 + 토큰 겹침도 0 → 최대 5점 (사실상 차단)
+  // (Wu-Palmer = 0) 점수를 강하게 억제 → "수박"에 "생수"/"계란" 방지
+  // 토큰 겹침이 약간 있어도 (한 글자 공유 등) L1이 다르면 차단
+  if (seedClass && targetClass && wuPalmer === 0) {
+    // 온톨로지상 L1 완전 다름 → overlap이 있어도 최대 5점
     return {
       score: Math.min(score, 5),
       factors: {

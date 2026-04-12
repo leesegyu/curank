@@ -63,7 +63,15 @@ function calcDiscoveryValue(seedKeyword: string, candidateKeyword: string, platf
   const isRealData = source === "autocomplete" || source === "deepAutocomplete" || source === "adRelated" || source === "brandExtract";
 
   if (!containsSeed && isRealData) {
-    // "노트북" → "LG그램" — 실제 데이터에서 온 완전히 다른 형태 = 최고 발견 가치
+    // "노트북" → "LG그램" — 실제 데이터에서 온 완전히 다른 형태 = 높은 발견 가치
+    // 단, 온톨로지상 L1이 완전히 다르면 발견 가치 0 (예: "수박" → "생수" 방지)
+    const seedCls = classifyKeyword(seedKeyword, platform);
+    const candCls = classifyKeyword(candidateKeyword, platform);
+    if (seedCls && candCls) {
+      const sim = wuPalmerSim(seedCls.path, candCls.path);
+      if (sim === 0) return 5; // 완전 다른 L1 → 발견 가치 거의 없음
+      if (sim < 0.3) return 20; // 먼 카테고리
+    }
     return 95;
   }
 

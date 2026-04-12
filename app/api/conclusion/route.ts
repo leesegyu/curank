@@ -40,6 +40,8 @@ export async function GET(req: NextRequest) {
   const platform = (req.nextUrl.searchParams.get("platform") ?? "naver") as Platform;
   const shouldGenerate = req.nextUrl.searchParams.get("generate") === "true";
   const shouldRegenerate = req.nextUrl.searchParams.get("regenerate") === "true";
+  const regenComboParam = req.nextUrl.searchParams.get("regenerateCombo");
+  const regenComboIdx = regenComboParam !== null ? parseInt(regenComboParam, 10) : -1;
 
   const validation = validateKeyword(rawKeyword);
   if (!validation.ok) {
@@ -65,6 +67,68 @@ export async function GET(req: NextRequest) {
       .single();
     const used = row?.regeneration_count ?? 0;
     return { limit: limits.regeneration, used, plan: usage?.plan ?? "free" };
+  }
+
+  // ── 개별 제안안 재생성 모드 ──
+  if (regenComboIdx >= 0) {
+    // 기존 결론 로드
+    const { data: existing } = await supabaseAdmin
+      .from("analysis_conclusions")
+      .select("result, generated_at")
+      .eq("user_id", userId).eq("keyword", keyword).eq("platform", platform)
+      .single();
+
+    if (!existing?.result) {
+      return NextResponse.json({ error: "기존 결론이 없습니다" }, { status: 400 });
+    }
+
+    const prevCombos = (existing.result as { combinations: import("@/lib/conclusion-generator").TitleTagCombo[] }).combinations;
+    if (regenComboIdx >= prevCombos.length) {
+      return NextResponse.json({ error: "잘못된 제안안 인덱스" }, { status: 400 });
+    }
+
+    // title-miner + ontology 데이터 수집 (기존 로직 재사용)
+    let minedKw = titleMineCache.get<import("@/lib/title-miner").TitleMinedKeyword[]>(keyword);
+    if (!minedKw) {
+      try { minedKw = await mineKeywordsFromTitles(keyword); titleMineCache.set(keyword, minedKw); } catch { minedKw = []; }
+    }
+    const cls = classifyKeywordV2(keyword, platform === "naver" ? "smartstore" : "coupang");
+    let oNode: import("@/lib/ontology/types").OntologyNode | null = null;
+    let poolKw: import("@/lib/category-pool").CategoryPoolKeyword[] | undefined;
+    if (cls) {
+      const { getNodesV2 } = await import("@/lib/ontology");
+      oNode = getNodesV2(cls.platform).find((n) => n.id === cls.path) ?? null;
+      try { const p = await getCategoryPool(cls.path, cls.platform); poolKw = p?.keywords.slice(0, 50); } catch {}
+    }
+
+    // 전체 재생성 후 해당 인덱스 combo만 교체
+    const fullResult = buildTitlesRuleBased({
+      keyword, platform, factorScores: { overall: 0, factors: [] } as unknown as import("@/lib/factor-model").FactorScoreSet,
+      recommendedKeywords: [], titleMinedKeywords: minedKw ?? [], ontologyNode: oNode, categoryPoolKeywords: poolKw,
+    });
+
+    // 해당 인덱스에 새 combo 삽입 (전략명은 유지, 내용만 교체)
+    const newCombo = fullResult.combinations[regenComboIdx % fullResult.combinations.length];
+    if (newCombo) {
+      newCombo.strategy = prevCombos[regenComboIdx].strategy;
+      newCombo.highlightFactor = prevCombos[regenComboIdx].highlightFactor;
+    }
+    prevCombos[regenComboIdx] = newCombo ?? prevCombos[regenComboIdx];
+
+    const updatedResult = { combinations: prevCombos };
+    const now = new Date().toISOString();
+    await supabaseAdmin
+      .from("analysis_conclusions")
+      .update({ result: updatedResult, last_regenerated_at: now })
+      .eq("user_id", userId).eq("keyword", keyword).eq("platform", platform);
+
+    const regen = await getRegenInfo();
+    return NextResponse.json({
+      ...updatedResult,
+      generatedAt: now,
+      cached: true,
+      regeneration: { used: regen.used, limit: regen.limit, plan: regen.plan },
+    });
   }
 
   // ── 조회 모드: 저장된 결론 반환 ──

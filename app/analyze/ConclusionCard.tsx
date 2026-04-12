@@ -65,6 +65,8 @@ export default function ConclusionCard({ keyword, platform }: Props) {
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [regenComboIdx, setRegenComboIdx] = useState<number | null>(null);
+  const [comboRegenCounts, setComboRegenCounts] = useState<Record<number, number>>({});
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
   const [regen, setRegen] = useState<RegenInfo | null>(null);
@@ -137,6 +139,26 @@ export default function ConclusionCard({ keyword, platform }: Props) {
     }
   }
 
+  async function regenerateCombo(comboIdx: number) {
+    setRegenComboIdx(comboIdx);
+    try {
+      const res = await fetch(
+        `/api/conclusion?keyword=${encodeURIComponent(keyword)}&platform=${platform}&regenerateCombo=${comboIdx}`
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "개별 재생성 실패");
+      if (data.combinations) setCombinations(data.combinations);
+      if (data.generatedAt) setGeneratedAt(data.generatedAt);
+      if (data.regeneration) setRegen(data.regeneration);
+      setComboRegenCounts((prev) => ({ ...prev, [comboIdx]: (prev[comboIdx] ?? 0) + 1 }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "개별 재생성 실패");
+    } finally {
+      setRegenComboIdx(null);
+    }
+  }
+
+  const COMBO_REGEN_LIMIT = 10;
   const regenRemaining = regen ? regen.limit - regen.used : null;
   const canRegenerate = regen ? regen.limit > 0 && regen.used < regen.limit : false;
   const isFree = regen?.plan === "free";
@@ -307,12 +329,27 @@ export default function ConclusionCard({ keyword, platform }: Props) {
               </div>
             </div>
 
-            {/* 한줄 해석 */}
-            <p className="text-xs text-gray-500 leading-relaxed">
-              <span className={`font-bold ${factorStyle.text}`}>{factorStyle.label}</span>
-              {" — "}
-              {combo.reasoning}
-            </p>
+            {/* 한줄 해석 + 개별 재생성 */}
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-500 leading-relaxed flex-1">
+                <span className={`font-bold ${factorStyle.text}`}>{factorStyle.label}</span>
+                {" — "}
+                {combo.reasoning}
+              </p>
+              {!isFree && (
+                <button
+                  onClick={() => regenerateCombo(idx)}
+                  disabled={regenComboIdx !== null || (comboRegenCounts[idx] ?? 0) >= COMBO_REGEN_LIMIT}
+                  className="ml-2 text-[11px] px-2 py-1 rounded-md border border-gray-200 text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 flex items-center gap-1"
+                >
+                  {regenComboIdx === idx ? (
+                    <span className="w-2.5 h-2.5 border border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>↻ {COMBO_REGEN_LIMIT - (comboRegenCounts[idx] ?? 0)}회</>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         );
       })}
