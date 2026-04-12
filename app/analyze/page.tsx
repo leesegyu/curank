@@ -506,7 +506,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           <ConclusionCard
             keyword={kw}
             platform={platform}
-            ready={!!(result && snapFactorScore && snapKeywordsV2)}
+            ready={!!(result && snapFactorScore && snapKeywordsV2 && snapFactorAggregated)}
           />
 
           {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}

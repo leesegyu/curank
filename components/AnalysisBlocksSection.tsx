@@ -262,6 +262,26 @@ export default function AnalysisBlocksSection() {
                     결과 보기 →
                   </span>
                 )}
+                {block.status === "error" && (
+                  <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => setBlocks(prev => prev.filter(b => b.id !== block.id))}
+                      className="text-xs p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-300 transition-colors"
+                      title="삭제"
+                    >
+                      🗑
+                    </button>
+                    <button
+                      onClick={() => {
+                        setBlocks(prev => prev.filter(b => b.id !== block.id));
+                        startAnalysis(block.keyword, block.platform);
+                      }}
+                      className="text-xs px-2.5 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold transition-colors"
+                    >
+                      재분석
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

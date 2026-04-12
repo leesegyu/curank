@@ -369,91 +369,68 @@ export default function ReportDownloadButton({ keyword, platform }: { keyword: s
       newDarkPage();
       sectionHeader(3, "SOLUTION DISCOVERY", "해결 방안 탐색");
 
-      // 추천 키워드 (V2)
-      const v2kws = data.keywordsV2 as { keyword: string; score: number }[] | null;
-      if (v2kws && v2kws.length > 0) {
-        const kh = 8 + v2kws.length * 6 + 4;
-        cardBox(kh);
-        let ky = y + 6;
-
+      // 헬퍼: 키워드 리스트 카드 렌더링
+      function renderKeywordList(
+        title: string,
+        items: { keyword: string; score?: number; similarity?: number; phase?: string; upsidePercent?: number }[],
+        showScore?: boolean,
+      ) {
+        if (!items || items.length === 0) return;
+        checkPage(12 + items.length * 5);
+        const lh = 8 + items.length * 5 + 4;
+        cardBox(lh);
+        let ly = y + 6;
         doc.setFont("NanumGothic", "bold");
         doc.setTextColor(...GOLD);
         doc.setFontSize(8);
-        doc.text("AI 추천 키워드 TOP 5", M + 6, ky);
-        ky += 6;
-
-        v2kws.forEach((kw, i) => {
-          doc.setFont("NanumGothic", "normal");
-          doc.setTextColor(...WHITE);
-          doc.setFontSize(8);
-          doc.text(`${i + 1}. ${kw.keyword}`, M + 8, ky + 3);
-          doc.setTextColor(...GOLD);
-          doc.setFontSize(7);
-          doc.text(`${kw.score}점`, M + CW - 20, ky + 3);
-          ky += 6;
-        });
-
-        y += kh + 4;
-      }
-
-      // 변형 키워드
-      const variants = data.keywordsVariant as { keyword: string }[] | null;
-      if (variants && variants.length > 0) {
-        checkPage(18);
-        const vh = 8 + Math.min(variants.length, 5) * 5 + 4;
-        cardBox(vh);
-        let vy = y + 6;
-
-        doc.setFont("NanumGothic", "bold");
-        doc.setTextColor(...GOLD);
-        doc.setFontSize(8);
-        doc.text("세부 유형 키워드", M + 6, vy);
-        vy += 6;
-
-        variants.slice(0, 5).forEach((v) => {
-          doc.setFont("NanumGothic", "normal");
-          doc.setTextColor(...CREAM);
-          doc.setFontSize(7.5);
-          doc.text(`* ${v.keyword}`, M + 8, vy + 3);
-          vy += 5;
-        });
-
-        y += vh + 4;
-      }
-
-      // 시즌 기회
-      const seasonKws = data.keywordsSeasonOpp as { keyword: string; phase?: string; upsidePercent?: number; peakMonth?: number }[] | null;
-      if (seasonKws && seasonKws.length > 0) {
-        checkPage(18);
-        const sh = 8 + seasonKws.length * 6 + 4;
-        cardBox(sh);
-        let sy = y + 6;
-
-        doc.setFont("NanumGothic", "bold");
-        doc.setTextColor(...GOLD);
-        doc.setFontSize(8);
-        doc.text("시즌 기회 키워드", M + 6, sy);
-        sy += 6;
-
-        seasonKws.forEach((s) => {
+        doc.text(`${title} (${items.length}개)`, M + 6, ly);
+        ly += 6;
+        items.forEach((kw, i) => {
+          checkPage(6);
           doc.setFont("NanumGothic", "normal");
           doc.setTextColor(...WHITE);
           doc.setFontSize(7.5);
-          const phase = s.phase === "rising" ? "상승 초입" : s.phase === "rising_fast" ? "급상승" : "";
-          doc.text(`* ${s.keyword}`, M + 8, sy + 3);
-          if (phase) {
-            doc.setTextColor(...GREEN);
-            doc.text(`[${phase}]`, M + 8 + doc.getTextWidth(`* ${s.keyword}  `), sy + 3);
-          }
-          if (s.upsidePercent) {
+          doc.text(`${i + 1}. ${kw.keyword}`, M + 8, ly + 3);
+          if (showScore && kw.score != null) {
             doc.setTextColor(...GOLD);
-            doc.text(`+${s.upsidePercent}%`, M + CW - 24, sy + 3);
+            doc.setFontSize(7);
+            doc.text(`${kw.score}점`, M + CW - 20, ly + 3);
           }
-          sy += 6;
+          if (kw.phase) {
+            const phaseLabel = kw.phase === "rising" ? "상승 초입" : kw.phase === "rising_fast" ? "급상승" : "";
+            if (phaseLabel) {
+              doc.setTextColor(...GREEN);
+              doc.setFontSize(6.5);
+              doc.text(`[${phaseLabel}]`, M + 8 + doc.getTextWidth(`${i + 1}. ${kw.keyword}  `), ly + 3);
+            }
+            if (kw.upsidePercent) {
+              doc.setTextColor(...GOLD);
+              doc.setFontSize(6.5);
+              doc.text(`+${kw.upsidePercent}%`, M + CW - 24, ly + 3);
+            }
+          }
+          ly += 5;
         });
-
-        y += sh + 4;
+        y += lh + 4;
       }
+
+      // AI 추천 키워드 TOP 10
+      renderKeywordList("AI 추천 키워드", data.keywordsV2 ?? [], true);
+
+      // 세부 유형 키워드 TOP 10
+      renderKeywordList("세부 유형 키워드", data.keywordsVariant ?? []);
+
+      // 크리에이티브 키워드 TOP 10
+      renderKeywordList("크리에이티브 발굴 키워드", data.keywordsCreative ?? [], true);
+
+      // 연관 키워드 TOP 10
+      const graphKws = (data.keywordsGraph ?? []) as { keyword: string; similarity?: number }[];
+      if (graphKws.length > 0) {
+        renderKeywordList("연관 키워드", graphKws.map(g => ({ ...g, score: Math.round((g.similarity ?? 0) * 100) })), true);
+      }
+
+      // 시즌 기회 키워드 TOP 10
+      renderKeywordList("시즌 기회 키워드", data.keywordsSeasonOpp ?? []);
 
       // ═══════════════════════════════════════════════════
       // STEP 4 — 전 (최종 후보 비교)
@@ -470,7 +447,7 @@ export default function ReportDownloadButton({ keyword, platform }: { keyword: s
         doc.setFont("NanumGothic", "bold");
         doc.setTextColor(...GOLD);
         doc.setFontSize(8);
-        doc.text("종합 점수 TOP 5", M + 6, ay);
+        doc.text(`종합 점수 TOP ${aggData.length}`, M + 6, ay);
         ay += 7;
 
         aggData.forEach((a, i) => {
