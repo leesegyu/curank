@@ -7,7 +7,7 @@ import { useState } from "react";
  * 다크 네이비 + 골드 악센트, 기-승-전-결 스토리텔링
  * NanumGothic 한국어 폰트, jsPDF 클라이언트 렌더링
  */
-export default function ReportDownloadButton({ keyword, platform }: { keyword: string; platform: string }) {
+export default function ReportDownloadButton({ keyword, platform, conclusionReady = false }: { keyword: string; platform: string; conclusionReady?: boolean }) {
   const [loading, setLoading] = useState(false);
 
   async function handleDownload() {
@@ -583,13 +583,20 @@ export default function ReportDownloadButton({ keyword, platform }: { keyword: s
   }
 
   return (
-    <button
-      onClick={handleDownload}
-      disabled={loading}
-      className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-wait"
-      style={{ background: "linear-gradient(135deg, #d4a853, #b8860b)" }}
-    >
-      {loading ? "PDF 생성 중..." : "분석 보고서 PDF 다운로드"}
-    </button>
+    <div className="space-y-2">
+      <button
+        onClick={handleDownload}
+        disabled={loading || !conclusionReady}
+        className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+        style={{ background: conclusionReady ? "linear-gradient(135deg, #d4a853, #b8860b)" : "#9ca3af" }}
+      >
+        {loading ? "PDF 생성 중..." : conclusionReady ? "분석 보고서 PDF 다운로드" : "STEP 6 결론 생성 후 PDF 다운로드 가능"}
+      </button>
+      {!conclusionReady && (
+        <p className="text-xs text-center text-gray-400">
+          위 STEP 6에서 <span className="font-bold text-indigo-500">결론 생성하기</span> 버튼을 먼저 눌러주세요
+        </p>
+      )}
+    </div>
   );
 }

@@ -129,11 +129,13 @@ async function main() {
   // ══════════════════════════════════════════════════════════════
   console.log(`  → 만료 스냅샷/결론/캐시 정리 시작`);
 
-  // 플랜별 snapshotDays: free=10, standard=30, business/premium/membership=Infinity
-  // 무한 보관 플랜 유저는 삭제하지 않음 → free/standard만 대상
+  // 플랜별 snapshotDays: free=10, standard=30, business/premium/membership=90
   const SNAPSHOT_CLEANUP_RULES = [
     { plan: "free", days: 10 },
     { plan: "standard", days: 30 },
+    { plan: "business", days: 90 },
+    { plan: "premium", days: 90 },
+    { plan: "membership", days: 90 },
   ];
 
   let snapshotsCleaned = 0;

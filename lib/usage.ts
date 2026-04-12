@@ -20,9 +20,9 @@ export interface PlanLimits {
 const PLAN_CONFIG: Record<string, PlanLimits> = {
   free:       { analysis: 8,   comparison: 5,  regeneration: 10, historyMax: 10, snapshotDays: 10,       pdfDownload: false, discoverLimit: 3 },
   standard:   { analysis: 30,  comparison: 10, regeneration: 20, historyMax: 30, snapshotDays: 30,       pdfDownload: true,  discoverLimit: 10 },
-  business:   { analysis: 80,  comparison: 20, regeneration: 30, historyMax: 50, snapshotDays: Infinity, pdfDownload: true,  discoverLimit: 30 },
-  premium:    { analysis: 200, comparison: 30, regeneration: 40, historyMax: 50, snapshotDays: Infinity, pdfDownload: true,  discoverLimit: 9999 },
-  membership: { analysis: 500, comparison: 50, regeneration: 50, historyMax: 50, snapshotDays: Infinity, pdfDownload: true,  discoverLimit: 9999 },
+  business:   { analysis: 80,  comparison: 20, regeneration: 30, historyMax: 50, snapshotDays: 90,       pdfDownload: true,  discoverLimit: 30 },
+  premium:    { analysis: 200, comparison: 30, regeneration: 40, historyMax: 50, snapshotDays: 90,       pdfDownload: true,  discoverLimit: 9999 },
+  membership: { analysis: 500, comparison: 50, regeneration: 50, historyMax: 50, snapshotDays: 90,       pdfDownload: true,  discoverLimit: 9999 },
 };
 
 /** 관리자 계정 — 무제한 */

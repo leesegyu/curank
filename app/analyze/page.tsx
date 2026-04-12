@@ -166,6 +166,23 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
     }
   }
 
+  // 결론 존재 여부 확인 (PDF 다운로드 활성화용)
+  let hasConclusionData = false;
+  if (userId) {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+      const { data: concRow } = await sb
+        .from("analysis_conclusions")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("keyword", kw)
+        .eq("platform", platform)
+        .single();
+      hasConclusionData = !!concRow;
+    } catch { /* 결론 조회 실패는 무시 */ }
+  }
+
   // 스냅샷 없거나 강제 새로고침 → API 호출
   if (!result) {
     console.log(`[snapshot] MISS: "${kw}" (${platform}) → API 호출`);
@@ -529,7 +546,7 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
           />
 
           {/* PDF 보고서 다운로드 */}
-          <ReportDownloadButton keyword={kw} platform={platform} />
+          <ReportDownloadButton keyword={kw} platform={platform} conclusionReady={hasConclusionData} />
 
           <p className="text-xs text-center text-gray-400 pb-4">
             분석 시각: {new Date(result.analyzedAt).toLocaleString("ko-KR")}
