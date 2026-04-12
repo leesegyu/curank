@@ -439,17 +439,25 @@ export function buildTitlesRuleBased(input: TitleBuilderInput): ConclusionResult
     });
   }
 
-  // ── 전략 5: 세부 유형 특화 ──
-  if (topVariantKeyword && variantTokens.length > 1) {
-    const alt = variantTokens.find((v) => norm(v) !== norm(topVariantKeyword));
-    if (alt) {
+  // ── 전략 5: 세부 유형 특화 (variantKeywords 기반) ──
+  // 전략 2와 다른 variant를 사용. variant가 1개뿐이어도 전략 2와 다른 키워드면 생성.
+  {
+    // 전략 2에서 사용한 키워드 제외
+    const usedVariant = topVariantKeyword ?? variantTokens[0] ?? "";
+    const altVariant = variantTokens.find((v) => norm(v) !== norm(usedVariant) && norm(v) !== norm(keyword));
+    // altVariant 없으면 topVariantKeyword 자체 사용 (전략 2에서 oppTokens를 쓴 경우)
+    const variantForS5 = altVariant ?? (topVariantKeyword && norm(topVariantKeyword) !== norm(usedVariant) ? topVariantKeyword : null);
+    // 마지막 폴백: variantTokens 첫 번째 (전략 2가 oppTokens를 쓴 경우 variant 미사용이므로)
+    const finalVariant = variantForS5 ?? (variantTokens.length > 0 && !combos.some((c) => c.strategy === "구체 니즈 타겟" && c.title.includes(variantTokens[0])) ? variantTokens[0] : null);
+
+    if (finalVariant) {
       const hook = selectHook(titleType, hookSeed + 4);
-      const title = buildTypedTitle(titleType, alt, hook, [...minedTokens, ...poolTokens], brands, maxChars);
+      const title = buildTypedTitle(titleType, finalVariant, hook, [...minedTokens, ...poolTokens, ...seedTokens], brands, maxChars);
       combos.push({
         strategy: "세부 유형 특화",
         title,
         tags: buildTags(allTokens, title, 10),
-        reasoning: `"${alt}" 특화 유형 틈새 진입`,
+        reasoning: `"${finalVariant}" 세부 유형으로 틈새 시장 진입`,
         highlightFactor: factorScores.factors[0]?.key ?? "ranking",
       });
     }
