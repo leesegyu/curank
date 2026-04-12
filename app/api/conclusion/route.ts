@@ -6,10 +6,17 @@ import { getKeywordTrend } from "@/lib/datalab";
 import { classifyKeywordIntent } from "@/lib/intent-classifier";
 import { calcFactorScores, type FactorInput, type Platform } from "@/lib/factor-model";
 import { generateConclusion } from "@/lib/conclusion-generator";
+import { buildTitlesRuleBased } from "@/lib/title-builder";
+import { mineKeywordsFromTitles } from "@/lib/title-miner";
+import { classifyKeywordV2 } from "@/lib/ontology";
+import { getCategoryPool } from "@/lib/category-pool";
 import { getUsage, getPlanLimits, isAdmin } from "@/lib/usage";
 import { v2Cache, V2_CACHE_TYPE, type KeywordV2 } from "@/app/api/keywords-v2/route";
 import { getL2Cache } from "@/lib/cache-db";
 import { validateKeyword } from "@/lib/keyword-validator";
+import NodeCache from "node-cache";
+
+const titleMineCache = new NodeCache({ stdTTL: 60 * 60 * 6, maxKeys: 500 });
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -292,17 +299,50 @@ export async function GET(req: NextRequest) {
       // 실패해도 결론 생성은 계속
     }
 
-    // 7. GPT-4o mini로 결론 생성
-    const result = await generateConclusion({
-      keyword,
-      platform,
-      factorScores,
-      recommendedKeywords,
-      opportunityKeywords,
-      creativeKeyword,
-      topAggregatedKeyword,
-      topVariantKeyword,
-    });
+    // 7. 규칙 기반 제목+태그 생성 (LLM 미사용)
+    //    title-miner로 실제 상위 상품 제목에서 키워드 추출 → 조립
+    let titleMinedKeywords = titleMineCache.get<import("@/lib/title-miner").TitleMinedKeyword[]>(keyword);
+    if (!titleMinedKeywords) {
+      try {
+        titleMinedKeywords = await mineKeywordsFromTitles(keyword);
+        titleMineCache.set(keyword, titleMinedKeywords);
+      } catch {
+        titleMinedKeywords = [];
+      }
+    }
+
+    const ontologyResult = classifyKeywordV2(keyword, platform === "naver" ? "smartstore" : "coupang");
+    let ontologyNode: import("@/lib/ontology/types").OntologyNode | null = null;
+    let categoryPoolKeywords: import("@/lib/category-pool").CategoryPoolKeyword[] | undefined;
+    if (ontologyResult) {
+      const { getNodesV2 } = await import("@/lib/ontology");
+      const nodes = getNodesV2(ontologyResult.platform);
+      ontologyNode = nodes.find((n) => n.id === ontologyResult.path) ?? null;
+      try {
+        const pool = await getCategoryPool(ontologyResult.path, ontologyResult.platform);
+        categoryPoolKeywords = pool?.keywords.slice(0, 50);
+      } catch { /* pool 실패해도 계속 */ }
+    }
+
+    let result;
+    if (titleMinedKeywords.length > 0 || ontologyNode) {
+      // 규칙 기반 생성 (OpenAI 비용 0)
+      result = buildTitlesRuleBased({
+        keyword, platform, factorScores, recommendedKeywords,
+        opportunityKeywords, creativeKeyword,
+        topAggregatedKeyword, topVariantKeyword,
+        titleMinedKeywords: titleMinedKeywords ?? [],
+        ontologyNode,
+        categoryPoolKeywords,
+      });
+    } else {
+      // 폴백: 데이터 부족 시 기존 LLM 사용
+      result = await generateConclusion({
+        keyword, platform, factorScores, recommendedKeywords,
+        opportunityKeywords, creativeKeyword,
+        topAggregatedKeyword, topVariantKeyword,
+      });
+    }
 
     // 4. DB에 저장 (upsert) + 재생성 카운트 증가
     const now = new Date().toISOString();
