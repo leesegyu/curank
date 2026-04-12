@@ -11,8 +11,7 @@ const supabaseAdmin = createClient(
 
 /**
  * GET /api/report?keyword=...&platform=...
- * 스냅샷 + 결론 데이터를 반환 (GPT 미사용, 비용 $0)
- * 클라이언트에서 고정 템플릿으로 PDF 렌더링
+ * 스냅샷 전체 + 결론 데이터를 반환 (기-승-전-결 PDF용)
  */
 export async function GET(req: NextRequest) {
   const keyword = req.nextUrl.searchParams.get("keyword")?.trim();
@@ -25,7 +24,6 @@ export async function GET(req: NextRequest) {
 
   const userId = session.user.id as string;
 
-  // 플랜 확인 — PDF는 Standard+
   if (!isAdmin(userId)) {
     const usage = await getUsage(userId);
     const limits = getPlanLimits(usage.plan);
@@ -41,9 +39,15 @@ export async function GET(req: NextRequest) {
 
   const result = snap.snapshot.result as Record<string, unknown>;
   const trend = snap.snapshot.trend as Record<string, unknown> | null;
-  const demo = snap.snapshot.demographics as Record<string, unknown> | null;
+  const factorScore = snap.snapshot.factorScore as Record<string, unknown> | null;
+  const keywordsV2 = snap.snapshot.keywordsV2 as unknown[] | null;
+  const keywordsVariant = snap.snapshot.keywordsVariant as unknown[] | null;
+  const keywordsSeasonOpp = snap.snapshot.keywordsSeasonOpp as unknown[] | null;
+  const factorAggregated = snap.snapshot.factorAggregated as unknown[] | null;
+  const competitorThreat = snap.snapshot.competitorThreat as Record<string, unknown> | null;
+  const brandDistribution = snap.snapshot.brandDistribution as unknown[] | null;
 
-  // 결론 데이터 (DB에서 조회, API 호출 0)
+  // 결론 데이터
   const { data: conclusionRow } = await supabaseAdmin
     .from("analysis_conclusions")
     .select("result, generated_at")
@@ -66,21 +70,25 @@ export async function GET(req: NextRequest) {
     keyword,
     platform,
     analyzedAt: snap.created_at,
+    // 기 (현재 상황)
     competitionScore: result.competitionScore,
     competitionLevel: result.competitionLevel,
     totalCount: result.totalCount,
     priceStats: result.priceStats,
-    advice: result.advice,
     trendDirection: trend?.direction ?? null,
     trendData: trend?.data ?? [],
-    demographics: demo ? {
-      maleRatio: demo.maleRatio,
-      femaleRatio: demo.femaleRatio,
-      hasGenderData: demo.hasGenderData,
-      ageGroups: demo.ageGroups,
-      hasAgeData: demo.hasAgeData,
-    } : null,
-    // 결론 (추천 제목+태그 조합)
+    // 승 (문제 진단)
+    factorScore,
+    competitorThreat,
+    brandDistribution,
+    // 전 (해결 방안)
+    keywordsV2: keywordsV2?.slice(0, 5) ?? [],
+    keywordsVariant: keywordsVariant?.slice(0, 5) ?? [],
+    keywordsSeasonOpp: keywordsSeasonOpp?.slice(0, 3) ?? [],
+    // 전 (최종 후보)
+    factorAggregated: factorAggregated?.slice(0, 5) ?? [],
+    // 결 (결론)
+    advice: result.advice,
     conclusion: conclusion?.combinations ?? null,
   });
 }
