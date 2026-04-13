@@ -132,9 +132,6 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
   let snapBrandDistribution: BrandDistributionData | null = null;
   let snapFactorAggregated: { candidates: Array<{ keyword: string; source: string }>; results: unknown[] } | null = null;
   let snapModifiersFiltered: unknown[] | null = null;
-  let snapPoolSource: "pool" | "api" | null = null;
-  let snapPoolFetchedAt: string | null = null;
-  let poolFreshnessLabel: string | null = null;
 
   if (!forceRefresh && userId) {
     const snap = await getSnapshot(userId, kw, platform);
@@ -154,14 +151,6 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
       snapBrandDistribution = (snap.snapshot.brandDistribution as BrandDistributionData | undefined) ?? null;
       snapFactorAggregated = (snap.snapshot.factorAggregated as typeof snapFactorAggregated) ?? null;
       snapModifiersFiltered = (snap.snapshot.modifiersFiltered as unknown[] | undefined) ?? null;
-      snapPoolSource = (snap.snapshot.poolSource as "pool" | "api" | null) ?? null;
-      snapPoolFetchedAt = (snap.snapshot.poolFetchedAt as string | null) ?? null;
-      if (snapPoolSource === "pool" && snapPoolFetchedAt) {
-        // eslint-disable-next-line react-hooks/purity
-        const nowMs = Date.now();
-        const days = Math.max(0, Math.floor((nowMs - new Date(snapPoolFetchedAt).getTime()) / 86400000));
-        poolFreshnessLabel = days === 0 ? "오늘 갱신" : `${days}일 전 갱신`;
-      }
       console.log(`[snapshot] HIT: "${kw}" (${platform}) from ${snap.created_at}`, snapKeywordsV2 ? `+keywords` : `(no keywords)`);
     }
   }
@@ -418,14 +407,6 @@ export default async function AnalyzePage({ searchParams }: PageProps) {
             <span className="text-xs font-bold text-white px-2.5 py-1 rounded-lg bg-green-500">STEP 3</span>
             <span className="text-sm font-bold text-gray-700">해결 방안</span>
             <span className="text-xs text-gray-400">경쟁을 피하고 기회를 잡을 키워드 추천</span>
-            {poolFreshnessLabel && (
-              <span
-                className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium"
-                title="카테고리 키워드 풀(Ad API 배치 캐시)에서 즉시 조회"
-              >
-                📦 카테고리 풀 · {poolFreshnessLabel}
-              </span>
-            )}
           </div>
 
           {/* 시즌 기회 키워드 — Historical + V2 융합 SOS (STEP 3 첫 번째) */}
