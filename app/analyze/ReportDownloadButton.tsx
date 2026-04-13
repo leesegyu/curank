@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * 쿠랭크 PDF 보고서 — 황금농부 디자인 모방
@@ -9,6 +9,14 @@ import { useState } from "react";
  */
 export default function ReportDownloadButton({ keyword, platform, conclusionReady = false }: { keyword: string; platform: string; conclusionReady?: boolean }) {
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(conclusionReady);
+
+  useEffect(() => {
+    if (conclusionReady) { setReady(true); return; }
+    const handler = () => setReady(true);
+    window.addEventListener("conclusion-ready", handler);
+    return () => window.removeEventListener("conclusion-ready", handler);
+  }, [conclusionReady]);
 
   async function handleDownload() {
     setLoading(true);
@@ -589,13 +597,13 @@ export default function ReportDownloadButton({ keyword, platform, conclusionRead
     <div className="space-y-2">
       <button
         onClick={handleDownload}
-        disabled={loading || !conclusionReady}
+        disabled={loading || !ready}
         className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-        style={{ background: conclusionReady ? "linear-gradient(135deg, #d4a853, #b8860b)" : "#9ca3af" }}
+        style={{ background: ready ? "linear-gradient(135deg, #d4a853, #b8860b)" : "#9ca3af" }}
       >
-        {loading ? "PDF 생성 중..." : conclusionReady ? "분석 보고서 PDF 다운로드" : "STEP 6 결론 생성 후 PDF 다운로드 가능"}
+        {loading ? "PDF 생성 중..." : ready ? "분석 보고서 PDF 다운로드" : "STEP 6 결론 생성 후 PDF 다운로드 가능"}
       </button>
-      {!conclusionReady && (
+      {!ready && (
         <p className="text-xs text-center text-gray-400">
           위 STEP 6에서 <span className="font-bold text-indigo-500">결론 생성하기</span> 버튼을 먼저 눌러주세요
         </p>

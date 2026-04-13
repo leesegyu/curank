@@ -84,6 +84,7 @@ export default function ConclusionCard({ keyword, platform, ready = true }: Prop
           if (data.cached && data.combinations) {
             setCombinations(data.combinations);
             setGeneratedAt(data.generatedAt);
+            window.dispatchEvent(new Event("conclusion-ready"));
           }
           if (data.regeneration) setRegen(data.regeneration);
         }
@@ -111,6 +112,7 @@ export default function ConclusionCard({ keyword, platform, ready = true }: Prop
       setCombinations(data.combinations);
       setGeneratedAt(data.generatedAt);
       if (data.regeneration) setRegen(data.regeneration);
+      window.dispatchEvent(new Event("conclusion-ready"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "결론 생성 실패");
     } finally {
